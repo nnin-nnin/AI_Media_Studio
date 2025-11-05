@@ -1,0 +1,81 @@
+# Dependencies
+node_modules
+
+# Logs
+logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode
+.idea
+
+# Build outputs
+dist
+build
+
+# Temporary files
+tmp
+temp
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Electron build files
+*.asar
+*.app
+*.exe
+*.deb
+*.rpm
+*.zip
+*.dmg
+
+# Package lock files
+package-lock.json
+yarn.lock
+
+# Runtime data
+*.pid
+*.seed
+*.pid.lock
+
+# Diagnostic reports
+*.debug.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Temporary folders
+.tmp
+.temp
+
+# macOS specific files
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Windows thumbnail cache files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Windows shortcuts
+*.lnk
