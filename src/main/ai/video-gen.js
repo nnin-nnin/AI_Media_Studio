@@ -35,7 +35,7 @@ export async function generateVideo({
   model = "doubao-seedance-1-0-pro-fast-251015",
   image_url = null,
   duration = 10,
-  resolution = "1080p",
+  resolution = "720p", // 修改默认分辨率为720p，该模型支持
   loop = true,
   camera_move = "forward-slow",
   watermark = false,
@@ -71,18 +71,55 @@ export async function generateVideo({
       });
     }
 
-    // 创建生成任务
-    const create_result = await client.contentGeneration.tasks.create({
-      model: model,
-      content: content,
-    });
+    // 创建生成任务 - 使用正确的API调用方式
+    console.error("正在调用API创建视频生成任务...");
+    
+    // 直接使用axios调用API，而不是OpenAI SDK（因为视频生成API与标准聊天API不同）
+    const response = await axios.post(
+      "https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks",
+      {
+        model: model,
+        content: content,
+      },
+      {
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+    
+    // 检查API响应
+    if (!response || !response.data) {
+      console.error("❌ API调用失败，未返回结果");
+      return null;
+    }
+    
+    console.error("API返回结果:", JSON.stringify(response.data, null, 2));
 
-    const task_id = create_result.id;
+    // 检查任务ID是否存在
+    if (!response.data.id) {
+      console.error("❌ API返回结果中未包含任务ID");
+      return null;
+    }
+
+    const task_id = response.data.id;
     console.error(`✅ 任务已创建，任务ID: ${task_id}`);
 
     // 轮询
     while (true) {
-      const result = await client.contentGeneration.tasks.get({ task_id: task_id });
+      // 使用axios轮询任务状态
+      const statusResponse = await axios.get(
+        `https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/${task_id}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Content-Type": "application/json"
+          }
+        }
+      );
+      
+      const result = statusResponse.data;
       const status = result.status;
 
       if (status === "succeeded") {
@@ -103,8 +140,8 @@ export async function generateVideo({
 
         // 下载保存到本地
         try {
-          const response = await axios.get(video_url, { responseType: "arraybuffer" });
-          fs.writeFileSync(output_path, response.data);
+          const downloadResponse = await axios.get(video_url, { responseType: "arraybuffer" });
+          fs.writeFileSync(output_path, downloadResponse.data);
           console.error(`💾 已保存到本地: ${output_path}`);
         } catch (dl_err) {
           console.error("⚠️ 下载失败，但生成成功。请手动用浏览器打开上面的视频URL保存。");
@@ -125,6 +162,10 @@ export async function generateVideo({
     }
   } catch (error) {
     console.error("视频生成过程中出现错误:", error);
+    // 如果是API错误，输出详细信息
+    if (error.response) {
+      console.error("API错误响应:", error.response.status, error.response.data);
+    }
     return null;
   }
 }

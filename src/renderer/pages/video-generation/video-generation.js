@@ -139,6 +139,19 @@ function handleVideoTemplateSelect(event) {
         chip.classList.remove('selected');
     });
     event.target.classList.add('selected');
+    
+    // 根据模板类型设置对应的提示词
+    const promptMap = {
+        'lecture': '教室场景，老师在讲台上授课，学生认真听讲，教育风格，明亮光线',
+        'travel': '户外风景，旅行拍摄，移动镜头，自然风光，第一人称视角',
+        'montage': '快节奏剪辑，多场景切换，时尚动感，炫酷转场效果',
+        'mv': '手绘动画风格，色彩丰富，流畅线条，音乐节奏同步'
+    };
+    
+    const promptInput = document.getElementById('video-prompt');
+    if (promptInput && promptMap[template]) {
+        promptInput.value = promptMap[template];
+    }
 }
 
 /**
@@ -272,32 +285,55 @@ function handleImageFile(file) {
     // 创建预览
     const reader = new FileReader();
     reader.onload = function(e) {
-        // 查找左侧预览区域并显示图像
-        const previewContent = document.querySelector('.left-panel .preview-content');
-        if (previewContent) {
-            previewContent.innerHTML = `
-                <div class="preview-container">
-                    <img src="${e.target.result}" alt="预览图片" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-                </div>
-                <!-- 添加隐藏的input来存储图片数据 -->
-                <input type="hidden" id="uploaded-image-data" value="${e.target.result}">
-            `;
-        } else {
-            // 如果没有找到left-panel中的preview-content，则查找任何preview-placeholder
-            const previewPlaceholder = document.querySelector('.preview-placeholder');
-            if (previewPlaceholder) {
-                previewPlaceholder.innerHTML = `
+        // 创建一个图片对象来获取原始尺寸
+        const img = new Image();
+        img.onload = function() {
+            // 检查图片尺寸，如果宽度小于300像素则进行调整
+            let imageDataURL = e.target.result;
+            if (img.width < 300) {
+                // 创建canvas来调整图片尺寸
+                const canvas = document.createElement('canvas');
+                // 设置新尺寸，保持宽高比
+                const scale = 300 / img.width;
+                canvas.width = 300;
+                canvas.height = img.height * scale;
+                
+                const ctx = canvas.getContext('2d');
+                // 绘制调整后的图片
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                // 获取调整后的图片数据
+                imageDataURL = canvas.toDataURL('image/jpeg', 0.9);
+            }
+            
+            // 查找左侧预览区域并显示图像
+            const previewContent = document.querySelector('.left-panel .preview-content');
+            if (previewContent) {
+                previewContent.innerHTML = `
                     <div class="preview-container">
-                        <img src="${e.target.result}" alt="预览图片" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        <img src="${imageDataURL}" alt="预览图片" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                     </div>
                     <!-- 添加隐藏的input来存储图片数据 -->
-                    <input type="hidden" id="uploaded-image-data" value="${e.target.result}">
+                    <input type="hidden" id="uploaded-image-data" value="${imageDataURL}">
                 `;
+            } else {
+                // 如果没有找到left-panel中的preview-content，则查找任何preview-placeholder
+                const previewPlaceholder = document.querySelector('.preview-placeholder');
+                if (previewPlaceholder) {
+                    previewPlaceholder.innerHTML = `
+                        <div class="preview-container">
+                            <img src="${imageDataURL}" alt="预览图片" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        </div>
+                        <!-- 添加隐藏的input来存储图片数据 -->
+                        <input type="hidden" id="uploaded-image-data" value="${imageDataURL}">
+                    `;
+                }
             }
-        }
-        
-        // 显示成功消息
-        console.log('图像已加载:', file.name);
+            
+            // 显示成功消息
+            console.log('图像已加载:', file.name);
+        };
+        img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
@@ -374,51 +410,95 @@ async function handleGenerateVideoClick() {
             const promptInput = document.getElementById('video-prompt');
             const prompt = promptInput ? promptInput.value : '';
             
-            const activeTemplate = document.querySelector('.template-chip.active');
-            const template = activeTemplate ? activeTemplate.getAttribute('data-template') : '';
+            // 获取上传的图片
+            let imageSrc = null;
+            const uploadedImageInput = document.getElementById('uploaded-image-data');
+            if (uploadedImageInput) {
+                imageSrc = uploadedImageInput.value;
+            }
             
+            // 获取时长
             const durationSlider = document.getElementById('duration');
             const duration = durationSlider ? parseInt(durationSlider.value) : 10;
             
-            const frameRateSlider = document.getElementById('frame-rate');
-            const frameRate = frameRateSlider ? parseInt(frameRateSlider.value) : 30;
-            
-            const backgroundMusicCheckbox = document.getElementById('background-music');
-            const backgroundMusic = backgroundMusicCheckbox ? backgroundMusicCheckbox.checked : true;
-            
+            // 获取方向（转换为分辨率）
             const activeOrientation = document.querySelector('.param-btn.active');
             const orientation = activeOrientation ? activeOrientation.getAttribute('data-orientation') : 'portrait';
+            
+            // 根据方向设置分辨率 (使用模型支持的分辨率)
+            let resolution = "720p";
+            switch (orientation) {
+                case 'landscape':
+                    resolution = "720p"; // 使用720p而不是1920x1080
+                    break;
+                case 'square':
+                    resolution = "720p"; // 使用720p而不是1080x1080
+                    break;
+                case 'portrait':
+                default:
+                    resolution = "720p"; // 竖屏也使用720p
+                    break;
+            }
+            
+            // 获取稳像设置
+            const stabilizationCheckbox = document.getElementById('stabilization');
+            const loop = stabilizationCheckbox ? stabilizationCheckbox.checked : true;
             
             // 调用AI服务生成视频
             const result = await window.electronAPI.generateVideo({
                 prompt: prompt || '默认视频提示词',
-                template: template || 'lecture',
+                image_url: imageSrc, // 传入首帧参考图
                 duration: duration,
-                frameRate: frameRate,
-                backgroundMusic: backgroundMusic,
-                orientation: orientation
+                resolution: resolution,
+                loop: loop
             });
             
             console.log('AI视频生成结果:', result);
             
             // 显示结果
             if (result.status === 'success') {
-                // 在预览区域显示生成的视频或封面
+                // 在预览区域显示生成的视频
                 const previewPlaceholder = document.querySelector('.right-panel .preview-placeholder');
                 if (previewPlaceholder) {
                     previewPlaceholder.innerHTML = `
-                        <div style="text-align: center; padding: 20px;">
-                            <div style="font-size: 48px; margin-bottom: 10px;">🎬</div>
-                            <p>视频已生成</p>
-                            <p style="font-size: 12px; color: #666;">${result.saved_path}</p>
+                        <div style="text-align: center; padding: 10px;">
+                            <video controls autoplay style="max-width: 100%; max-height: 100%;">
+                                <source src="${result.video_url}" type="video/mp4">
+                                您的浏览器不支持视频播放。
+                            </video>
+                            <p style="margin-top: 10px; font-size: 14px; color: #666;">视频已生成</p>
                         </div>
                     `;
                 }
             } else {
-                alert('生成失败: ' + (result.error || '未知错误'));
+                // 显示错误信息
+                const previewPlaceholder = document.querySelector('.right-panel .preview-placeholder');
+                if (previewPlaceholder) {
+                    previewPlaceholder.innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <div style="font-size: 48px; margin-bottom: 10px;">❌</div>
+                            <p>视频生成失败</p>
+                            <p style="font-size: 12px; color: #666;">错误信息: ${result.message || '未知错误'}</p>
+                        </div>
+                    `;
+                }
+                alert('生成失败: ' + (result.message || '未知错误'));
             }
         } catch (error) {
             console.error('生成过程中出错:', error);
+            
+            // 显示错误信息
+            const previewPlaceholder = document.querySelector('.right-panel .preview-placeholder');
+            if (previewPlaceholder) {
+                previewPlaceholder.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">❌</div>
+                        <p>视频生成过程中出现错误</p>
+                        <p style="font-size: 12px; color: #666;">请查看控制台了解详情</p>
+                    </div>
+                `;
+            }
+            
             alert('生成过程中出现错误，请查看控制台了解详情');
         } finally {
             // 恢复按钮状态

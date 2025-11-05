@@ -149,6 +149,19 @@ ipcMain.handle('ai-generate-video', async (event, options) => {
   }
 });
 
+ipcMain.handle('ai-clone-voice', async (event, options) => {
+  try {
+    // 动态导入AI服务模块以避免初始化问题
+    const { default: AIService } = await import('./ai/ai-service.js');
+    return await AIService.cloneVoice(options);
+  } catch (error) {
+    return {
+      status: 'error',
+      message: error.message
+    };
+  }
+});
+
 // 添加处理保存图片文件的IPC事件
 ipcMain.handle('save-image-file', async (event, fileName, dataURL) => {
   return new Promise((resolve, reject) => {
@@ -162,6 +175,33 @@ ipcMain.handle('save-image-file', async (event, fileName, dataURL) => {
       
       // 移除数据URL前缀
       const base64Data = dataURL.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+      const filePath = path.join(tempDir, fileName);
+      
+      writeFile(filePath, buffer, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(filePath);
+        }
+      });
+    });
+  });
+});
+
+// 添加处理保存音频文件的IPC事件
+ipcMain.handle('save-audio-file', async (event, fileName, dataURL) => {
+  return new Promise((resolve, reject) => {
+    // 创建临时目录
+    const tempDir = path.join(tmpdir(), 'ai-course');
+    mkdir(tempDir, { recursive: true }, (err) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      
+      // 移除数据URL前缀
+      const base64Data = dataURL.replace(/^data:audio\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
       const filePath = path.join(tempDir, fileName);
       
@@ -204,14 +244,35 @@ ipcMain.handle('read-image-file', async (event, fileName) => {
   });
 });
 
-// 添加获取临时目录路径的IPC事件
-ipcMain.handle('get-temp-dir', async () => {
-  return path.join(tmpdir(), 'ai-course');
+// 添加处理读取音频文件的IPC事件
+ipcMain.handle('read-audio-file', async (event, fileName) => {
+  return new Promise((resolve, reject) => {
+    // 构建文件路径
+    const tempDir = path.join(tmpdir(), 'ai-course');
+    const filePath = path.join(tempDir, fileName);
+    
+    // 读取文件并转换为数据URL
+    readFile(filePath, (err, data) => {
+      if (err) {
+        reject(err);
+      } else {
+        // 转换为数据URL格式
+        const ext = path.extname(fileName).toLowerCase();
+        let mimeType = 'audio/mpeg';
+        if (ext === '.wav') {
+          mimeType = 'audio/wav';
+        } else if (ext === '.mp3') {
+          mimeType = 'audio/mpeg';
+        }
+        
+        const dataURL = `data:${mimeType};base64,${data.toString('base64')}`;
+        resolve(dataURL);
+      }
+    });
+  });
 });
 
-// 处理来自渲染进程的重新加载请求
-ipcMain.on('reload-window', () => {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.reloadIgnoringCache();
-  }
+// 添加处理获取临时目录路径的IPC事件
+ipcMain.handle('get-temp-dir', async () => {
+  return path.join(tmpdir(), 'ai-course');
 });

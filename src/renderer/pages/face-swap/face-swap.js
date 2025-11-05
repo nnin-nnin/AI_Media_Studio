@@ -249,35 +249,58 @@ function handleImageFile(file) {
     // 创建预览
     const reader = new FileReader();
     reader.onload = function(e) {
-        // 查找左侧预览区域并显示图像
-        const previewContent = document.querySelector('.left-panel .preview-content');
-        if (previewContent) {
-            previewContent.innerHTML = `
-                <div class="preview-container">
-                    <img src="${e.target.result}" alt="预览图片" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-                </div>
-                <!-- 添加隐藏的input来存储图片数据 -->
-                <input type="hidden" id="uploaded-image-data" value="${e.target.result}">
-            `;
-        } else {
-            // 如果没有找到left-panel中的preview-content，则查找任何preview-placeholder
-            const previewPlaceholder = document.querySelector('.preview-placeholder');
-            if (previewPlaceholder) {
-                previewPlaceholder.innerHTML = `
+        // 创建一个图片对象来获取原始尺寸
+        const img = new Image();
+        img.onload = function() {
+            // 检查图片尺寸，如果宽度小于300像素则进行调整
+            let imageDataURL = e.target.result;
+            if (img.width < 300) {
+                // 创建canvas来调整图片尺寸
+                const canvas = document.createElement('canvas');
+                // 设置新尺寸，保持宽高比
+                const scale = 300 / img.width;
+                canvas.width = 300;
+                canvas.height = img.height * scale;
+                
+                const ctx = canvas.getContext('2d');
+                // 绘制调整后的图片
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                // 获取调整后的图片数据
+                imageDataURL = canvas.toDataURL('image/jpeg', 0.9);
+            }
+            
+            // 查找左侧预览区域并显示图像
+            const previewContent = document.querySelector('.left-panel .preview-content');
+            if (previewContent) {
+                previewContent.innerHTML = `
                     <div class="preview-container">
-                        <img src="${e.target.result}" alt="预览图片" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        <img src="${imageDataURL}" alt="预览图片" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                     </div>
                     <!-- 添加隐藏的input来存储图片数据 -->
-                    <input type="hidden" id="uploaded-image-data" value="${e.target.result}">
+                    <input type="hidden" id="uploaded-image-data" value="${imageDataURL}">
                 `;
+            } else {
+                // 如果没有找到left-panel中的preview-content，则查找任何preview-placeholder
+                const previewPlaceholder = document.querySelector('.preview-placeholder');
+                if (previewPlaceholder) {
+                    previewPlaceholder.innerHTML = `
+                        <div class="preview-container">
+                            <img src="${imageDataURL}" alt="预览图片" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        </div>
+                        <!-- 添加隐藏的input来存储图片数据 -->
+                        <input type="hidden" id="uploaded-image-data" value="${imageDataURL}">
+                    `;
+                }
             }
-        }
-        
-        // 显示成功消息
-        console.log('图像已加载:', file.name);
-        
-        // 在实际项目中，这里会将文件保存到本地供Python脚本处理
-        // 通过 window.electronAPI.saveImageFile 可以实现
+            
+            // 显示成功消息
+            console.log('图像已加载:', file.name);
+            
+            // 在实际项目中，这里会将文件保存到本地供Python脚本处理
+            // 通过 window.electronAPI.saveImageFile 可以实现
+        };
+        img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }

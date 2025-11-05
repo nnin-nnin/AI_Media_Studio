@@ -8,13 +8,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   generateImage: (options) => ipcRenderer.invoke('ai-generate-image', options),
   editImage: (options) => ipcRenderer.invoke('ai-edit-image', options),
   generateVideo: (options) => ipcRenderer.invoke('ai-generate-video', options),
+  cloneVoice: (options) => ipcRenderer.invoke('ai-clone-voice', options),
   
   // 文件操作
   saveImageFile: (fileName, dataURL) => ipcRenderer.invoke('save-image-file', fileName, dataURL),
+  saveAudioFile: (fileName, dataURL) => ipcRenderer.invoke('save-audio-file', fileName, dataURL),
   
   // 获取临时目录路径
   getTempDir: () => ipcRenderer.invoke('get-temp-dir'),
   
   // 读取图片文件并返回数据URL
-  readImageFile: (fileName) => ipcRenderer.invoke('read-image-file', fileName)
+  readImageFile: (fileName) => ipcRenderer.invoke('read-image-file', fileName),
+  
+  // 读取音频文件并返回数据URL
+  readAudioFile: (fileName) => ipcRenderer.invoke('read-audio-file', fileName)
 });

@@ -62,7 +62,7 @@ function loadVoiceCloningContent() {
                 </div>
             </div>
         </div>
-
+        
         <div class="section">
             <div class="preview-actions">
                 <button class="secondary-btn" id="play-voice-btn">
@@ -97,19 +97,13 @@ function setupVoiceCloningEventListeners() {
         // 上传音频按钮
         const uploadAudioBtn = document.getElementById('upload-audio-btn');
         if (uploadAudioBtn) {
-            uploadAudioBtn.addEventListener('click', () => {
-                console.log('上传音频按钮被点击');
-                // 实际项目中会处理文件上传
-            });
+            uploadAudioBtn.addEventListener('click', handleUploadAudio);
         }
         
         // 录制音频按钮
         const recordAudioBtn = document.getElementById('record-audio-btn');
         if (recordAudioBtn) {
-            recordAudioBtn.addEventListener('click', () => {
-                console.log('录制音频按钮被点击');
-                // 实际项目中会处理音频录制
-            });
+            recordAudioBtn.addEventListener('click', handleRecordAudio);
         }
         
         // 情感选择
@@ -134,125 +128,39 @@ function setupVoiceCloningEventListeners() {
         if (downloadVoiceBtn) {
             downloadVoiceBtn.addEventListener('click', handleDownloadVoiceClick);
         }
+        
+        // 相似度滑块
+        const similaritySlider = document.getElementById('similarity');
+        if (similaritySlider) {
+            similaritySlider.addEventListener('input', handleSimilarityChange);
+        }
+        
+        // 语速滑块
+        const speechRateSlider = document.getElementById('speech-rate');
+        if (speechRateSlider) {
+            speechRateSlider.addEventListener('input', handleSpeechRateChange);
+        }
+        
+        // 去噪处理开关
+        const noiseReductionCheckbox = document.getElementById('noise-reduction');
+        if (noiseReductionCheckbox) {
+            noiseReductionCheckbox.addEventListener('change', handleNoiseReductionChange);
+        }
+        
+        // 停顿处理开关
+        const pauseProcessingCheckbox = document.getElementById('pause-processing');
+        if (pauseProcessingCheckbox) {
+            pauseProcessingCheckbox.addEventListener('change', handlePauseProcessingChange);
+        }
     }, 100);
 }
 
 /**
- * 处理一键生成声音按钮点击
- */
-async function handleGenerateVoiceClick() {
-    console.log('一键生成声音按钮被点击');
-    
-    // 显示加载状态
-    const generateBtn = document.getElementById('generate-voice-btn');
-    if (generateBtn) {
-        const originalContent = generateBtn.innerHTML;
-        generateBtn.innerHTML = '<span class="icon">⏳</span> 生成中...';
-        generateBtn.disabled = true;
-        
-        try {
-            // 获取参数
-            const textInput = document.getElementById('voice-text');
-            const text = textInput ? textInput.value : '';
-            
-            const similaritySlider = document.getElementById('similarity');
-            const similarity = similaritySlider ? parseInt(similaritySlider.value) : 80;
-            
-            const speechRateSlider = document.getElementById('speech-rate');
-            const speechRate = speechRateSlider ? parseInt(speechRateSlider.value) : 50;
-            
-            const activeEmotion = document.querySelector('.param-btn.active');
-            const emotion = activeEmotion ? activeEmotion.getAttribute('data-emotion') : 'neutral';
-            
-            const noiseReductionCheckbox = document.getElementById('noise-reduction');
-            const noiseReduction = noiseReductionCheckbox ? noiseReductionCheckbox.checked : true;
-            
-            const pauseProcessingCheckbox = document.getElementById('pause-processing');
-            const pauseProcessing = pauseProcessingCheckbox ? pauseProcessingCheckbox.checked : true;
-            
-            // 调用AI服务生成声音
-            // 注意：这里我们暂时没有实现声音生成功能，仅作演示
-            console.log('声音生成参数:', {
-                text: text || '默认文本',
-                similarity: similarity,
-                speechRate: speechRate,
-                emotion: emotion,
-                noiseReduction: noiseReduction,
-                pauseProcessing: pauseProcessing
-            });
-            
-            // 模拟生成过程
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // 显示结果
-            const previewPlaceholder = document.querySelector('.right-panel .preview-placeholder');
-            if (previewPlaceholder) {
-                previewPlaceholder.innerHTML = `
-                    <div style="text-align: center; padding: 20px;">
-                        <div style="font-size: 48px; margin-bottom: 10px;">🔊</div>
-                        <p>声音已生成</p>
-                        <audio id="generated-audio" controls style="width: 100%; margin-top: 10px;">
-                            <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFd2xqZ2RlY2RlZmhpb3F3fYOFiIqQlZmfo6etr7K1uLq8vsLGys3P0tXY29zh4+Xo6uzu8fP19/j5+/z9/v8AAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==" type="audio/wav">
-                        </audio>
-                        <input type="hidden" id="generated-audio-data" value="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFd2xqZ2RlY2RlZmhpb3F3fYOFiIqQlZmfo6etr7K1uLq8vsLGys3P0tXY29zh4+Xo6uzu8fP19/j5+/z9/v8AAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==">
-                    </div>
-                `;
-            }
-        } catch (error) {
-            console.error('生成过程中出错:', error);
-            alert('生成过程中出现错误，请查看控制台了解详情');
-        } finally {
-            // 恢复按钮状态
-            if (generateBtn) {
-                generateBtn.innerHTML = originalContent;
-                generateBtn.disabled = false;
-            }
-        }
-    }
-}
-
-/**
- * 处理播放声音按钮点击
- */
-function handlePlayVoiceClick() {
-    console.log('播放声音按钮被点击');
-    
-    const audioElement = document.getElementById('generated-audio');
-    if (audioElement) {
-        audioElement.play();
-    } else {
-        alert('请先生成声音');
-    }
-}
-
-/**
- * 处理下载声音按钮点击
- */
-function handleDownloadVoiceClick() {
-    console.log('下载声音按钮被点击');
-    
-    const audioDataInput = document.getElementById('generated-audio-data');
-    if (audioDataInput) {
-        const audioData = audioDataInput.value;
-        
-        // 创建临时的下载链接
-        const link = document.createElement('a');
-        link.href = audioData;
-        link.download = 'ai-generated-voice-' + Date.now() + '.wav';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    } else {
-        alert('请先生成声音');
-    }
-}
-
-/**
- * 处理上传音频
+ * 处理上传音频按钮点击
  */
 function handleUploadAudio() {
     console.log('上传音频按钮被点击');
-    // 实际项目中会打开文件选择对话框
+    
     // 创建一个隐藏的文件输入元素
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -278,16 +186,93 @@ function handleUploadAudio() {
 }
 
 /**
- * 处理录制音频
+ * 处理录制音频按钮点击
  */
 function handleRecordAudio() {
     console.log('录制音频按钮被点击');
-    // 实际项目中会打开录音设备
-    alert('在实际应用中，这里会打开录音设备');
+    
+    // 检查浏览器是否支持getUserMedia API
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        // 请求访问麦克风
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(function(stream) {
+                // 创建一个音频录制对象
+                const mediaRecorder = new MediaRecorder(stream);
+                const audioChunks = [];
+                
+                // 开始录制
+                mediaRecorder.start();
+                
+                // 创建一个模态框来显示录制状态
+                const modal = document.createElement('div');
+                modal.className = 'recording-modal';
+                modal.innerHTML = `
+                    <div class="recording-container">
+                        <div class="recording-header">
+                            <h3>录制音频</h3>
+                            <button class="close-btn">&times;</button>
+                        </div>
+                        <div class="recording-preview">
+                            <div class="recording-indicator">
+                                <div class="recording-dot"></div>
+                                <p>正在录制...</p>
+                            </div>
+                        </div>
+                        <div class="recording-controls">
+                            <button class="stop-btn">停止录制</button>
+                            <button class="cancel-btn">取消</button>
+                        </div>
+                    </div>
+                `;
+                
+                // 添加到页面
+                document.body.appendChild(modal);
+                
+                // 绑定关闭按钮事件
+                modal.querySelector('.close-btn').addEventListener('click', function() {
+                    mediaRecorder.stop();
+                    stream.getTracks().forEach(track => track.stop());
+                    document.body.removeChild(modal);
+                });
+                
+                // 绑定取消按钮事件
+                modal.querySelector('.cancel-btn').addEventListener('click', function() {
+                    mediaRecorder.stop();
+                    stream.getTracks().forEach(track => track.stop());
+                    document.body.removeChild(modal);
+                });
+                
+                // 绑定停止录制按钮事件
+                modal.querySelector('.stop-btn').addEventListener('click', function() {
+                    mediaRecorder.stop();
+                    stream.getTracks().forEach(track => track.stop());
+                    document.body.removeChild(modal);
+                });
+                
+                // 监听数据可用事件
+                mediaRecorder.addEventListener("dataavailable", event => {
+                    audioChunks.push(event.data);
+                });
+                
+                // 监听停止事件
+                mediaRecorder.addEventListener("stop", () => {
+                    // 创建音频文件
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const file = new File([audioBlob], 'recorded-audio.wav', { type: 'audio/wav' });
+                    handleAudioFile(file);
+                });
+            })
+            .catch(function(err) {
+                console.error('无法访问麦克风:', err);
+                alert('无法访问麦克风，请检查权限设置');
+            });
+    } else {
+        alert('您的浏览器不支持音频录制功能');
+    }
 }
 
 /**
- * 处理音频文件
+ * 处理音频文件（无论是上传还是录制）
  * @param {File} file - 音频文件对象
  */
 function handleAudioFile(file) {
@@ -306,7 +291,7 @@ function handleAudioFile(file) {
     // 创建预览
     const reader = new FileReader();
     reader.onload = function(e) {
-        // 在预览区域显示音频信息
+        // 查找左侧预览区域并显示音频
         const previewContent = document.querySelector('.left-panel .preview-content');
         if (previewContent) {
             previewContent.innerHTML = `
@@ -395,3 +380,117 @@ function handlePauseProcessingChange(event) {
     const checked = event.target.checked;
     console.log('停顿处理开关状态:', checked);
 }
+
+/**
+ * 处理播放声音按钮点击
+ */
+function handlePlayVoiceClick() {
+    console.log('播放声音按钮被点击');
+    
+    // 查找生成的音频元素
+    const generatedAudio = document.getElementById('generated-audio');
+    if (generatedAudio) {
+        generatedAudio.play();
+    } else {
+        alert('请先生成声音');
+    }
+}
+
+/**
+ * 处理下载按钮点击
+ */
+async function handleDownloadVoiceClick() {
+    console.log('下载按钮被点击');
+    
+    // 查找生成的音频数据
+    const generatedAudioDataInput = document.getElementById('generated-audio-data');
+    if (generatedAudioDataInput) {
+        const audioDataUrl = generatedAudioDataInput.value;
+        // 创建下载链接
+        const link = document.createElement('a');
+        link.href = audioDataUrl;
+        link.download = 'generated-voice.mp3';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } else {
+        alert('请先生成声音');
+    }
+}
+
+/**
+ * 处理一键生成声音按钮点击
+ */
+async function handleGenerateVoiceClick() {
+    console.log('一键生成声音按钮被点击');
+    
+    // 显示加载状态
+    const generateBtn = document.getElementById('generate-voice-btn');
+    if (generateBtn) {
+        const originalContent = generateBtn.innerHTML;
+        generateBtn.innerHTML = '<span class="icon">⏳</span> 生成中...';
+        generateBtn.disabled = true;
+        
+        try {
+            // 获取参数
+            const textInput = document.getElementById('voice-text');
+            const text = textInput ? textInput.value : '';
+            
+            if (!text.trim()) {
+                alert('请输入要合成的文本');
+                return;
+            }
+            
+            // 获取上传的音频
+            let audioSrc = null;
+            const uploadedAudioInput = document.getElementById('uploaded-audio-data');
+            if (uploadedAudioInput) {
+                audioSrc = uploadedAudioInput.value;
+            } else {
+                alert('请先上传音频文件');
+                return;
+            }
+            
+            // 调用AI服务克隆声音
+            const result = await window.electronAPI.cloneVoice({
+                audio: audioSrc,
+                text: text
+            });
+            
+            console.log('AI声音克隆结果:', result);
+            
+            // 显示结果
+            if (result.status === 'success') {
+                // 在预览区域显示生成的音频
+                const previewPlaceholder = document.querySelector('.right-panel .preview-placeholder');
+                if (previewPlaceholder) {
+                    previewPlaceholder.innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <div style="font-size: 48px; margin-bottom: 10px;">🔊</div>
+                            <p>声音已生成</p>
+                            <audio id="generated-audio" controls style="width: 100%; margin-top: 10px;">
+                                <source src="${result.audio_url}" type="audio/mpeg">
+                            </audio>
+                            <!-- 添加隐藏的input来存储音频数据 -->
+                            <input type="hidden" id="generated-audio-data" value="${result.audio_url}">
+                        </div>
+                    `;
+                }
+            } else {
+                alert('生成失败: ' + (result.message || '未知错误'));
+            }
+        } catch (error) {
+            console.error('生成过程中出错:', error);
+            alert('生成过程中出现错误，请查看控制台了解详情');
+        } finally {
+            // 恢复按钮状态
+            if (generateBtn) {
+                generateBtn.innerHTML = originalContent;
+                generateBtn.disabled = false;
+            }
+        }
+    }
+}
+
+// 导出函数供外部调用
+export { loadVoiceCloningContent };
