@@ -37,7 +37,7 @@ class AIService {
   static async generateImage(options) {
     try {
       const imageUrl = await this.textToImage(options);
-      
+
       return {
         status: 'success',
         image_url: imageUrl
@@ -49,7 +49,7 @@ class AIService {
       };
     }
   }
-  
+
   /**
    * 文本到图像生成
    * @param {Object} options - 生成选项
@@ -58,24 +58,24 @@ class AIService {
   static async textToImage(options) {
     const {
       prompt,
-      model = "doubao-illuminator-2-0-250802",
+      model = "ep-20250209095657-p2j9r",
       width = 1024,
       height = 1024,
       saveTo
     } = options;
-    
+
     const resp = await client.images.generate({
       model,
       prompt,
       n: 1,
       size: `${width}x${height}`
     });
-    
+
     const url = resp.data[0].url;
     if (saveTo) await this.download(url, saveTo);
     return url;
   }
-  
+
   /**
    * 下载文件
    * @param {string} url - 文件URL
@@ -86,7 +86,7 @@ class AIService {
     fs.mkdirSync(path.dirname(outPath), { recursive: true });
     fs.writeFileSync(outPath, data);
   }
-  
+
   /**
    * 编辑图片
    * @param {Object} options - 编辑选项
@@ -94,13 +94,13 @@ class AIService {
    */
   static async editImage(options) {
     const imageUrl = await imageToImage(options);
-    
+
     return {
       status: 'success',
       image_url: imageUrl
     };
   }
-  
+
   /**
    * 生成视频
    * @param {Object} options - 视频生成选项
@@ -109,7 +109,7 @@ class AIService {
   static async generateVideo(options) {
     try {
       const videoUrl = await generateVideo(options);
-      
+
       return {
         status: 'success',
         video_url: videoUrl
@@ -121,7 +121,7 @@ class AIService {
       };
     }
   }
-  
+
   /**
    * 克隆声音
    * @param {Object} options - 声音克隆选项
@@ -134,45 +134,45 @@ class AIService {
       if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
       }
-      
+
       // 从数据URL提取音频数据
       const audioDataUrl = options.audio;
       const audioBuffer = this.dataURLToBuffer(audioDataUrl);
-      
+
       // 保存音频到临时文件
       const audioExt = this.getAudioExtension(audioDataUrl);
       const audioFilePath = path.join(tempDir, `input_audio_${Date.now()}.${audioExt}`);
       fs.writeFileSync(audioFilePath, audioBuffer);
-      
+
       // 生成输出文件路径
       const outputFilePath = path.join(tempDir, `output_voice_${Date.now()}.mp3`);
-      
+
       // 获取Python脚本路径
       const scriptPath = path.join(__dirname, 'voice-clone.py');
-      
+
       // 检查Python脚本是否存在
       if (!fs.existsSync(scriptPath)) {
         throw new Error('声音克隆脚本不存在');
       }
-      
+
       // 使用虚拟环境中的Python
       const venvPythonPath = path.join(__dirname, '..', '..', '..', '.venv', 'bin', 'python');
       const pythonPath = fs.existsSync(venvPythonPath) ? venvPythonPath : (process.env.PYTHON_PATH || 'python3');
-      
+
       const args = [scriptPath, audioFilePath, options.text, outputFilePath];
-      
+
       const result = await this.executePythonScript(pythonPath, args);
-      
+
       if (result.status === 'success') {
         // 读取生成的音频文件并转换为数据URL
         if (fs.existsSync(outputFilePath)) {
           const outputBuffer = fs.readFileSync(outputFilePath);
           const outputDataUrl = `data:audio/mpeg;base64,${outputBuffer.toString('base64')}`;
-          
+
           // 清理临时文件
           fs.unlinkSync(audioFilePath);
           fs.unlinkSync(outputFilePath);
-          
+
           return {
             status: 'success',
             audio_url: outputDataUrl
@@ -190,7 +190,7 @@ class AIService {
       };
     }
   }
-  
+
   /**
    * 将数据URL转换为Buffer
    * @param {string} dataUrl - 数据URL
@@ -203,7 +203,7 @@ class AIService {
     }
     return Buffer.from(matches[2], 'base64');
   }
-  
+
   /**
    * 获取音频文件扩展名
    * @param {string} dataUrl - 数据URL
@@ -215,7 +215,7 @@ class AIService {
     if (dataUrl.startsWith('data:audio/mpeg')) return 'mp3';
     return 'wav'; // 默认
   }
-  
+
   /**
    * 执行Python脚本
    * @param {string} command - 命令
@@ -225,18 +225,18 @@ class AIService {
   static executePythonScript(command, args) {
     return new Promise((resolve, reject) => {
       const process = spawn(command, args);
-      
+
       let stdoutData = '';
       let stderrData = '';
-      
+
       process.stdout.on('data', (data) => {
         stdoutData += data.toString();
       });
-      
+
       process.stderr.on('data', (data) => {
         stderrData += data.toString();
       });
-      
+
       process.on('close', (code) => {
         if (code === 0) {
           try {
@@ -245,24 +245,24 @@ class AIService {
             resolve(result);
           } catch (e) {
             // 如果解析失败，返回原始数据
-            resolve({ 
-              status: 'success', 
+            resolve({
+              status: 'success',
               raw_output: stdoutData,
-              raw_error: stderrData 
+              raw_error: stderrData
             });
           }
         } else {
-          resolve({ 
-            status: 'error', 
-            message: `Python脚本执行失败: ${stderrData || '未知错误'}` 
+          resolve({
+            status: 'error',
+            message: `Python脚本执行失败: ${stderrData || '未知错误'}`
           });
         }
       });
-      
+
       process.on('error', (error) => {
-        reject({ 
-          status: 'error', 
-          message: `执行Python脚本时出错: ${error.message}` 
+        reject({
+          status: 'error',
+          message: `执行Python脚本时出错: ${error.message}`
         });
       });
     });

@@ -1,0 +1,248 @@
+/* Sidebar Specific Styles - Source Aligned */
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 1rem;
+    height: 60px;
+    width: 100%;
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn:hover {
+    background: var(--btn-secondary-hover);
+    color: var(--text-primary);
+}
+
+.sidebar-nav-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 0 1rem;
+    gap: 2px;
+}
+
+.nav-list-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    text-align: left;
+}
+
+.nav-list-item:hover {
+    color: var(--text-primary);
+    background: var(--btn-secondary-hover);
+}
+
+.nav-list-item.active {
+    background: var(--btn-secondary-bg);
+    color: var(--text-primary);
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    border-radius: 6px;
+}
+
+.nav-link:hover {
+    color: var(--text-primary);
+    background: var(--btn-secondary-hover);
+}
+
+.nav-divider {
+    height: 1px;
+    background: var(--glass-border);
+    /* Using variable */
+    margin: 1rem 0;
+    width: 100%;
+}
+
+.new-session-section {
+    padding: 0 1rem;
+    width: 100%;
+}
+
+.new-session-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.new-session-btn:hover {
+    border-color: rgba(0, 0, 0, 0.2);
+    background: var(--btn-secondary-hover);
+}
+
+.session-list {
+    margin-top: 1rem;
+    padding: 0 1rem;
+    width: 100%;
+    flex: 1;
+    /* Fill remaining space */
+}
+
+.session-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.session-item.active {
+    background: var(--btn-secondary-bg);
+    color: var(--text-primary);
+}
+
+.sidebar-footer {
+    padding: 1rem;
+    border-top: var(--glass-border);
+    width: 100%;
+    margin-top: auto;
+    /* Push to bottom */
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.user-profile:hover {
+    background: var(--btn-secondary-hover);
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    background: var(--gradient-magic);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    font-size: 14px;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.user-plan {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.sidebar-group-label {
+    padding: 16px 12px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+/* --- Collapsed State Overrides --- */
+/* These rules apply when #app-sidebar has class 'collapsed' */
+
+#app-sidebar.collapsed .sidebar-header {
+    justify-content: center;
+    padding: 0;
+}
+
+#app-sidebar.collapsed .sidebar-group-label {
+    display: none;
+}
+
+
+#app-sidebar.collapsed .sidebar-header .icon-btn:nth-child(2) {
+    /* Hide the Home button (or redundant elements) */
+    display: none;
+}
+
+#app-sidebar.collapsed .nav-list-item,
+#app-sidebar.collapsed .nav-link,
+#app-sidebar.collapsed .new-session-btn,
+#app-sidebar.collapsed .session-item,
+#app-sidebar.collapsed .user-profile {
+    justify-content: center;
+    padding: 10px 0;
+    /* Vertical padding, no horizontal */
+    width: 44px;
+    /* Square-ish target */
+    height: 44px;
+    margin: 0 auto;
+    /* Center in container */
+    font-size: 0;
+    /* Hide text nodes */
+}
+
+#app-sidebar.collapsed .nav-list-item svg,
+#app-sidebar.collapsed .nav-link svg,
+#app-sidebar.collapsed .new-session-btn svg,
+#app-sidebar.collapsed .session-item svg {
+    margin: 0;
+    /* Remove right margin */
+}
+
+#app-sidebar.collapsed .user-details {
+    display: none;
+}
+
+#app-sidebar.collapsed .session-list {
+    display: none;
+    /* Hide session list in collapsed mode or simplify */
+}
+
+#app-sidebar.collapsed .new-session-btn {
+    border: none;
+}

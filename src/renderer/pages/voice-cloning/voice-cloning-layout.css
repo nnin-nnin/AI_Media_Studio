@@ -1,0 +1,329 @@
+/* Voice Cloning Layout - Aligned with Face Swap */
+
+/* Scoped Control Panel */
+.voice-cloning-controls {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-core);
+}
+
+/* 1. Header */
+.vc-header {
+    padding: 1rem 1.5rem;
+    border-bottom: var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-glass);
+    flex-shrink: 0;
+}
+
+.vc-mode-switch {
+    display: flex;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.mode-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.mode-btn:hover {
+    color: var(--text-primary);
+}
+
+.mode-btn.active {
+    background: white;
+    color: var(--text-primary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 2. Interactive Input Section */
+.vc-input-section {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 0 0 auto;
+}
+
+/* Slots Row (for Audio Reference) */
+.vc-slots-row {
+    display: flex;
+    gap: 10px;
+}
+
+.vc-slot {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    border: 1px dashed var(--glass-shine);
+    background: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    color: var(--text-secondary);
+}
+
+.vc-slot:hover {
+    border-color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.vc-slot.has-audio {
+    background: #f0fdf4;
+    /* Green tint */
+    border-color: transparent;
+    border-style: solid;
+    color: #16a34a;
+}
+
+.vc-slot .remove-btn {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 18px;
+    height: 18px;
+    background: var(--text-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.vc-slot:hover .remove-btn {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.vc-slot .remove-btn svg {
+    width: 10px;
+    height: 10px;
+}
+
+/* Text Editor */
+.vc-text-editor {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: border-color 0.2s;
+    min-height: 120px;
+}
+
+.vc-text-editor:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.vc-textarea {
+    width: 100%;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+    font-size: 15px;
+    color: #000000;
+    font-weight: 500;
+    background: transparent;
+    min-height: 80px;
+    line-height: 1.5;
+}
+
+.vc-textarea:focus {
+    background: transparent;
+    color: #000000;
+}
+
+.vc-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    border-top: 1px solid rgba(0, 0, 0, 0.04);
+    padding-top: 8px;
+}
+
+.tool-icon-btn {
+    padding: 6px;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.tool-icon-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-primary);
+}
+
+/* 3. Tabbed Panel (Settings / Assets) */
+.vc-tabs-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-top: var(--glass-border);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.vc-tab-header {
+    display: flex;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.vc-tab-btn {
+    flex: 1;
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.vc-tab-btn.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.vc-tab-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+/* Settings Controls (Unique to VC) */
+.bg-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    display: block;
+}
+
+.vc-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    outline: none;
+    margin-bottom: 8px;
+}
+
+.vc-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Emotion Grid */
+.emotion-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.emotion-btn {
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.emotion-btn:hover {
+    border-color: rgba(0, 0, 0, 0.3);
+}
+
+.emotion-btn.active {
+    background: var(--text-primary);
+    color: white;
+    border-color: var(--text-primary);
+}
+
+
+/* 4. Action Area */
+.vc-action-area {
+    padding: 1.5rem;
+    border-top: var(--glass-border);
+    background: var(--bg-glass);
+}
+
+
+/* Viewport Specifics */
+.audio-visualizer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    height: 120px;
+}
+
+.visual-bar {
+    width: 6px;
+    background: var(--text-primary);
+    border-radius: 4px;
+    animation: bounce 0.5s infinite ease-in-out;
+}
+
+@keyframes bounce {
+
+    0%,
+    100% {
+        transform: scaleY(0.5);
+    }
+
+    50% {
+        transform: scaleY(1);
+    }
+}

@@ -1,90 +1,130 @@
 // pages/voice-cloning/voice-cloning.js
+
 /**
- * 加载克隆声音页面内容
+ * 加载克隆声音页面内容 (Studio Layout Refactor)
  */
-function loadVoiceCloningContent() {
-    const contentContainer = document.getElementById('voice-cloning-content');
-    if (!contentContainer) return;
-    
-    contentContainer.innerHTML = `
-        <div class="section">
-            <h3>素材与授权</h3>
-            <div class="upload-area">
-                <button class="upload-btn" id="upload-audio-btn">
-                    <span class="icon">🎵</span>
-                    上传音频
-                </button>
-                <button class="upload-btn" id="record-audio-btn">
-                    <span class="icon">🎤</span>
-                    录制音频
-                </button>
-                <div class="file-info">支持 WAV/MP3 格式</div>
-            </div>
-        </div>
+function loadVoiceCloningPage(container) {
+    if (!container) return;
 
-        <div class="section">
-            <h3>文本输入</h3>
-            <textarea placeholder="输入要合成的语音文本..." class="prompt-input large" id="voice-text"></textarea>
-        </div>
+    // Inject styles if not present
+    if (!document.getElementById('vc-layout-css')) {
+        const link = document.createElement('link');
+        link.id = 'vc-layout-css';
+        link.rel = 'stylesheet';
+        link.href = 'pages/voice-cloning/voice-cloning-layout.css';
+        document.head.appendChild(link);
+    }
 
-        <div class="section">
-            <h3>参数调节</h3>
-            <div class="parameters">
-                <div class="slider-control">
-                    <label>相似度</label>
-                    <input type="range" min="0" max="100" value="80" id="similarity">
-                </div>
-                <div class="slider-control">
-                    <label>语速</label>
-                    <input type="range" min="0" max="100" value="50" id="speech-rate">
-                </div>
-                <div class="param-group">
-                    <label>情感</label>
-                    <div class="button-group">
-                        <button class="param-btn active" data-emotion="neutral">中性</button>
-                        <button class="param-btn" data-emotion="happy">开心</button>
-                        <button class="param-btn" data-emotion="friendly">亲切</button>
+    container.innerHTML = `
+        <div class="studio-layout fade-in">
+            <!-- Col 1: Global Nav (Handled by App) -->
+            
+            <!-- Col 2: Controls (Left Panel) -->
+            <div class="studio-controls voice-cloning-controls">
+                
+                <!-- 1. Header & Mode -->
+                <div class="vc-header">
+                    <div style="font-weight:600; font-size:14px;">Audio Studio</div>
+                    <div class="vc-mode-switch">
+                        <button class="mode-btn active" data-mode="text">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Text
+                        </button>
+                        <button class="mode-btn" data-mode="clone">
+                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="23"></line><line x1="8" x2="16" y1="23" y2="23"></line></svg>
+                            Clone
+                        </button>
                     </div>
                 </div>
-                <div class="toggle-control">
-                    <label>去噪处理</label>
-                    <label class="switch">
-                        <input type="checkbox" id="noise-reduction" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="toggle-control">
-                    <label>停顿处理</label>
-                    <label class="switch">
-                        <input type="checkbox" id="pause-processing">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
-        </div>
-        
-        <div class="section">
-            <div class="preview-actions">
-                <button class="secondary-btn" id="play-voice-btn">
-                    <span class="icon">▶️</span>
-                    播放声音
-                </button>
-                <button class="secondary-btn" id="download-voice-btn">
-                    <span class="icon">⬇️</span>
-                    下载
-                </button>
-            </div>
-        </div>
 
-        <div class="section">
-            <button class="primary-btn" id="generate-voice-btn">
-                <span class="icon">🔊</span>
-                一键生成
-            </button>
+                <!-- 2. Interactive Input Section -->
+                <div class="vc-input-section">
+                    <!-- Audio Reference Slots (Hidden by default in Text mode) -->
+                    <div class="vc-slots-row" id="vc-slots-row" style="display:none;">
+                        <div class="vc-slot" id="vc-slot-ref" title="Upload Audio Reference">
+                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
+                             <input type="file" style="display:none" accept="audio/*">
+                        </div>
+                        <div style="font-size:12px; color:var(--text-secondary); display:flex; align-items:center;">
+                            Upload reference<br>voice sample
+                        </div>
+                    </div>
+
+                    <!-- Text Editor -->
+                    <div class="vc-text-editor">
+                        <textarea class="vc-textarea" id="vc-prompt-input" placeholder="Type what you want the voice to say..."></textarea>
+                        
+                        <div class="vc-toolbar">
+                             <button class="tool-icon-btn" id="btn-clear-prompt" title="Clear"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Tabbed Component Panel -->
+                <div class="vc-tabs-panel">
+                    <div class="vc-tab-header">
+                        <button class="vc-tab-btn active" data-tab="settings">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            Settings
+                        </button>
+                        <button class="vc-tab-btn" data-tab="assets">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+                            Assets
+                        </button>
+                    </div>
+                    <div class="vc-tab-content">
+                         <!-- Tab: Settings -->
+                         <div id="tab-settings" class="tab-pane">
+                            <span class="bg-label">Emotion / Style</span>
+                            <div class="emotion-grid">
+                                <button class="emotion-btn active" data-emotion="neutral">Neutral</button>
+                                <button class="emotion-btn" data-emotion="happy">Happy</button>
+                                <button class="emotion-btn" data-emotion="friendly">Friendly</button>
+                            </div>
+
+                            <span class="bg-label" style="margin-top:20px;">Speed</span>
+                            <input type="range" class="vc-slider" id="speed-slider" min="0.5" max="2.0" step="0.1" value="1.0">
+                            
+                            <span class="bg-label" style="margin-top:20px;">Similarity</span>
+                            <input type="range" class="vc-slider" id="similarity-slider" min="0" max="100" value="75">
+                         </div>
+
+                         <!-- Tab: Assets -->
+                         <div id="tab-assets" class="tab-pane" style="display:none;">
+                            <div style="text-align:center; margin-top:2rem; font-size:12px; color:var(--text-secondary);">
+                                No voice history found.
+                            </div>
+                         </div>
+                    </div>
+                </div>
+
+                <!-- 4. Action Area -->
+                <div class="vc-action-area">
+                     <button class="primary-btn" id="generate-voice-btn" style="width:100%;">
+                        Generate Speech
+                     </button>
+                </div>
+            </div>
+
+            <!-- Col 3: Viewport -->
+            <div class="studio-viewport">
+                <!-- Header -->
+                <div style="position:absolute; top:20px; right:20px; z-index:10;">
+                   <div class="status-badge" style="background:rgba(255,255,255,0.1); padding:4px 8px; border-radius:4px; font-size:12px;">Audio Ready</div>
+                </div>
+
+                <!-- Result Container -->
+                <div class="preview-box result-preview empty" style="width:100%; height:100%; border:none; background:transparent; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                     <div class="preview-placeholder">
+                        <span style="font-size:48px; margin-bottom:1rem; opacity:0.5;">🎙️</span>
+                        <p style="color:var(--text-secondary);">Your generated speech will play here</p>
+                     </div>
+                </div>
+            </div>
+            
         </div>
     `;
-    
-    // 绑定事件监听器
+
     setupVoiceCloningEventListeners();
 }
 
@@ -92,405 +132,186 @@ function loadVoiceCloningContent() {
  * 设置克隆声音页面事件监听器
  */
 function setupVoiceCloningEventListeners() {
-    // 等待DOM更新后绑定事件
-    setTimeout(() => {
-        // 上传音频按钮
-        const uploadAudioBtn = document.getElementById('upload-audio-btn');
-        if (uploadAudioBtn) {
-            uploadAudioBtn.addEventListener('click', handleUploadAudio);
-        }
-        
-        // 录制音频按钮
-        const recordAudioBtn = document.getElementById('record-audio-btn');
-        if (recordAudioBtn) {
-            recordAudioBtn.addEventListener('click', handleRecordAudio);
-        }
-        
-        // 情感选择
-        document.querySelectorAll('.param-btn[data-emotion]').forEach(button => {
-            button.addEventListener('click', handleEmotionChange);
+
+    // 1. Mode Switcher
+    const modeBtns = document.querySelectorAll('.mode-btn');
+    const slotsRow = document.getElementById('vc-slots-row');
+
+    modeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            modeBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const mode = btn.dataset.mode;
+            if (mode === 'clone') {
+                slotsRow.style.display = 'flex';
+            } else {
+                slotsRow.style.display = 'none';
+            }
         });
-        
-        // 一键生成按钮
-        const generateVoiceBtn = document.getElementById('generate-voice-btn');
-        if (generateVoiceBtn) {
-            generateVoiceBtn.addEventListener('click', handleGenerateVoiceClick);
-        }
-        
-        // 播放声音按钮
-        const playVoiceBtn = document.getElementById('play-voice-btn');
-        if (playVoiceBtn) {
-            playVoiceBtn.addEventListener('click', handlePlayVoiceClick);
-        }
-        
-        // 下载按钮
-        const downloadVoiceBtn = document.getElementById('download-voice-btn');
-        if (downloadVoiceBtn) {
-            downloadVoiceBtn.addEventListener('click', handleDownloadVoiceClick);
-        }
-        
-        // 相似度滑块
-        const similaritySlider = document.getElementById('similarity');
-        if (similaritySlider) {
-            similaritySlider.addEventListener('input', handleSimilarityChange);
-        }
-        
-        // 语速滑块
-        const speechRateSlider = document.getElementById('speech-rate');
-        if (speechRateSlider) {
-            speechRateSlider.addEventListener('input', handleSpeechRateChange);
-        }
-        
-        // 去噪处理开关
-        const noiseReductionCheckbox = document.getElementById('noise-reduction');
-        if (noiseReductionCheckbox) {
-            noiseReductionCheckbox.addEventListener('change', handleNoiseReductionChange);
-        }
-        
-        // 停顿处理开关
-        const pauseProcessingCheckbox = document.getElementById('pause-processing');
-        if (pauseProcessingCheckbox) {
-            pauseProcessingCheckbox.addEventListener('change', handlePauseProcessingChange);
-        }
-    }, 100);
-}
-
-/**
- * 处理上传音频按钮点击
- */
-function handleUploadAudio() {
-    console.log('上传音频按钮被点击');
-    
-    // 创建一个隐藏的文件输入元素
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'audio/*';
-    fileInput.style.display = 'none';
-    
-    // 添加change事件监听器
-    fileInput.addEventListener('change', function(event) {
-        const file = event.target.files[0];
-        if (file) {
-            handleAudioFile(file);
-        }
     });
-    
-    // 将文件输入元素添加到页面并触发点击
-    document.body.appendChild(fileInput);
-    fileInput.click();
-    
-    // 点击后移除元素
-    fileInput.addEventListener('blur', function() {
-        document.body.removeChild(fileInput);
-    });
-}
 
-/**
- * 处理录制音频按钮点击
- */
-function handleRecordAudio() {
-    console.log('录制音频按钮被点击');
-    
-    // 检查浏览器是否支持getUserMedia API
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        // 请求访问麦克风
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(function(stream) {
-                // 创建一个音频录制对象
-                const mediaRecorder = new MediaRecorder(stream);
-                const audioChunks = [];
-                
-                // 开始录制
-                mediaRecorder.start();
-                
-                // 创建一个模态框来显示录制状态
-                const modal = document.createElement('div');
-                modal.className = 'recording-modal';
-                modal.innerHTML = `
-                    <div class="recording-container">
-                        <div class="recording-header">
-                            <h3>录制音频</h3>
-                            <button class="close-btn">&times;</button>
-                        </div>
-                        <div class="recording-preview">
-                            <div class="recording-indicator">
-                                <div class="recording-dot"></div>
-                                <p>正在录制...</p>
-                            </div>
-                        </div>
-                        <div class="recording-controls">
-                            <button class="stop-btn">停止录制</button>
-                            <button class="cancel-btn">取消</button>
-                        </div>
-                    </div>
+    // 2. Audio Slot Logic
+    const slot = document.getElementById('vc-slot-ref');
+    const defaultIconHTML = slot?.innerHTML;
+
+    function handleFileSelect(e, slotElement, defaultHTML) {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                slotElement.innerHTML = `
+                    <div style="font-size:24px;">🎵</div>
+                    <div class="remove-btn" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
                 `;
-                
-                // 添加到页面
-                document.body.appendChild(modal);
-                
-                // 绑定关闭按钮事件
-                modal.querySelector('.close-btn').addEventListener('click', function() {
-                    mediaRecorder.stop();
-                    stream.getTracks().forEach(track => track.stop());
-                    document.body.removeChild(modal);
-                });
-                
-                // 绑定取消按钮事件
-                modal.querySelector('.cancel-btn').addEventListener('click', function() {
-                    mediaRecorder.stop();
-                    stream.getTracks().forEach(track => track.stop());
-                    document.body.removeChild(modal);
-                });
-                
-                // 绑定停止录制按钮事件
-                modal.querySelector('.stop-btn').addEventListener('click', function() {
-                    mediaRecorder.stop();
-                    stream.getTracks().forEach(track => track.stop());
-                    document.body.removeChild(modal);
-                });
-                
-                // 监听数据可用事件
-                mediaRecorder.addEventListener("dataavailable", event => {
-                    audioChunks.push(event.data);
-                });
-                
-                // 监听停止事件
-                mediaRecorder.addEventListener("stop", () => {
-                    // 创建音频文件
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                    const file = new File([audioBlob], 'recorded-audio.wav', { type: 'audio/wav' });
-                    handleAudioFile(file);
-                });
-            })
-            .catch(function(err) {
-                console.error('无法访问麦克风:', err);
-                alert('无法访问麦克风，请检查权限设置');
-            });
-    } else {
-        alert('您的浏览器不支持音频录制功能');
-    }
-}
+                slotElement.classList.add('has-audio');
+                slotElement.dataset.hasAudio = "true";
+                slotElement.title = file.name;
 
-/**
- * 处理音频文件（无论是上传还是录制）
- * @param {File} file - 音频文件对象
- */
-function handleAudioFile(file) {
-    // 检查文件类型
-    if (!file.type.match('audio.*')) {
-        alert('请选择音频文件');
-        return;
+                // Hidden data storage
+                slotElement.dataset.audioData = evt.target.result;
+
+                slotElement.querySelector('.remove-btn').addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    slotElement.innerHTML = defaultHTML;
+                    slotElement.classList.remove('has-audio');
+                    delete slotElement.dataset.hasAudio;
+                    delete slotElement.dataset.audioData;
+
+                    const newInput = slotElement.querySelector('input');
+                    if (newInput) newInput.addEventListener('change', (ev2) => handleFileSelect(ev2, slotElement, defaultHTML));
+                });
+            };
+            reader.readAsDataURL(file);
+        }
     }
-    
-    // 检查文件大小 (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-        alert('文件大小超过10MB限制');
-        return;
+
+    if (slot) {
+        slot.addEventListener('click', (e) => {
+            if (e.target.closest('.remove-btn')) return;
+            const input = slot.querySelector('input');
+            if (input) input.click();
+        });
+        const initialInput = slot.querySelector('input');
+        if (initialInput) initialInput.addEventListener('change', (e) => handleFileSelect(e, slot, defaultIconHTML));
     }
-    
-    // 创建预览
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        // 查找左侧预览区域并显示音频
-        const previewContent = document.querySelector('.left-panel .preview-content');
-        if (previewContent) {
-            previewContent.innerHTML = `
-                <div class="preview-container">
-                    <div style="text-align: center; padding: 20px;">
-                        <div style="font-size: 48px; margin-bottom: 10px;">🎵</div>
-                        <p>音频文件已上传</p>
-                        <p style="font-size: 12px; color: #666;">${file.name}</p>
-                        <audio controls style="width: 100%; margin-top: 10px;">
-                            <source src="${e.target.result}" type="${file.type}">
-                        </audio>
+
+    // 3. Emotion Selection
+    document.querySelectorAll('.emotion-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.emotion-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+        });
+    });
+
+    // 4. Tabs
+    const tabBtns = document.querySelectorAll('.vc-tab-btn');
+    const tabSettings = document.getElementById('tab-settings');
+    const tabAssets = document.getElementById('tab-assets');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const target = btn.dataset.tab;
+            if (target === 'settings') {
+                tabSettings.style.display = 'block';
+                tabAssets.style.display = 'none';
+            } else {
+                tabSettings.style.display = 'none';
+                tabAssets.style.display = 'block';
+            }
+        });
+    });
+
+    // 5. Generate Logic
+    const generateBtn = document.getElementById('generate-voice-btn');
+    generateBtn?.addEventListener('click', async () => {
+        const promptInput = document.getElementById('vc-prompt-input');
+        const prompt = promptInput?.value?.trim();
+        const slot = document.getElementById('vc-slot-ref');
+        const hasAudio = slot?.dataset.hasAudio === "true";
+        const mode = document.querySelector('.mode-btn.active').dataset.mode;
+
+        if (!prompt) {
+            alert("Please enter text to generate speech.");
+            return;
+        }
+
+        if (mode === 'clone' && !hasAudio) {
+            alert("Please upload a reference audio for cloning.");
+            return;
+        }
+
+        const oldText = generateBtn.innerHTML;
+        generateBtn.innerHTML = "Generating...";
+        generateBtn.disabled = true;
+
+        try {
+            const resBox = document.querySelector('.result-preview');
+            // Fake Visualizer
+            resBox.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
+                    <div class="audio-visualizer">
+                        ${Array(10).fill(0).map(() => `<div class="visual-bar" style="height:${20 + Math.random() * 40}px; animation-duration:${0.3 + Math.random() * 0.5}s"></div>`).join('')}
                     </div>
-                    <!-- 添加隐藏的input来存储音频数据 -->
-                    <input type="hidden" id="uploaded-audio-data" value="${e.target.result}">
+                    <p style="margin-top:20px; color:var(--text-secondary);">Synthesizing voice...</p>
                 </div>
             `;
-        } else {
-            // 如果没有找到left-panel中的preview-content，则查找任何preview-placeholder
-            const previewPlaceholder = document.querySelector('.preview-placeholder');
-            if (previewPlaceholder) {
-                previewPlaceholder.innerHTML = `
-                    <div class="preview-container">
-                        <div style="text-align: center; padding: 20px;">
-                            <div style="font-size: 48px; margin-bottom: 10px;">🎵</div>
-                            <p>音频文件已上传</p>
-                            <p style="font-size: 12px; color: #666;">${file.name}</p>
-                            <audio controls style="width: 100%; margin-top: 10px;">
-                                <source src="${e.target.result}" type="${file.type}">
-                            </audio>
+
+            // Call API
+            const result = await window.electronAPI.cloneVoice({
+                text: prompt,
+                audio: hasAudio ? slot.dataset.audioData : null
+            });
+
+            if (result && result.status === 'success') {
+                resBox.innerHTML = `
+                    <div style="text-align: center; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                        <audio controls autoplay style="width: 300px; border-radius:30px; box-shadow:0 10px 30px rgba(0,0,0,0.1);">
+                            <source src="${result.audio_url}" type="audio/mpeg">
+                            Your browser does not support audio.
+                        </audio>
+                        <div style="margin-top:1.5rem; display:flex; gap:12px;">
+                             <button class="secondary-btn" id="btn-download-audio">Download</button>
                         </div>
-                        <!-- 添加隐藏的input来存储音频数据 -->
-                        <input type="hidden" id="uploaded-audio-data" value="${e.target.result}">
                     </div>
                 `;
-            }
-        }
-        
-        // 显示成功消息
-        console.log('音频已加载:', file.name);
-    };
-    reader.readAsDataURL(file);
-}
 
-/**
- * 处理相似度变化
- */
-function handleSimilarityChange(event) {
-    const value = event.target.value;
-    console.log('相似度调整为:', value);
-}
+                document.getElementById('btn-download-audio')?.addEventListener('click', () => {
+                    const a = document.createElement('a');
+                    a.href = result.audio_url;
+                    a.download = `voice_${Date.now()}.mp3`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                });
 
-/**
- * 处理语速变化
- */
-function handleSpeechRateChange(event) {
-    const value = event.target.value;
-    console.log('语速调整为:', value);
-}
-
-/**
- * 处理情感变化
- */
-function handleEmotionChange(event) {
-    const emotion = event.target.getAttribute('data-emotion');
-    console.log('选择情感:', emotion);
-    
-    // 更新选中状态
-    document.querySelectorAll('.param-btn[data-emotion]').forEach(button => {
-        button.classList.remove('active');
-    });
-    event.target.classList.add('active');
-}
-
-/**
- * 处理去噪处理开关变化
- */
-function handleNoiseReductionChange(event) {
-    const checked = event.target.checked;
-    console.log('去噪处理开关状态:', checked);
-}
-
-/**
- * 处理停顿处理开关变化
- */
-function handlePauseProcessingChange(event) {
-    const checked = event.target.checked;
-    console.log('停顿处理开关状态:', checked);
-}
-
-/**
- * 处理播放声音按钮点击
- */
-function handlePlayVoiceClick() {
-    console.log('播放声音按钮被点击');
-    
-    // 查找生成的音频元素
-    const generatedAudio = document.getElementById('generated-audio');
-    if (generatedAudio) {
-        generatedAudio.play();
-    } else {
-        alert('请先生成声音');
-    }
-}
-
-/**
- * 处理下载按钮点击
- */
-async function handleDownloadVoiceClick() {
-    console.log('下载按钮被点击');
-    
-    // 查找生成的音频数据
-    const generatedAudioDataInput = document.getElementById('generated-audio-data');
-    if (generatedAudioDataInput) {
-        const audioDataUrl = generatedAudioDataInput.value;
-        // 创建下载链接
-        const link = document.createElement('a');
-        link.href = audioDataUrl;
-        link.download = 'generated-voice.mp3';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    } else {
-        alert('请先生成声音');
-    }
-}
-
-/**
- * 处理一键生成声音按钮点击
- */
-async function handleGenerateVoiceClick() {
-    console.log('一键生成声音按钮被点击');
-    
-    // 显示加载状态
-    const generateBtn = document.getElementById('generate-voice-btn');
-    if (generateBtn) {
-        const originalContent = generateBtn.innerHTML;
-        generateBtn.innerHTML = '<span class="icon">⏳</span> 生成中...';
-        generateBtn.disabled = true;
-        
-        try {
-            // 获取参数
-            const textInput = document.getElementById('voice-text');
-            const text = textInput ? textInput.value : '';
-            
-            if (!text.trim()) {
-                alert('请输入要合成的文本');
-                return;
-            }
-            
-            // 获取上传的音频
-            let audioSrc = null;
-            const uploadedAudioInput = document.getElementById('uploaded-audio-data');
-            if (uploadedAudioInput) {
-                audioSrc = uploadedAudioInput.value;
             } else {
-                alert('请先上传音频文件');
-                return;
+                throw new Error(result?.message || "Generation failed");
             }
-            
-            // 调用AI服务克隆声音
-            const result = await window.electronAPI.cloneVoice({
-                audio: audioSrc,
-                text: text
-            });
-            
-            console.log('AI声音克隆结果:', result);
-            
-            // 显示结果
-            if (result.status === 'success') {
-                // 在预览区域显示生成的音频
-                const previewPlaceholder = document.querySelector('.right-panel .preview-placeholder');
-                if (previewPlaceholder) {
-                    previewPlaceholder.innerHTML = `
-                        <div style="text-align: center; padding: 20px;">
-                            <div style="font-size: 48px; margin-bottom: 10px;">🔊</div>
-                            <p>声音已生成</p>
-                            <audio id="generated-audio" controls style="width: 100%; margin-top: 10px;">
-                                <source src="${result.audio_url}" type="audio/mpeg">
-                            </audio>
-                            <!-- 添加隐藏的input来存储音频数据 -->
-                            <input type="hidden" id="generated-audio-data" value="${result.audio_url}">
-                        </div>
-                    `;
-                }
-            } else {
-                alert('生成失败: ' + (result.message || '未知错误'));
-            }
+
         } catch (error) {
-            console.error('生成过程中出错:', error);
-            alert('生成过程中出现错误，请查看控制台了解详情');
+            console.error(error);
+            alert("Error: " + error.message);
+            const resBox = document.querySelector('.result-preview');
+            resBox.innerHTML = `
+                 <div class="preview-placeholder">
+                    <span style="font-size:48px; margin-bottom:1rem; opacity:0.5;">⚠️</span>
+                    <p style="color:var(--text-secondary);">Generation failed.</p>
+                 </div>
+            `;
         } finally {
-            // 恢复按钮状态
-            if (generateBtn) {
-                generateBtn.innerHTML = originalContent;
-                generateBtn.disabled = false;
-            }
+            generateBtn.innerHTML = oldText;
+            generateBtn.disabled = false;
         }
-    }
+    });
+
+    // Toolbar
+    document.getElementById('btn-clear-prompt')?.addEventListener('click', () => {
+        const el = document.getElementById('vc-prompt-input');
+        if (el) el.value = '';
+    });
 }
 
-// 导出函数供外部调用
-export { loadVoiceCloningContent };
+window.loadVoiceCloningPage = loadVoiceCloningPage;

@@ -1,95 +1,162 @@
 // pages/video-generation/video-generation.js
+
 /**
- * 加载生成视频页面内容
+ * 加载生成视频页面内容 (Studio Layout Refactor)
  */
-function loadVideoGenerationContent() {
-    const contentContainer = document.getElementById('video-generation-content');
-    if (!contentContainer) return;
-    
-    contentContainer.innerHTML = `
-        <div class="section">
-            <h3>模板与素材</h3>
-            <div class="template-grid">
-                <div class="template-chip" data-template="lecture">讲台演说</div>
-                <div class="template-chip" data-template="travel">旅行Vlog</div>
-                <div class="template-chip" data-template="montage">卡点混剪</div>
-                <div class="template-chip" data-template="mv">手绘MV</div>
-            </div>
-        </div>
+function loadVideoGenerationPage(container) {
+    if (!container) return;
 
-        <div class="section">
-            <h3>提示词输入</h3>
-            <textarea placeholder="如：活泼校园风，节奏明快，明亮色调..." class="prompt-input large" id="video-prompt"></textarea>
-        </div>
+    // Inject styles if not present
+    if (!document.getElementById('vg-layout-css')) {
+        const link = document.createElement('link');
+        link.id = 'vg-layout-css';
+        link.rel = 'stylesheet';
+        link.href = 'pages/video-generation/video-generation-layout.css';
+        document.head.appendChild(link);
+    }
 
-        <div class="section">
-            <h3>参数调节</h3>
-            <div class="parameters">
-                <div class="param-group">
-                    <label>分辨率</label>
-                    <div class="button-group">
-                        <button class="param-btn active" data-orientation="portrait">竖屏</button>
-                        <button class="param-btn" data-orientation="landscape">横屏</button>
-                        <button class="param-btn" data-orientation="square">方形</button>
+    container.innerHTML = `
+        <div class="studio-layout fade-in">
+            <!-- Col 1: Global Nav (Handled by App) -->
+            
+            <!-- Col 2: Controls (Left Panel) -->
+            <div class="studio-controls video-gen-controls">
+                
+                <!-- 1. Header & Mode -->
+                <div class="vg-header">
+                    <div style="font-weight:600; font-size:14px;">Video Director</div>
+                    <div class="vg-mode-switch">
+                        <button class="mode-btn active" data-mode="text">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Text
+                        </button>
+                        <button class="mode-btn" data-mode="image">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+                            Image
+                        </button>
                     </div>
                 </div>
-                <div class="slider-control">
-                    <label>时长 (秒)</label>
-                    <input type="range" min="1" max="60" value="10" id="duration">
-                </div>
-                <div class="slider-control">
-                    <label>帧率</label>
-                    <input type="range" min="15" max="60" value="30" id="frame-rate">
-                </div>
-                <div class="toggle-control">
-                    <label>稳像</label>
-                    <label class="switch">
-                        <input type="checkbox" id="stabilization" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="toggle-control">
-                    <label>自动字幕</label>
-                    <label class="switch">
-                        <input type="checkbox" id="auto-subtitles">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="toggle-control">
-                    <label>背景音乐</label>
-                    <label class="switch">
-                        <input type="checkbox" id="background-music">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
-        </div>
-        
-        <div class="section">
-            <div class="preview-actions">
-                <div class="upload-area">
-                    <button class="upload-btn" id="upload-video-btn">
-                        <span class="icon">⬆️</span>
-                        选择图片
-                    </button>
-                    <button class="upload-btn" id="capture-video-btn">
-                        <span class="icon">📷</span>
-                        拍摄照片
-                    </button>
-                    <p class="upload-hint">支持 JPG、PNG 格式，大小不超过 5MB</p>
-                </div>
-            </div>
-        </div>
 
-        <div class="section">
-            <button class="primary-btn" id="generate-video-btn">
-                <span class="icon">🎬</span>
-                生成视频
-            </button>
+                <!-- 2. Interactive Input Section -->
+                <div class="vg-input-section">
+                    <!-- Image Upload Slot (Initially hidden or shown based on mode) -->
+                    <div class="vg-slots-row" id="vg-image-slot-row" style="display:none;">
+                        <div class="vg-slot" id="vg-slot-ref" title="Upload Reference Image">
+                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
+                             <input type="file" style="display:none" accept="image/*">
+                        </div>
+                        <div style="font-size:12px; color:var(--text-secondary); display:flex; align-items:center; margin-left:10px;">
+                            Start with an image (optional)
+                        </div>
+                    </div>
+
+                    <!-- Text Editor -->
+                    <div class="vg-text-editor">
+                        <textarea class="vg-textarea" id="vg-prompt-input" placeholder="Describe the scene, movement, and style..."></textarea>
+                        
+                        <div class="vg-toolbar">
+                             <button class="tool-icon-btn" id="btn-gen-prompt" title="Generate Prompt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg></button>
+                             <button class="tool-icon-btn" id="btn-clear-prompt" title="Clear"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Tabbed Component Panel -->
+                <div class="vg-tabs-panel">
+                    <div class="vg-tab-header">
+                        <button class="vg-tab-btn active" data-tab="settings">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            Settings
+                        </button>
+                        <button class="vg-tab-btn" data-tab="assets">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+                            Assets
+                        </button>
+                    </div>
+                    <div class="vg-tab-content">
+                         <!-- Tab: Settings -->
+                         <div id="tab-settings" class="tab-pane">
+                            <span class="bg-label">Aspect Ratio</span>
+                            <div class="ratio-grid">
+                                <div class="ratio-option active" data-ratio="16:9">
+                                    <div class="ratio-box ratio-16-9"></div>
+                                    <span class="ratio-label">16:9</span>
+                                </div>
+                                <div class="ratio-option" data-ratio="4:3">
+                                     <div class="ratio-box ratio-4-3"></div>
+                                     <span class="ratio-label">4:3</span>
+                                </div>
+                                <div class="ratio-option" data-ratio="1:1">
+                                     <div class="ratio-box ratio-1-1"></div>
+                                     <span class="ratio-label">1:1</span>
+                                </div>
+                                <div class="ratio-option" data-ratio="3:4">
+                                     <div class="ratio-box ratio-3-4"></div>
+                                     <span class="ratio-label">3:4</span>
+                                </div>
+                                <div class="ratio-option" data-ratio="9:16">
+                                     <div class="ratio-box ratio-9-16"></div>
+                                     <span class="ratio-label">9:16</span>
+                                </div>
+                            </div>
+
+                            <span class="bg-label" style="margin-top:20px;">Duration</span>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                <span style="font-size:12px; color:var(--text-secondary);">Seconds</span>
+                                <span id="duration-display" style="font-size:12px; color:var(--text-primary);">5s</span>
+                            </div>
+                            <input type="range" class="vg-slider" id="duration-slider" min="5" max="10" step="5" value="5">
+                             <p style="font-size:10px; color:var(--text-secondary); margin-top:4px;">Currently limited to 5s or 10s by model.</p>
+
+                            <span class="bg-label" style="margin-top:20px;">Motion Strength</span>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                                <span style="font-size:12px; color:var(--text-secondary);">1-10</span>
+                                <span id="motion-display" style="font-size:12px; color:var(--text-primary);">5</span>
+                            </div>
+                            <input type="range" class="vg-slider" id="motion-slider" min="1" max="10" value="5">
+                         </div>
+
+                         <!-- Tab: Assets -->
+                         <div id="tab-assets" class="tab-pane" style="display:none;">
+                            <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px;">
+                                <!-- Mock Assets -->
+                                <div style="aspect-ratio:16/9; background:#f1f5f9; border-radius:8px;"></div>
+                                <div style="aspect-ratio:16/9; background:#f1f5f9; border-radius:8px;"></div>
+                            </div>
+                            <div style="text-align:center; margin-top:1rem; font-size:12px; color:var(--text-secondary);">
+                                Generative history
+                            </div>
+                         </div>
+                    </div>
+                </div>
+
+                <!-- 4. Action Area -->
+                <div class="vg-action-area">
+                     <button class="primary-btn" id="generate-video-btn" style="width:100%;">
+                        Generate Video
+                     </button>
+                </div>
+            </div>
+
+            <!-- Col 3: Viewport -->
+            <div class="studio-viewport">
+                <!-- Preview Header -->
+                <div style="position:absolute; top:20px; right:20px; display:flex; gap:10px; z-index:10;">
+                   <div class="status-badge" style="background:rgba(255,255,255,0.1); padding:4px 8px; border-radius:4px; font-size:12px;">Ready</div>
+                </div>
+
+                <!-- Result Container -->
+                <div class="preview-box result-preview empty" style="width:100%; height:100%; border:none; background:transparent; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                     <div class="preview-placeholder">
+                        <span style="font-size:32px; margin-bottom:1rem; opacity:0.5;">🎬</span>
+                        <p style="color:var(--text-secondary);">Your generated video will play here</p>
+                     </div>
+                </div>
+            </div>
+            
         </div>
     `;
-    
-    // 绑定事件监听器
+
     setupVideoGenerationEventListeners();
 }
 
@@ -97,418 +164,235 @@ function loadVideoGenerationContent() {
  * 设置生成视频页面事件监听器
  */
 function setupVideoGenerationEventListeners() {
-    // 等待DOM更新后绑定事件
-    setTimeout(() => {
-        // 模板选择
-        document.querySelectorAll('.template-chip[data-template]').forEach(chip => {
-            chip.addEventListener('click', handleVideoTemplateSelect);
-        });
-        
-        // 上传按钮
-        document.getElementById('upload-video-btn')?.addEventListener('click', handleUploadImageClick);
-        document.getElementById('capture-video-btn')?.addEventListener('click', handleCaptureImageClick);
-        
-        // 参数调节
-        document.querySelectorAll('.param-btn[data-orientation]').forEach(button => {
-            button.addEventListener('click', handleOrientationChange);
-        });
-        
-        // 滑块控制
-        document.getElementById('duration')?.addEventListener('input', handleDurationChange);
-        document.getElementById('frame-rate')?.addEventListener('input', handleFrameRateChange);
-        
-        // 开关控制
-        document.getElementById('stabilization')?.addEventListener('change', handleStabilizationChange);
-        document.getElementById('auto-subtitles')?.addEventListener('change', handleAutoSubtitlesChange);
-        document.getElementById('background-music')?.addEventListener('change', handleBackgroundMusicChange);
-        
-        // 生成按钮
-        document.getElementById('generate-video-btn')?.addEventListener('click', handleGenerateVideoClick);
-    }, 100);
-}
 
-/**
- * 处理视频模板选择
- */
-function handleVideoTemplateSelect(event) {
-    const template = event.target.getAttribute('data-template');
-    console.log('选择视频模板:', template);
-    
-    // 更新选中状态
-    document.querySelectorAll('.template-chip').forEach(chip => {
-        chip.classList.remove('selected');
-    });
-    event.target.classList.add('selected');
-    
-    // 根据模板类型设置对应的提示词
-    const promptMap = {
-        'lecture': '教室场景，老师在讲台上授课，学生认真听讲，教育风格，明亮光线',
-        'travel': '户外风景，旅行拍摄，移动镜头，自然风光，第一人称视角',
-        'montage': '快节奏剪辑，多场景切换，时尚动感，炫酷转场效果',
-        'mv': '手绘动画风格，色彩丰富，流畅线条，音乐节奏同步'
-    };
-    
-    const promptInput = document.getElementById('video-prompt');
-    if (promptInput && promptMap[template]) {
-        promptInput.value = promptMap[template];
-    }
-}
+    // 1. Mode Switcher (Text vs Image)
+    const modeBtns = document.querySelectorAll('.mode-btn');
+    const imageSlotRow = document.getElementById('vg-image-slot-row');
 
-/**
- * 处理上传图片按钮点击
- */
-function handleUploadImageClick() {
-    console.log('上传图片按钮被点击');
-    
-    // 创建一个隐藏的文件输入元素
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.style.display = 'none';
-    
-    // 添加change事件监听器
-    fileInput.addEventListener('change', function(event) {
-        const file = event.target.files[0];
-        if (file) {
-            handleImageFile(file);
-        }
-    });
-    
-    // 将文件输入元素添加到页面并触发点击
-    document.body.appendChild(fileInput);
-    fileInput.click();
-    
-    // 点击后移除元素
-    fileInput.addEventListener('blur', function() {
-        document.body.removeChild(fileInput);
-    });
-}
+    modeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            modeBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
 
-/**
- * 处理拍摄照片按钮点击
- */
-function handleCaptureImageClick() {
-    console.log('拍摄照片按钮被点击');
-    
-    // 检查浏览器是否支持getUserMedia API
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        // 请求访问摄像头
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function(stream) {
-                // 创建一个视频元素用于显示摄像头画面
-                const video = document.createElement('video');
-                video.srcObject = stream;
-                video.play();
-                
-                // 创建一个模态框来显示摄像头画面
-                const modal = document.createElement('div');
-                modal.className = 'camera-modal';
-                modal.innerHTML = `
-                    <div class="camera-container">
-                        <div class="camera-header">
-                            <h3>拍摄照片</h3>
-                            <button class="close-btn">&times;</button>
-                        </div>
-                        <div class="camera-preview"></div>
-                        <div class="camera-controls">
-                            <button class="capture-btn">拍摄</button>
-                            <button class="cancel-btn">取消</button>
-                        </div>
-                    </div>
-                `;
-                
-                // 将视频元素添加到预览区域
-                modal.querySelector('.camera-preview').appendChild(video);
-                
-                // 添加到页面
-                document.body.appendChild(modal);
-                
-                // 绑定关闭按钮事件
-                modal.querySelector('.close-btn').addEventListener('click', function() {
-                    stream.getTracks().forEach(track => track.stop());
-                    document.body.removeChild(modal);
-                });
-                
-                // 绑定取消按钮事件
-                modal.querySelector('.cancel-btn').addEventListener('click', function() {
-                    stream.getTracks().forEach(track => track.stop());
-                    document.body.removeChild(modal);
-                });
-                
-                // 绑定拍摄按钮事件
-                modal.querySelector('.capture-btn').addEventListener('click', function() {
-                    // 创建canvas来捕获当前帧
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    
-                    // 将canvas转换为Blob对象
-                    canvas.toBlob(function(blob) {
-                        // 创建一个文件对象
-                        const file = new File([blob], 'captured-image.png', { type: 'image/png' });
-                        handleImageFile(file);
-                    }, 'image/png');
-                    
-                    // 停止摄像头并关闭模态框
-                    stream.getTracks().forEach(track => track.stop());
-                    document.body.removeChild(modal);
-                });
-            })
-            .catch(function(err) {
-                console.error('无法访问摄像头:', err);
-                alert('无法访问摄像头，请检查权限设置');
-            });
-    } else {
-        alert('您的浏览器不支持摄像头功能');
-    }
-}
-
-/**
- * 处理图像文件（无论是上传还是拍摄）
- * @param {File} file - 图像文件对象
- */
-function handleImageFile(file) {
-    // 检查文件类型
-    if (!file.type.match('image.*')) {
-        alert('请选择图像文件');
-        return;
-    }
-    
-    // 检查文件大小 (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-        alert('文件大小超过5MB限制');
-        return;
-    }
-    
-    // 创建预览
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        // 创建一个图片对象来获取原始尺寸
-        const img = new Image();
-        img.onload = function() {
-            // 检查图片尺寸，如果宽度小于300像素则进行调整
-            let imageDataURL = e.target.result;
-            if (img.width < 300) {
-                // 创建canvas来调整图片尺寸
-                const canvas = document.createElement('canvas');
-                // 设置新尺寸，保持宽高比
-                const scale = 300 / img.width;
-                canvas.width = 300;
-                canvas.height = img.height * scale;
-                
-                const ctx = canvas.getContext('2d');
-                // 绘制调整后的图片
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                
-                // 获取调整后的图片数据
-                imageDataURL = canvas.toDataURL('image/jpeg', 0.9);
-            }
-            
-            // 查找左侧预览区域并显示图像
-            const previewContent = document.querySelector('.left-panel .preview-content');
-            if (previewContent) {
-                previewContent.innerHTML = `
-                    <div class="preview-container">
-                        <img src="${imageDataURL}" alt="预览图片" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-                    </div>
-                    <!-- 添加隐藏的input来存储图片数据 -->
-                    <input type="hidden" id="uploaded-image-data" value="${imageDataURL}">
-                `;
+            const mode = btn.dataset.mode;
+            if (mode === 'image') {
+                imageSlotRow.style.display = 'flex';
             } else {
-                // 如果没有找到left-panel中的preview-content，则查找任何preview-placeholder
-                const previewPlaceholder = document.querySelector('.preview-placeholder');
-                if (previewPlaceholder) {
-                    previewPlaceholder.innerHTML = `
-                        <div class="preview-container">
-                            <img src="${imageDataURL}" alt="预览图片" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-                        </div>
-                        <!-- 添加隐藏的input来存储图片数据 -->
-                        <input type="hidden" id="uploaded-image-data" value="${imageDataURL}">
-                    `;
-                }
+                imageSlotRow.style.display = 'none';
             }
-            
-            // 显示成功消息
-            console.log('图像已加载:', file.name);
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-/**
- * 处理方向变化
- */
-function handleOrientationChange(event) {
-    const orientation = event.target.getAttribute('data-orientation');
-    console.log('选择方向:', orientation);
-    
-    // 更新选中状态
-    document.querySelectorAll('.param-btn[data-orientation]').forEach(button => {
-        button.classList.remove('active');
+        });
     });
-    event.target.classList.add('active');
-}
 
-/**
- * 处理时长变化
- */
-function handleDurationChange(event) {
-    const value = event.target.value;
-    console.log('时长调整为:', value);
-}
+    // 2. Image Slot Logic
+    const slot = document.getElementById('vg-slot-ref');
+    const defaultIconHTML = slot?.innerHTML;
 
-/**
- * 处理帧率变化
- */
-function handleFrameRateChange(event) {
-    const value = event.target.value;
-    console.log('帧率调整为:', value);
-}
+    function handleFileSelect(e, slotElement, defaultHTML) {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                slotElement.innerHTML = `
+                    <img src="${evt.target.result}">
+                    <div class="remove-btn" title="Remove">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </div>
+                `;
+                slotElement.classList.add('has-image');
+                slotElement.dataset.hasImage = "true"; // Mark for logic
 
-/**
- * 处理稳像开关变化
- */
-function handleStabilizationChange(event) {
-    const checked = event.target.checked;
-    console.log('稳像开关状态:', checked);
-}
+                slotElement.querySelector('.remove-btn').addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    slotElement.innerHTML = defaultHTML;
+                    slotElement.classList.remove('has-image');
+                    delete slotElement.dataset.hasImage;
+                    // Re-attach listener
+                    const newInput = slotElement.querySelector('input');
+                    if (newInput) {
+                        newInput.addEventListener('change', (ev2) => handleFileSelect(ev2, slotElement, defaultHTML));
+                    }
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    }
 
-/**
- * 处理自动字幕开关变化
- */
-function handleAutoSubtitlesChange(event) {
-    const checked = event.target.checked;
-    console.log('自动字幕开关状态:', checked);
-}
+    if (slot) {
+        slot.addEventListener('click', (e) => {
+            if (e.target.closest('.remove-btn')) return;
+            const input = slot.querySelector('input');
+            if (input) input.click();
+        });
+        const initialInput = slot.querySelector('input');
+        if (initialInput) {
+            initialInput.addEventListener('change', (e) => handleFileSelect(e, slot, defaultIconHTML));
+        }
+    }
 
-/**
- * 处理背景音乐开关变化
- */
-function handleBackgroundMusicChange(event) {
-    const checked = event.target.checked;
-    console.log('背景音乐开关状态:', checked);
-}
+    // 3. Aspect Ratio (Event Delegation)
+    const ratioGrid = document.querySelector('.ratio-grid');
+    if (ratioGrid) {
+        ratioGrid.addEventListener('click', (e) => {
+            const option = e.target.closest('.ratio-option');
+            if (option) {
+                document.querySelectorAll('.ratio-option').forEach(o => o.classList.remove('active'));
+                option.classList.add('active');
+            }
+        });
+    }
 
-/**
- * 处理一键生成视频按钮点击
- */
-async function handleGenerateVideoClick() {
-    console.log('一键生成视频按钮被点击');
-    
-    // 显示加载状态
+    // 4. Sliders
+    const durSlider = document.getElementById('duration-slider');
+    const durDisplay = document.getElementById('duration-display');
+    if (durSlider) {
+        durSlider.addEventListener('input', (e) => {
+            durDisplay.textContent = e.target.value + 's';
+        });
+    }
+    const motSlider = document.getElementById('motion-slider');
+    const motDisplay = document.getElementById('motion-display');
+    if (motSlider) {
+        motSlider.addEventListener('input', (e) => {
+            motDisplay.textContent = e.target.value;
+        });
+    }
+
+    // 5. Tabs
+    const tabBtns = document.querySelectorAll('.vg-tab-btn');
+    const tabSettings = document.getElementById('tab-settings');
+    const tabAssets = document.getElementById('tab-assets');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const target = btn.dataset.tab;
+            if (target === 'settings') {
+                if (tabSettings) tabSettings.style.display = 'block';
+                if (tabAssets) tabAssets.style.display = 'none';
+            } else {
+                if (tabSettings) tabSettings.style.display = 'none';
+                if (tabAssets) tabAssets.style.display = 'block';
+            }
+        });
+    });
+
+    // 6. Generate Logic
     const generateBtn = document.getElementById('generate-video-btn');
-    if (generateBtn) {
-        const originalContent = generateBtn.innerHTML;
-        generateBtn.innerHTML = '<span class="icon">⏳</span> 生成中...';
+    generateBtn?.addEventListener('click', async () => {
+        const promptInput = document.getElementById('vg-prompt-input');
+        const prompt = promptInput?.value?.trim();
+        const slot = document.getElementById('vg-slot-ref');
+        const hasImage = slot?.dataset.hasImage === "true";
+        const imgElement = slot?.querySelector('img');
+
+        if (!prompt && !hasImage) {
+            alert("Please enter a prompt or upload an image.");
+            return;
+        }
+
+        const oldText = generateBtn.innerHTML;
+        generateBtn.innerHTML = "Generating...";
         generateBtn.disabled = true;
-        
+
         try {
-            // 获取参数
-            const promptInput = document.getElementById('video-prompt');
-            const prompt = promptInput ? promptInput.value : '';
-            
-            // 获取上传的图片
-            let imageSrc = null;
-            const uploadedImageInput = document.getElementById('uploaded-image-data');
-            if (uploadedImageInput) {
-                imageSrc = uploadedImageInput.value;
-            }
-            
-            // 获取时长
-            const durationSlider = document.getElementById('duration');
-            const duration = durationSlider ? parseInt(durationSlider.value) : 10;
-            
-            // 获取方向（转换为分辨率）
-            const activeOrientation = document.querySelector('.param-btn.active');
-            const orientation = activeOrientation ? activeOrientation.getAttribute('data-orientation') : 'portrait';
-            
-            // 根据方向设置分辨率 (使用模型支持的分辨率)
-            let resolution = "720p";
-            switch (orientation) {
-                case 'landscape':
-                    resolution = "720p"; // 使用720p而不是1920x1080
-                    break;
-                case 'square':
-                    resolution = "720p"; // 使用720p而不是1080x1080
-                    break;
-                case 'portrait':
-                default:
-                    resolution = "720p"; // 竖屏也使用720p
-                    break;
-            }
-            
-            // 获取稳像设置
-            const stabilizationCheckbox = document.getElementById('stabilization');
-            const loop = stabilizationCheckbox ? stabilizationCheckbox.checked : true;
-            
-            // 调用AI服务生成视频
-            const result = await window.electronAPI.generateVideo({
-                prompt: prompt || '默认视频提示词',
-                image_url: imageSrc, // 传入首帧参考图
+            // Get Parameters
+            const activeRatio = document.querySelector('.ratio-option.active')?.dataset.ratio || "16:9";
+            // Map ratio to resolution or orientation
+            // Simple mapping: 16:9 -> landscape, 9:16 -> portrait, 1:1 -> square
+            let orientation = 'landscape';
+            if (activeRatio === '9:16') orientation = 'portrait';
+            if (activeRatio === '1:1') orientation = 'square';
+
+            // Note: API might expect 'resolution' string like "720p". 
+            // In original code, we inferred 720p. 
+            // Let's pass resolution if supported, or orientation. 
+            // Checking ai-service.js: it accepts 'resolution' (e.g. '720p') but doesn't seem to use ratio explicitly?
+            // Actually, for video gen, usually you send width/height or aspect ratio.
+            // Let's stick to what worked before: passing a resolution string and maybe relying on model defaults?
+            // The previous code had "Orientation" buttons which mapped to 720p.
+
+            const duration = durSlider ? parseInt(durSlider.value) : 5;
+
+            // Prepare Opts
+            const opts = {
+                prompt: prompt || "A high quality video",
+                image_url: hasImage ? imgElement.src : null,
                 duration: duration,
-                resolution: resolution,
-                loop: loop
-            });
-            
-            console.log('AI视频生成结果:', result);
-            
-            // 显示结果
-            if (result.status === 'success') {
-                // 在预览区域显示生成的视频
-                const previewPlaceholder = document.querySelector('.right-panel .preview-placeholder');
-                if (previewPlaceholder) {
-                    previewPlaceholder.innerHTML = `
-                        <div style="text-align: center; padding: 10px;">
-                            <video controls autoplay style="max-width: 100%; max-height: 100%;">
-                                <source src="${result.video_url}" type="video/mp4">
-                                您的浏览器不支持视频播放。
-                            </video>
-                            <p style="margin-top: 10px; font-size: 14px; color: #666;">视频已生成</p>
-                        </div>
-                    `;
-                }
+                resolution: "720p", // Defaulting as before
+                ratio: activeRatio // Passing ratio just in case backend uses it
+            };
+
+            const resBox = document.querySelector('.result-preview');
+            resBox.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:var(--text-secondary);">
+                    <div class="spinner" style="margin-bottom:15px; width:30px; height:30px; border:3px solid var(--glass-border); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+                    <p>Generating video... (this may take a while)</p>
+                </div>
+                <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
+            `;
+
+            let result;
+            if (window.electronAPI && window.electronAPI.generateVideo) {
+                result = await window.electronAPI.generateVideo(opts);
             } else {
-                // 显示错误信息
-                const previewPlaceholder = document.querySelector('.right-panel .preview-placeholder');
-                if (previewPlaceholder) {
-                    previewPlaceholder.innerHTML = `
-                        <div style="text-align: center; padding: 20px;">
-                            <div style="font-size: 48px; margin-bottom: 10px;">❌</div>
-                            <p>视频生成失败</p>
-                            <p style="font-size: 12px; color: #666;">错误信息: ${result.message || '未知错误'}</p>
-                        </div>
-                    `;
-                }
-                alert('生成失败: ' + (result.message || '未知错误'));
+                // Fallback
+                const resp = await fetch('/api/ai/video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(opts)
+                });
+                result = await resp.json();
             }
-        } catch (error) {
-            console.error('生成过程中出错:', error);
-            
-            // 显示错误信息
-            const previewPlaceholder = document.querySelector('.right-panel .preview-placeholder');
-            if (previewPlaceholder) {
-                previewPlaceholder.innerHTML = `
-                    <div style="text-align: center; padding: 20px;">
-                        <div style="font-size: 48px; margin-bottom: 10px;">❌</div>
-                        <p>视频生成过程中出现错误</p>
-                        <p style="font-size: 12px; color: #666;">请查看控制台了解详情</p>
+
+            if (result && result.status === 'success') {
+                resBox.innerHTML = `
+                    <div style="text-align: center; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                        <video controls autoplay loop style="max-width: 100%; max-height: 80%; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.3);">
+                            <source src="${result.video_url}" type="video/mp4">
+                            Your browser does not support video.
+                        </video>
+                        <div style="margin-top:1.5rem; display:flex; gap:12px;">
+                             <button class="secondary-btn" id="btn-download-video">Download</button>
+                        </div>
                     </div>
                 `;
+
+                document.getElementById('btn-download-video')?.addEventListener('click', () => {
+                    const a = document.createElement('a');
+                    a.href = result.video_url;
+                    a.download = `video_${Date.now()}.mp4`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                });
+
+            } else {
+                throw new Error(result?.message || "Generation failed");
             }
-            
-            alert('生成过程中出现错误，请查看控制台了解详情');
+
+        } catch (error) {
+            console.error(error);
+            alert("Error: " + error.message);
+            const resBox = document.querySelector('.result-preview');
+            resBox.innerHTML = `
+                <div class="preview-placeholder">
+                    <span style="font-size:32px; margin-bottom:1rem; opacity:0.5;">⚠️</span>
+                    <p style="color:var(--text-secondary);">Generation failed.</p>
+                </div>
+            `;
         } finally {
-            // 恢复按钮状态
-            if (generateBtn) {
-                generateBtn.innerHTML = originalContent;
-                generateBtn.disabled = false;
-            }
+            generateBtn.innerHTML = oldText;
+            generateBtn.disabled = false;
         }
-    }
+    });
+
+    // Toolbar
+    document.getElementById('btn-clear-prompt')?.addEventListener('click', () => {
+        const el = document.getElementById('vg-prompt-input');
+        if (el) el.value = '';
+    });
 }
 
-// 导出函数供外部调用
-export { loadVideoGenerationContent };
+// Make it globally available
+window.loadVideoGenerationPage = loadVideoGenerationPage;

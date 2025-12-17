@@ -1,501 +1,420 @@
 // pages/face-swap/face-swap.js
-/**
- * 加载变脸图片页面内容
- */
-function loadFaceSwapContent() {
-    const contentContainer = document.getElementById('face-swap-content');
-    if (!contentContainer) return;
-    
-    contentContainer.innerHTML = `
-        <div class="section">
-            <h3>模板与素材</h3>
-            <div class="template-grid">
-                <div class="template-chip" data-template="prompt1">超人</div>
-                <div class="template-chip" data-template="prompt2">漫画头像</div>
-                <div class="template-chip" data-template="prompt3">职业装扮</div>
-            </div>
-        </div>
 
-        <div class="section">
-            <h3>提示词编辑</h3>
-            <div class="prompt-editor">
-                <textarea placeholder="输入提示词..." class="prompt-input" id="positive-prompt"></textarea>
+/**
+ * 加载变脸图片页面内容 (Runway Style Refactor)
+ */
+function loadFaceSwapPage(container) {
+    if (!container) return;
+
+    // Inject styles if not present
+    if (!document.getElementById('fs-layout-css')) {
+        const link = document.createElement('link');
+        link.id = 'fs-layout-css';
+        link.rel = 'stylesheet';
+        link.href = 'pages/face-swap/face-swap-layout.css';
+        document.head.appendChild(link);
+    }
+
+    container.innerHTML = `
+        <div class="studio-layout fade-in">
+            <!-- Col 1: Global Nav -->
+            <div class="studio-nav" id="global-sidebar"></div>
+
+            <!-- Col 2: Controls (Left Panel) -->
+            <div class="studio-controls face-swap-controls">
+                
+                <!-- 1. Header & Mode -->
+                <div class="fs-header">
+                    <div style="font-weight:600; font-size:14px;">Generative Session</div>
+                    <div class="fs-mode-switch">
+                        <button class="mode-btn" data-mode="text">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Text
+                        </button>
+                        <button class="mode-btn active" data-mode="image">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+                            Image
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Interactive Input Section -->
+                <div class="fs-input-section">
+                    <!-- Reference Slots (Hidden in Text mode) -->
+                    <div class="fs-slots-row" id="fs-slots-row">
+                        <!-- Upload Slot 1 -->
+                        <div class="fs-slot" id="slot-ref-1" title="Add Image Reference">
+                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
+                             <input type="file" style="display:none" accept="image/*">
+                        </div>
+                        <!-- Empty Placeholder Slots (Visual only) -->
+                        <div class="fs-slot" style="opacity:0.5; cursor:default; border-style:dashed;"></div>
+                        <div class="fs-slot" style="opacity:0.5; cursor:default; border-style:dashed;"></div>
+                    </div>
+
+                    <!-- Text Editor -->
+                    <div class="fs-text-editor">
+                        <textarea class="fs-textarea" id="fs-prompt-input" placeholder="Describe your image...
+Mention colors, lighting, and style."></textarea>
+                        
+                        <div class="fs-toolbar">
+                             <button class="tool-icon-btn" id="btn-gen-prompt" title="Generate Prompt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg></button>
+                             <button class="tool-icon-btn" id="btn-clear-prompt" title="Clear"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Tabbed Component Panel -->
+                <div class="fs-tabs-panel">
+                    <div class="fs-tab-header">
+                        <button class="fs-tab-btn active" data-tab="settings">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            Settings
+                        </button>
+                        <button class="fs-tab-btn" data-tab="assets">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+                            Assets
+                        </button>
+                    </div>
+                    <div class="fs-tab-content">
+                         <!-- Tab: Settings -->
+                         <div id="tab-settings" class="tab-pane">
+                            <span class="bg-label">Aspect Ratio</span>
+                            <div class="ratio-grid">
+                                <div class="ratio-option active" data-ratio="16:9">
+                                    <div class="ratio-box ratio-16-9"></div>
+                                    <span class="ratio-label">16:9</span>
+                                </div>
+                                <div class="ratio-option" data-ratio="4:3">
+                                     <div class="ratio-box ratio-4-3"></div>
+                                     <span class="ratio-label">4:3</span>
+                                </div>
+                                <div class="ratio-option" data-ratio="1:1">
+                                     <div class="ratio-box ratio-1-1"></div>
+                                     <span class="ratio-label">1:1</span>
+                                </div>
+                                <div class="ratio-option" data-ratio="3:4">
+                                     <div class="ratio-box ratio-3-4"></div>
+                                     <span class="ratio-label">3:4</span>
+                                </div>
+                                <div class="ratio-option" data-ratio="9:16">
+                                     <div class="ratio-box ratio-9-16"></div>
+                                     <span class="ratio-label">9:16</span>
+                                </div>
+                            </div>
+
+                            <span class="bg-label" style="margin-top:20px;">Reference Strength</span>
+                            <input type="range" class="fs-slider" min="0" max="100" value="75" style="margin-top:8px;">
+                         </div>
+
+                         <!-- Tab: Assets -->
+                         <div id="tab-assets" class="tab-pane" style="display:none;">
+                            <div id="fs-asset-list" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px;">
+                                <!-- Dynamic Assets -->
+                            </div>
+                            <div id="fs-asset-empty" style="text-align:center; margin-top:1rem; font-size:12px; color:var(--text-secondary); display:none;">
+                                No history found
+                            </div>
+                         </div>
+                    </div>
+                </div>
+
+                <!-- 4. Action Area -->
+                <div class="fs-action-area">
+                     <button class="primary-btn" id="generate-btn" style="width:100%;">
+                        Generate
+                     </button>
+                </div>
+
             </div>
-        </div>
-        
-        <div class="section">
-            <div class="preview-actions">
-                <div class="upload-area">
-                    <button class="upload-btn" id="upload-image-btn">
-                        <span class="icon">⬆️</span>
-                        选择图片
-                    </button>
-                    <button class="upload-btn" id="capture-image-btn">
-                        <span class="icon">📷</span>
-                        拍摄照片
-                    </button>
-                    <p class="upload-hint">支持 JPG、PNG 格式，大小不超过 5MB</p>
+
+            <!-- Col 3: Viewport (Canvas) -->
+            <div class="studio-viewport">
+                <!-- Simple Header -->
+                <div style="position:absolute; top:20px; right:20px; display:flex; gap:10px; z-index:10;">
+                    <button class="secondary-btn" style="background:var(--bg-glass); backdrop-filter:blur(10px);">Export</button>
+                </div>
+
+                <!-- Empty State / Result -->
+                <div class="preview-box result-preview empty" style="width:100%; height:100%; border:none; background:transparent;">
+                    <div class="preview-placeholder">
+                        <span style="font-size:32px; margin-bottom:1rem; opacity:0.5;">✨</span>
+                        <p style="color:var(--text-secondary);">Your generated image will appear here</p>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <div class="section">
-            <button class="primary-btn" id="generate-btn">
-                <span class="icon">⚡</span>
-                生成
-            </button>
-        </div>
     `;
-    
-    // 绑定事件监听器
+
     setupFaceSwapEventListeners();
 }
 
 /**
- * 设置变脸图片页面事件监听器
+ * 设置变脸/生成页面事件监听器
  */
 function setupFaceSwapEventListeners() {
-    // 等待DOM更新后绑定事件
-    setTimeout(() => {
-        // 模板选择
-        document.querySelectorAll('.template-chip[data-template]').forEach(chip => {
-            chip.addEventListener('click', handleTemplateSelect);
-        });
-        
-        // 上传图片按钮
-        const uploadImageBtn = document.getElementById('upload-image-btn');
-        if (uploadImageBtn) {
-            uploadImageBtn.addEventListener('click', handleUploadImageClick);
-        }
-        
-        // 拍摄照片按钮
-        const captureImageBtn = document.getElementById('capture-image-btn');
-        if (captureImageBtn) {
-            captureImageBtn.addEventListener('click', handleCaptureImageClick);
-        }
-        
-        // 生成按钮
-        document.getElementById('generate-btn')?.addEventListener('click', handleGenerateClick);
-        
-        // 参数调节
-        document.querySelectorAll('.param-btn[data-ratio]').forEach(button => {
-            button.addEventListener('click', handleRatioChange);
-        });
-        
-        // 滑块控制
-        document.getElementById('style-strength')?.addEventListener('input', handleStyleStrengthChange);
-        document.getElementById('cfg-value')?.addEventListener('input', handleCfgChange);
-        document.getElementById('steps-value')?.addEventListener('input', handleStepsChange);
-        
-        // 开关控制
-        document.getElementById('preserve-features')?.addEventListener('change', handlePreserveFeaturesChange);
-    }, 100);
-}
 
-/**
- * 处理模板选择
- */
-function handleTemplateSelect(event) {
-    const template = event.target.getAttribute('data-template');
-    console.log('选择模板:', template);
-    
-    // 更新选中状态
-    document.querySelectorAll('.template-chip').forEach(chip => {
-        chip.classList.remove('selected');
-    });
-    event.target.classList.add('selected');
-    
-    // 根据模板类型设置对应的提示词
-    const promptMap = {
-        'prompt1': '照片中的人脸保持不变。身体变成超人，强壮的身体，披风，标志性的S标志，正义的表情',
-        'prompt2': '照片中的人脸保持不变。漫画风格，鲜明的色彩，夸张的表情，线条艺术，日式动漫',
-        'prompt3': '照片中的人脸保持不变。职业装，西装革履，领带，专业表情，办公室背景'
-    };
-    
-    const promptInput = document.getElementById('positive-prompt');
-    if (promptInput && promptMap[template]) {
-        promptInput.value = promptMap[template];
-    }
-}
+    // 1. Mode Switcher (Text vs Image)
+    const modeBtns = document.querySelectorAll('.mode-btn');
+    const slotsRow = document.getElementById('fs-slots-row');
 
-/**
- * 处理上传图片按钮点击
- */
-function handleUploadImageClick() {
-    console.log('上传图片按钮被点击');
-    
-    // 创建一个隐藏的文件输入元素
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.style.display = 'none';
-    
-    // 添加change事件监听器
-    fileInput.addEventListener('change', function(event) {
-        const file = event.target.files[0];
-        if (file) {
-            handleImageFile(file);
-        }
-    });
-    
-    // 将文件输入元素添加到页面并触发点击
-    document.body.appendChild(fileInput);
-    fileInput.click();
-    
-    // 点击后移除元素
-    fileInput.addEventListener('blur', function() {
-        document.body.removeChild(fileInput);
-    });
-}
+    modeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            modeBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
 
-/**
- * 处理拍摄照片按钮点击
- */
-function handleCaptureImageClick() {
-    console.log('拍摄照片按钮被点击');
-    
-    // 检查浏览器是否支持getUserMedia API
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        // 请求访问摄像头
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(function(stream) {
-                // 创建一个视频元素用于显示摄像头画面
-                const video = document.createElement('video');
-                video.srcObject = stream;
-                video.play();
-                
-                // 创建一个模态框来显示摄像头画面
-                const modal = document.createElement('div');
-                modal.className = 'camera-modal';
-                modal.innerHTML = `
-                    <div class="camera-container">
-                        <div class="camera-header">
-                            <h3>拍摄照片</h3>
-                            <button class="close-btn">&times;</button>
-                        </div>
-                        <div class="camera-preview"></div>
-                        <div class="camera-controls">
-                            <button class="capture-btn">拍摄</button>
-                            <button class="cancel-btn">取消</button>
-                        </div>
-                    </div>
-                `;
-                
-                // 将视频元素添加到预览区域
-                modal.querySelector('.camera-preview').appendChild(video);
-                
-                // 添加到页面
-                document.body.appendChild(modal);
-                
-                // 绑定关闭按钮事件
-                modal.querySelector('.close-btn').addEventListener('click', function() {
-                    stream.getTracks().forEach(track => track.stop());
-                    document.body.removeChild(modal);
-                });
-                
-                // 绑定取消按钮事件
-                modal.querySelector('.cancel-btn').addEventListener('click', function() {
-                    stream.getTracks().forEach(track => track.stop());
-                    document.body.removeChild(modal);
-                });
-                
-                // 绑定拍摄按钮事件
-                modal.querySelector('.capture-btn').addEventListener('click', function() {
-                    // 创建canvas来捕获当前帧
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    
-                    // 将canvas转换为Blob对象
-                    canvas.toBlob(function(blob) {
-                        // 创建一个文件对象
-                        const file = new File([blob], 'captured-image.png', { type: 'image/png' });
-                        handleImageFile(file);
-                    }, 'image/png');
-                    
-                    // 停止摄像头并关闭模态框
-                    stream.getTracks().forEach(track => track.stop());
-                    document.body.removeChild(modal);
-                });
-            })
-            .catch(function(err) {
-                console.error('无法访问摄像头:', err);
-                alert('无法访问摄像头，请检查权限设置');
-            });
-    } else {
-        alert('您的浏览器不支持摄像头功能');
-    }
-}
-
-/**
- * 处理图像文件（无论是上传还是拍摄）
- * @param {File} file - 图像文件对象
- */
-function handleImageFile(file) {
-    // 检查文件类型
-    if (!file.type.match('image.*')) {
-        alert('请选择图像文件');
-        return;
-    }
-    
-    // 检查文件大小 (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-        alert('文件大小超过5MB限制');
-        return;
-    }
-    
-    // 创建预览
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        // 创建一个图片对象来获取原始尺寸
-        const img = new Image();
-        img.onload = function() {
-            // 检查图片尺寸，如果宽度小于300像素则进行调整
-            let imageDataURL = e.target.result;
-            if (img.width < 300) {
-                // 创建canvas来调整图片尺寸
-                const canvas = document.createElement('canvas');
-                // 设置新尺寸，保持宽高比
-                const scale = 300 / img.width;
-                canvas.width = 300;
-                canvas.height = img.height * scale;
-                
-                const ctx = canvas.getContext('2d');
-                // 绘制调整后的图片
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                
-                // 获取调整后的图片数据
-                imageDataURL = canvas.toDataURL('image/jpeg', 0.9);
-            }
-            
-            // 查找左侧预览区域并显示图像
-            const previewContent = document.querySelector('.left-panel .preview-content');
-            if (previewContent) {
-                previewContent.innerHTML = `
-                    <div class="preview-container">
-                        <img src="${imageDataURL}" alt="预览图片" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-                    </div>
-                    <!-- 添加隐藏的input来存储图片数据 -->
-                    <input type="hidden" id="uploaded-image-data" value="${imageDataURL}">
-                `;
+            // Toggle Slots for Text/Image Mode
+            const mode = btn.dataset.mode;
+            if (mode === 'text') {
+                if (slotsRow) slotsRow.style.display = 'none';
             } else {
-                // 如果没有找到left-panel中的preview-content，则查找任何preview-placeholder
-                const previewPlaceholder = document.querySelector('.preview-placeholder');
-                if (previewPlaceholder) {
-                    previewPlaceholder.innerHTML = `
-                        <div class="preview-container">
-                            <img src="${imageDataURL}" alt="预览图片" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-                        </div>
-                        <!-- 添加隐藏的input来存储图片数据 -->
-                        <input type="hidden" id="uploaded-image-data" value="${imageDataURL}">
-                    `;
-                }
+                if (slotsRow) slotsRow.style.display = 'flex';
             }
-            
-            // 显示成功消息
-            console.log('图像已加载:', file.name);
-            
-            // 在实际项目中，这里会将文件保存到本地供Python脚本处理
-            // 通过 window.electronAPI.saveImageFile 可以实现
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
+        });
+    });
 
-/**
- * 处理一键生成按钮点击
- */
-async function handleGenerateClick() {
-    console.log('换脸开始');
-    
-    // 显示加载状态
+    // 2. Interactive Input Section (Start with Image Logic)
+    const slot1 = document.getElementById('slot-ref-1');
+    const defaultIconHTML = slot1?.innerHTML;
+
+    function handleFileSelect(e, slotElement, defaultHTML) {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                slotElement.innerHTML = `
+                    <img src="${evt.target.result}">
+                    <div class="remove-btn" title="Remove">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </div>
+                `;
+                slotElement.classList.add('has-image');
+                slotElement.dataset.hasImage = "true";
+
+                slotElement.querySelector('.remove-btn').addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    slotElement.innerHTML = defaultHTML;
+                    slotElement.classList.remove('has-image');
+                    delete slotElement.dataset.hasImage;
+                    // Re-attach listener
+                    const newInput = slotElement.querySelector('input');
+                    if (newInput) {
+                        newInput.addEventListener('change', (ev2) => handleFileSelect(ev2, slotElement, defaultHTML));
+                    }
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    if (slot1) {
+        slot1.addEventListener('click', (e) => {
+            if (e.target.closest('.remove-btn')) return;
+            const input = slot1.querySelector('input');
+            if (input) input.click();
+        });
+        const initialInput = slot1.querySelector('input');
+        if (initialInput) {
+            initialInput.addEventListener('change', (e) => handleFileSelect(e, slot1, defaultIconHTML));
+        }
+    }
+
+    // 3. Aspect Ratio Selection (Event Delegation)
+    const ratioGrid = document.querySelector('.ratio-grid');
+    if (ratioGrid) {
+        ratioGrid.addEventListener('click', (e) => {
+            const option = e.target.closest('.ratio-option');
+            if (option) {
+                document.querySelectorAll('.ratio-option').forEach(o => o.classList.remove('active'));
+                option.classList.add('active');
+            }
+        });
+    }
+
+    // 4. Tab Switching (Settings / Assets)
+    const tabBtns = document.querySelectorAll('.fs-tab-btn');
+    const tabSettings = document.getElementById('tab-settings');
+    const tabAssets = document.getElementById('tab-assets');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const target = btn.dataset.tab;
+            if (target === 'settings') {
+                if (tabSettings) tabSettings.style.display = 'block';
+                if (tabAssets) tabAssets.style.display = 'none';
+            } else {
+                if (tabSettings) tabSettings.style.display = 'none';
+                if (tabAssets) tabAssets.style.display = 'block';
+            }
+        });
+    });
+
+    // 5. Generate Logic
     const generateBtn = document.getElementById('generate-btn');
-    if (generateBtn) {
-        const originalContent = generateBtn.innerHTML;
-        generateBtn.innerHTML = '<span class="icon">⏳</span> 生成中...';
+    generateBtn?.addEventListener('click', async () => {
+        const promptInput = document.getElementById('fs-prompt-input');
+        const prompt = promptInput?.value?.trim();
+        const slot = document.getElementById('slot-ref-1');
+        const hasImage = slot?.dataset.hasImage === "true";
+        const imgElement = slot?.querySelector('img');
+
+        if (!prompt && !hasImage) {
+            alert("Please enter a prompt or upload an image.");
+            return;
+        }
+
+        const oldText = generateBtn.innerHTML;
+        generateBtn.innerHTML = "Generating...";
         generateBtn.disabled = true;
-        
-        // 获取提示词
-        const promptInput = document.getElementById('positive-prompt');
-        const prompt = promptInput ? promptInput.value : '';
-        
-        // 获取选中的模板
-        const selectedTemplate = document.querySelector('.template-chip.selected');
-        const template = selectedTemplate ? selectedTemplate.getAttribute('data-template') : '';
-        
-        // 获取上传的图片 - 使用更可靠的方法
-        let imageSrc = null;
-        const uploadedImageInput = document.getElementById('uploaded-image-data');
-        imageSrc = uploadedImageInput.value;
-        console.log('上传的图片:', imageSrc);
-        
-        const result = await window.electronAPI.editImage({
-            prompt: prompt,
-            image: imageSrc, // 传入图片数据
-            // size: '1024x1024'
-        });
-        
-        console.log('AI生成结果:', result);
-        
-        // 显示结果
-        if (result.status === 'success') {
-            // 在预览区域显示生成的图片
-            const previewPlaceholder = document.querySelector('.right-panel .preview-placeholder');
-            if (previewPlaceholder) {
-                previewPlaceholder.innerHTML = `
-                    <img src="${result.image_url}" alt="AI生成图片" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-                `;
-            }
-        } else {
-            alert('生成失败: ' + (result.message));
-        }
 
-        
-        // 恢复按钮状态
-        if (generateBtn) {
-            generateBtn.innerHTML = originalContent;
-            generateBtn.disabled = false;
-        }
-    }
-}
+        try {
+            // Get Parameters
+            const activeRatio = document.querySelector('.ratio-option.active')?.dataset.ratio || "1:1";
 
-/**
- * 使用AI处理图片
- * @param {string} prompt - 提示词
- * @param {string} imageSrc - 图片数据URL
- */
-async function processImageWithAI(prompt, imageSrc) {
-    try {
-        console.log('开始AI图片处理:', prompt);
-        
-        // 保存图片到临时文件
-        const fileName = 'input_image_' + Date.now() + '.png';
-        let imagePath;
-        
-        if (window.electronAPI && window.electronAPI.saveImageFile) {
-            imagePath = await window.electronAPI.saveImageFile(fileName, imageSrc);
-            console.log('图片已保存到:', imagePath);
-        } else {
-            console.warn('无法保存图片到本地文件，使用数据URL');
-            imagePath = imageSrc; // 回退到使用数据URL
-        }
-        
-        // 调用JavaScript版本的AI图片处理脚本
-        if (window.electronAPI && window.electronAPI.runPythonScript) {
-            console.log('调用JavaScript脚本处理图片...');
-            // 使用JavaScript版本的脚本 (注意这里改为edit_photo_js.js)
-            const result = await window.electronAPI.runPythonScript(
-                'edit_photo_js.js',
-                ['--input', imagePath, '--prompt', prompt]
-            );
-            
-            console.log('JavaScript脚本执行结果:', result);
-            
-            // 检查是否有错误返回
-            if (result.error) {
-                throw new Error(result.error);
-            }
-            
-            // 解析脚本输出的生成文件路径
-            let generatedImageName = null;
-            if (result.stdout) {
-                try {
-                    // 尝试解析JSON格式的输出
-                    const scriptResult = JSON.parse(result.stdout);
-                    if (scriptResult.status === "success") {
-                        generatedImageName = scriptResult.saved_path;
-                    }
-                } catch (parseError) {
-                    console.error('解析脚本输出失败:', parseError);
-                    // 如果JSON解析失败，回退到正则表达式方式
-                    const match = result.stdout.match(/::GENERATED_FILE::([^\s]+)/);
-                    if (match && match[1]) {
-                        generatedImageName = match[1];
-                    }
+            // Map Ratio to Size
+            let width = 1024, height = 1024;
+            if (activeRatio === '16:9') { width = 1024; height = 576; }
+            if (activeRatio === '4:3') { width = 1024; height = 768; }
+            if (activeRatio === '3:4') { width = 768; height = 1024; }
+            if (activeRatio === '9:16') { width = 576; height = 1024; }
+
+            const resBox = document.querySelector('.result-preview');
+            resBox.innerHTML = `
+                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:var(--text-secondary);">
+                    <div class="spinner" style="margin-bottom:15px; width:30px; height:30px; border:3px solid var(--glass-border); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
+                    <p>Creating masterpiece...</p>
+                </div>
+                <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
+            `;
+            resBox.classList.remove('empty');
+
+            let result;
+            if (hasImage) {
+                // EDIT IMAGE MODE
+                const opts = {
+                    image: imgElement.src,
+                    prompt: prompt || "Enhance this image",
+                    model: "doubao-seedream-4-0-250828"
+                };
+                if (window.electronAPI && window.electronAPI.editImage) {
+                    result = await window.electronAPI.editImage(opts);
+                } else {
+                    const resp = await fetch('/api/ai/edit-image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(opts)
+                    });
+                    result = await resp.json();
+                }
+            } else {
+                // GENERATE IMAGE MODE
+                const opts = {
+                    prompt: prompt,
+                    width, height,
+                    model: "doubao-seedream-4-0-250828"
+                };
+                if (window.electronAPI && window.electronAPI.generateImage) {
+                    result = await window.electronAPI.generateImage(opts);
+                } else {
+                    const resp = await fetch('/api/ai/image', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(opts)
+                    });
+                    result = await resp.json();
                 }
             }
-            
-            // 显示结果
-            if (generatedImageName && window.electronAPI.readImageFile) {
-                // 使用API读取生成的图片文件
-                const imageDataUrl = await window.electronAPI.readImageFile(generatedImageName);
-                showResultPreview(imageDataUrl);
+
+            if (result && result.status === 'success') {
+                const imageUrl = result.image_url || result.url;
+                resBox.innerHTML = `
+                    <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                        <img src="${imageUrl}" style="max-width:100%; max-height:100%; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
+                        <div style="margin-top:10px; display:flex; gap:10px;">
+                             <button class="secondary-btn small" id="btn-save-assets">Save to Assets</button>
+                             <button class="secondary-btn small" onclick="window.open('${imageUrl}')">Open</button>
+                        </div>
+                    </div>
+                `;
+
+                // Auto-Save to Assets
+                try {
+                    window.AssetManager.add({
+                        type: 'image',
+                        url: imageUrl,
+                        prompt: prompt || "Generated Image",
+                        metadata: { width, height, model: "doubao-seedream" }
+                    });
+                    console.log("Auto-saved to assets");
+                    renderAssetsTab(); // Refresh sidebar
+                } catch (err) {
+                    console.error("Auto-save failed:", err);
+                }
+
+                // Add Save Listener (Just for visual feedback or updates)
+                setTimeout(() => {
+                    const saveBtn = document.getElementById('btn-save-assets');
+                    if (saveBtn) {
+                        saveBtn.innerHTML = "Saved ✓";
+                        saveBtn.disabled = true;
+                    }
+                }, 0);
             } else {
-                showResultPreview();
+                throw new Error(result?.message || "Unknown error");
             }
-        } else {
-            console.warn('未检测到脚本执行API，使用模拟结果');
-            
-            // 模拟处理过程
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // 显示结果
-            showResultPreview();
-        }
-        
-        // 恢复按钮状态
-        const generateBtn = document.getElementById('generate-btn');
-        if (generateBtn) {
-            generateBtn.disabled = false;
-            generateBtn.innerHTML = '<span class="icon">⚡</span> 一键生成';
-        }
-        
-        console.log('AI图片处理完成');
-    } catch (error) {
-        console.error('AI图片处理失败:', error);
-        
-        // 恢复按钮状态
-        const generateBtn = document.getElementById('generate-btn');
-        if (generateBtn) {
-            generateBtn.disabled = false;
-            generateBtn.innerHTML = '<span class="icon">⚡</span> 一键生成';
-        }
-        
-        // 显示用户友好的错误信息
-        let errorMessage = 'AI图片处理失败';
-        if (error && error.error) {
-            // 如果是脚本错误，显示具体的错误信息
-            errorMessage += ': ' + error.error;
-        } else if (error && error.message) {
-            errorMessage += ': ' + error.message;
-        } else {
-            errorMessage += ': ' + String(error);
-        }
-        
-        alert(errorMessage);
-    }
-}
 
-/**
- * 显示结果预览
- */
-function showResultPreview(imageDataUrl) {
-    const previewPlaceholder = document.querySelector('.right-panel .preview-placeholder');
-    if (!previewPlaceholder) return;
-    
-    previewPlaceholder.innerHTML = `
-        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-            <img src="${imageDataUrl}" alt="AI生成图片" style="max-width: 100%; max-height: 100%; object-fit: contain;">
-        </div>
-    `;
-}
-
-/**
- * 处理分辨率比例变化
- */
-function handleRatioChange(event) {
-    const ratio = event.target.getAttrSeedreamibute('data-ratio');
-    console.log('选择分辨率比例:', ratio);
-    
-    // 更新选中状态
-    document.querySelectorAll('.param-btn[data-ratio]').forEach(button => {
-        button.classList.remove('active');
+        } catch (error) {
+            console.error(error);
+            alert("Error: " + error.message);
+            const resBox = document.querySelector('.result-preview');
+            resBox.innerHTML = `
+                <div class="preview-placeholder">
+                    <span style="font-size:32px; margin-bottom:1rem; opacity:0.5;">⚠️</span>
+                    <p style="color:var(--text-secondary);">Generation failed.</p>
+                </div>
+            `;
+        } finally {
+            generateBtn.innerHTML = oldText;
+            generateBtn.disabled = false;
+        }
     });
-    event.target.classList.add('active');
-}
 
-// 导出函数供外部调用
-export { loadFaceSwapContent };
+    // 6. Toolbar
+    document.getElementById('btn-clear-prompt')?.addEventListener('click', () => {
+        const el = document.getElementById('fs-prompt-input');
+        if (el) el.value = "A futuristic cyberpunk city with neon lights and flying cars, cinematic lighting.";
+    });
+
+
+    // 7. Render Assets
+    function renderAssetsTab() {
+        const list = document.getElementById('fs-asset-list');
+        const empty = document.getElementById('fs-asset-empty');
+        if (!list) return;
+
+        const assets = window.AssetManager.getRecent('image', 20);
+
+        if (assets.length === 0) {
+            list.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+        }
+
+        empty.style.display = 'none';
+        list.innerHTML = assets.map(asset => `
+            <div class="asset-item" onclick="/* Open or Reuse */" style="aspect-ratio:1; border-radius:8px; overflow:hidden; position:relative; cursor:pointer; border:1px solid var(--glass-border);">
+                <img src="${asset.url}" style="width:100%; height:100%; object-fit:cover;">
+            </div>
+        `).join('');
+    }
+
+    // Initial render
+    renderAssetsTab();
+
+    // Listen for global asset updates
+    window.addEventListener('assets-updated', () => {
+        renderAssetsTab();
+    });
+}

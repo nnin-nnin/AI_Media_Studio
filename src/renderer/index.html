@@ -1,28 +1,47 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Media Studio</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-    <div id="app">
-        <!-- 顶部导航栏 -->
-        <header id="main-header"></header>
+    <div id="app" class="app-layout">
+        <!-- 全局侧边栏容器 -->
+        <aside id="app-sidebar"></aside>
 
-        <!-- 主体内容 -->
-        <main id="main-content"></main>
+        <!-- 主内容区域 -->
+        <div id="content-wrapper">
+            <!-- 顶部导航栏 (Optional per page) -->
+            <!-- <header id="main-header"></header> -->
 
-        <!-- 底部操作栏 -->
-        <footer id="main-footer"></footer>
+            <!-- 主体内容 -->
+            <main id="main-content"></main>
+
+            <!-- 底部操作栏 -->
+            <footer id="main-footer"></footer>
+        </div>
     </div>
 
     <!-- JavaScript 模块 -->
-    <script src="components/header/header.js"></script>
-    <script src="components/main-content/main-content.js"></script>
-    <script src="components/footer/footer.js"></script>
-    <script src="utils/helpers.js"></script>
+    <!-- JavaScript 模块 -->
+    <script src="pages/dashboard/dashboard.js"></script>
+    <script src="pages/face-swap/face-swap.js"></script>
+    <script src="pages/video-generation/video-generation.js"></script>
+    <script src="pages/voice-cloning/voice-cloning.js"></script>
+    <script src="pages/assets/assets.js"></script>
+
+    <!-- Components -->
+    <script src="./components/toast.js"></script>
+    <script src="./components/sidebar/sidebar.js"></script>
+
+    <!-- Utilities & Core -->
+    <script src="utils/web-api.js"></script>
+    <script src="utils/asset-manager.js"></script>
     <script src="app.js"></script>
 </body>
+
 </html>

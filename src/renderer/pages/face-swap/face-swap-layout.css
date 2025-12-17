@@ -1,0 +1,346 @@
+/* Face Swap Runway-style Layout */
+
+/* 1. Control Panel Container */
+.face-swap-controls {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background: var(--bg-core);
+    /* Light: Slate 100, Dark: Slate 900 */
+}
+
+/* 2. Top Header (Mode Switcher) */
+.fs-header {
+    padding: 1rem 1.5rem;
+    border-bottom: var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-glass);
+}
+
+.fs-mode-switch {
+    display: flex;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 4px;
+    border-radius: 8px;
+}
+
+.mode-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.mode-btn.active {
+    background: white;
+    color: var(--text-primary);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 3. Main Input Area (Slots & Text) */
+.fs-input-section {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 0 0 auto;
+    /* Don't stretch infinitely */
+}
+
+/* Slots Row */
+.fs-slots-row {
+    display: flex;
+    gap: 10px;
+}
+
+.fs-slot {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    border: 1px dashed var(--glass-shine);
+    background: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    color: var(--text-secondary);
+}
+
+.fs-slot:hover {
+    border-color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.fs-slot.has-image {
+    border-style: solid;
+    border-color: transparent;
+}
+
+.fs-slot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Text Editor */
+.fs-text-editor {
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: border-color 0.2s;
+    min-height: 120px;
+}
+
+.fs-text-editor:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.fs-textarea {
+    width: 100%;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+    font-size: 15px;
+    color: #000000;
+    /* Pure black for maximum contrast */
+    font-weight: 500;
+    background: transparent;
+    min-height: 80px;
+    line-height: 1.5;
+}
+
+.fs-textarea:focus {
+    background: transparent;
+    color: #000000;
+}
+
+.fs-textarea::placeholder {
+    color: #94a3b8;
+}
+
+.fs-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    border-top: 1px solid rgba(0, 0, 0, 0.04);
+    padding-top: 8px;
+}
+
+.tool-icon-btn {
+    padding: 6px;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.tool-icon-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-primary);
+}
+
+/* 4. Tabbed Panel (Settings/Assets) */
+.fs-tabs-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-top: var(--glass-border);
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.fs-tab-header {
+    display: flex;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.fs-tab-btn {
+    flex: 1;
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.fs-tab-btn.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.fs-tab-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+/* 5. Bottom Action Area */
+.fs-action-area {
+    padding: 1.5rem;
+    border-top: var(--glass-border);
+    background: var(--bg-glass);
+}
+
+/* --- New Refinements --- */
+
+/* Aspect Ratio Grid */
+.bg-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    display: block;
+}
+
+.ratio-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.ratio-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.ratio-box {
+    border: 1px solid var(--glass-border);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.5);
+    transition: all 0.2s;
+}
+
+/* Aspect Ratio Visuals */
+.ratio-16-9 {
+    width: 32px;
+    height: 18px;
+}
+
+.ratio-4-3 {
+    width: 28px;
+    height: 21px;
+}
+
+.ratio-1-1 {
+    width: 24px;
+    height: 24px;
+}
+
+.ratio-3-4 {
+    width: 21px;
+    height: 28px;
+}
+
+.ratio-9-16 {
+    width: 18px;
+    height: 32px;
+}
+
+.ratio-option:hover .ratio-box {
+    border-color: var(--text-secondary);
+    background: white;
+}
+
+.ratio-option.active .ratio-box {
+    border-color: var(--primary);
+    background: var(--bg-primary-light, #eff6ff);
+    box-shadow: 0 0 0 1px var(--primary);
+}
+
+.ratio-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+.ratio-option.active .ratio-label {
+    color: var(--primary);
+    font-weight: 500;
+}
+
+/* Slot Remove Badge */
+.fs-slot .remove-btn {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 18px;
+    height: 18px;
+    background: var(--text-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.fs-slot:hover .remove-btn {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.fs-slot .remove-btn svg {
+    width: 10px;
+    height: 10px;
+}
+
+/* Slider Controls (Future use) */
+.fs-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    outline: none;
+}
+
+.fs-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}

@@ -1,5 +1,5 @@
 // app.js - 主应用文件
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // 初始化应用
     initializeApp();
 });
@@ -9,14 +9,38 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function initializeApp() {
     // 初始化各个组件
-    initializeHeader();
-    initializeMainContent();
-    initializeFooter();
-    
+    // initializeHeader(); // Removed for Studio Layout
+    // initializeMainContent(); // Removed
+    // initializeFooter();      // Removed
+
     // 设置路由变化监听
     setupRouting();
-    
-    // 设置全局事件监听
+
+    // Expose global navigation
+    window.app = {
+        navigate: (page) => {
+            showPage(page);
+            history.pushState({ page: page }, '', `#${page}`);
+            // Update sidebar active state (simple re-render for now or class toggle)
+            if (window.GlobalSidebar) {
+                const sidebarContainer = document.getElementById('app-sidebar');
+                if (sidebarContainer) {
+                    // Ideally we just update classes, but full render is safer for prototype
+                    sidebarContainer.innerHTML = window.GlobalSidebar.render(page);
+                }
+            }
+        }
+    };
+
+    // Initialize Global Sidebar
+    if (window.GlobalSidebar) {
+        const sidebarContainer = document.getElementById('app-sidebar');
+        if (sidebarContainer) {
+            sidebarContainer.innerHTML = window.GlobalSidebar.render('dashboard');
+        }
+    }
+
+    // Set global event listeners
     setupGlobalEventListeners();
 }
 
@@ -24,12 +48,15 @@ function initializeApp() {
  * 设置路由变化监听
  */
 function setupRouting() {
-    // 默认显示变脸图片页面
-    showPage('face-swap');
-    
-    // 监听浏览器前进后退
-    window.addEventListener('popstate', function(event) {
-        const page = event.state ? event.state.page : 'face-swap';
+    // Default to 'dashboard'
+    // check hash first
+    const hash = window.location.hash.slice(1);
+    const initialPage = hash || 'dashboard';
+    showPage(initialPage);
+
+    // Listen for browser navigation
+    window.addEventListener('popstate', function (event) {
+        const page = event.state ? event.state.page : 'dashboard';
         showPage(page);
     });
 }
@@ -39,7 +66,7 @@ function setupRouting() {
  */
 function setupGlobalEventListeners() {
     // 全局点击事件处理
-    document.addEventListener('click', function(event) {
+    document.addEventListener('click', function (event) {
         // 处理页面切换
         if (event.target.matches('[data-page]')) {
             const page = event.target.getAttribute('data-page');
@@ -56,22 +83,32 @@ function setupGlobalEventListeners() {
 function showPage(page) {
     const mainContent = document.getElementById('main-content');
     if (!mainContent) return;
-    
+
     // 根据页面类型加载对应内容
     switch (page) {
+        case 'dashboard':
+            loadDashboardPage(mainContent);
+            break;
+        case 'home': // Legacy fallback
+            if (typeof loadHomePage === 'function') loadHomePage(mainContent);
+            else loadDashboardPage(mainContent);
+            break;
         case 'face-swap':
             loadFaceSwapPage(mainContent);
             break;
         case 'video-generation':
-            loadVideoGenerationPage(mainContent);
+            if (window.loadVideoGenerationPage) window.loadVideoGenerationPage(mainContent);
             break;
         case 'voice-cloning':
-            loadVoiceCloningPage(mainContent);
+            if (window.loadVoiceCloningPage) window.loadVoiceCloningPage(mainContent);
+            break;
+        case 'assets':
+            if (window.loadAssetsPage) window.loadAssetsPage(mainContent);
             break;
         default:
-            loadFaceSwapPage(mainContent);
+            loadHomePage(mainContent);
     }
-    
+
     // 更新激活状态
     updateActivePage(page);
 }
@@ -85,7 +122,7 @@ function updateActivePage(page) {
     document.querySelectorAll('[data-page]').forEach(el => {
         el.classList.remove('active');
     });
-    
+
     // 添加当前页面激活状态
     const activeElement = document.querySelector(`[data-page="${page}"]`);
     if (activeElement) {
