@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魔法六芒星阵 - 手势互动 | Arcane Hexagram - Gesture Interaction</title>
+    <meta name="description" content="基于Three.js和MediaPipe的交互式魔法阵演示，支持手势识别和粒子动画">
+    <meta name="keywords" content="Three.js, MediaPipe, 手势识别, 粒子动画, 魔法阵, WebGL">
+    <meta name="author" content="Li Yuxuan">
+
+    <!-- Open Graph Meta Tags for Social Sharing -->
+    <meta property="og:title" content="魔法六芒星阵 - 手势互动">
+    <meta property="og:description" content="基于Three.js和MediaPipe的交互式魔法阵演示">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://liyuxuan.github.io/magic/">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="魔法六芒星阵 - 手势互动">
+    <meta name="twitter:description" content="基于Three.js和MediaPipe的交互式魔法阵演示">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        #video-input {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 240px;
+            height: 180px;
+            border: 2px solid #ffaa00;
+            border-radius: 10px;
+            z-index: 20;
+            transform: scaleX(-1);
+            /* 镜像显示 */
+            opacity: 0.7;
+            display: block;
+            /* 确保显示 */
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            pointer-events: none;
+            z-index: 10;
+            max-width: 40%;
+        }
+
+        h1 {
+            margin: 0;
+            text-shadow: 0 0 10px #ffaa00;
+            font-size: 2.2em;
+            margin-bottom: 15px;
+        }
+
+        .instruction {
+            font-size: 1.1em;
+            color: #aaa;
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
+        #status {
+            color: #00ff00;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        /* --- 新增：启动界面样式 --- */
+        #startOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+        }
+
+        #startBtn {
+            padding: 20px 40px;
+            font-size: 24px;
+            background: linear-gradient(45deg, #ff6b00, #ffaa00);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(255, 170, 0, 0.5);
+            transition: transform 0.2s;
+            font-family: inherit;
+        }
+
+        #startBtn:hover {
+            transform: scale(1.05);
+        }
+
+        #startBtn:active {
+            transform: scale(0.95);
+        }
+
+        #startOverlay p {
+            color: #aaa;
+            margin-top: 20px;
+            text-align: center;
+            max-width: 80%;
+            line-height: 1.5;
+        }
+
+        /* GitHub Pages Footer */
+        .footer {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9em;
+            z-index: 10;
+        }
+
+        .footer a {
+            color: #ffaa00;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            #ui-layer {
+                max-width: 90%;
+                font-size: 0.9em;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            #video-input {
+                width: 160px;
+                height: 120px;
+                top: 10px;
+                right: 10px;
+            }
+
+            .footer {
+                font-size: 0.8em;
+                bottom: 10px;
+                right: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- --- 新增：启动界面 --- -->
+    <div id="startOverlay">
+        <button id="startBtn">启动魔法阵</button>
+        <p>点击按钮以允许摄像头访问<br>Click the button to allow camera access</p>
+    </div>
+
+    <div id="ui-layer">
+        <h1>Arcane Hexagram</h1>
+        <div class="instruction">当前状态: <span id="status">等待启动...</span></div>
+        <div class="instruction">1. 张开手掌 -> 握拳: <b>聚能坍缩</b></div>
+        <div class="instruction">2. 保持握拳 -> 张开: <b>释放法阵</b></div>
+        <div class="instruction">3. 双手拉开: <b>高阶魔法阵</b></div>
+        <div class="instruction" style="margin-top: 20px; font-size: 0.9em; color: #888;">
+            English:<br>
+            1. Open palm → Fist: Energy Collapse<br>
+            2. Hold fist → Open: Release Formation<br>
+            3. Pull hands apart: Advanced Formation
+        </div>
+    </div>
+
+    <video id="video-input"></video>
+    <div id="container"></div>
+
+    <div class="footer">
+        <a href="https://github.com/LiYuxuan/magic" target="_blank">View on GitHub</a>
+    </div>
+
+    <script>
+        // --- 状态定义 ---
+        const STATE_SPHERE = 0;      // 初始橙色球体
+        const STATE_COLLAPSING = 1;  // 正在坍缩/奇点蓄力
+        const STATE_EXPLODING = 2;   // 正在爆开
+        const STATE_HEXAGRAM = 3;    // 六芒星阵
+        const STATE_COMPLEX_CIRCLE = 4; // 复杂魔法阵 (图片同款)
+
+        let currentState = STATE_SPHERE;
+        let animationProgress = 0;
+        let time = 0;
+        let expansionProgress = 0; // 新增：法阵展开进度
+
+        // --- Three.js 变量 ---
+        let scene, camera, renderer;
+        let particleSystem;
+        const PARTICLE_COUNT = 45000; // 增加粒子数以支持更多细节
+
+        // 粒子数据
+        const positions = new Float32Array(PARTICLE_COUNT * 3);
+        const targetPositions = new Float32Array(PARTICLE_COUNT * 3);
+        const colors = new Float32Array(PARTICLE_COUNT * 3);
+        const sizes = new Float32Array(PARTICLE_COUNT);
+        // 额外属性：每个粒子的随机偏移，用于风暴效果
+        const randoms = new Float32Array(PARTICLE_COUNT * 3);
+
+        // --- 手势变量 ---
+        let isFist = false;
+        let handDetected = false;
+        let twoHandsDetected = false; // 是否检测到双手
+        let handDistance = 0; // 双手距离
+        let handLandmarks = null;
+        let pinchDistance = 0; // 两指距离
+        let indexFingerX = 0.5; // 食指X坐标 (0-1)
+
+        // --- 初始化 Three.js ---
+        function initThree() {
+            const container = document.getElementById('container');
+            scene = new THREE.Scene();
+            // scene.fog = new THREE.FogExp2(0x050505, 0.002); // 移除雾效以提高清晰度
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 3000);
+            camera.position.z = 800;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            // 初始化粒子
+            const geometry = new THREE.BufferGeometry();
+            const color = new THREE.Color();
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                // 初始位置：球体表面 + 内部填充，强调球体轮廓
+                // 使用球坐标系生成
+                const r = 300 * (Math.random() > 0.2 ? 1 : Math.cbrt(Math.random())); // 80%在表面，20%在内部
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+
+                const x = r * Math.sin(phi) * Math.cos(theta);
+                const y = r * Math.sin(phi) * Math.sin(theta);
+                const z = r * Math.cos(phi);
+
+                positions[i * 3] = x;
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = z;
+
+                // 初始颜色：深橙色/岩浆色
+                color.setHSL(0.05 + Math.random() * 0.05, 1.0, 0.5);
+                colors[i * 3] = color.r;
+                colors[i * 3 + 1] = color.g;
+                colors[i * 3 + 2] = color.b;
+
+                sizes[i] = Math.random() * 4 + 2;
+
+                // 随机向量
+                randoms[i * 3] = (Math.random() - 0.5);
+                randoms[i * 3 + 1] = (Math.random() - 0.5);
+                randoms[i * 3 + 2] = (Math.random() - 0.5);
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+            const material = new THREE.PointsMaterial({
+                size: 3, // 减小粒子尺寸以提高清晰度
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                depthTest: false,
+                transparent: true,
+                opacity: 1.0,
+                sizeAttenuation: true
+            });
+
+            particleSystem = new THREE.Points(geometry, material);
+            scene.add(particleSystem);
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- 目标生成 ---
+
+        function generateHexagramTargets() {
+            const r = 400;
+            let idx = 0;
+
+            function addLine(x1, y1, x2, y2, count) {
+                for (let i = 0; i < count; i++) {
+                    if (idx >= PARTICLE_COUNT) return;
+                    const t = Math.random();
+                    const jitter = 2;
+                    targetPositions[idx * 3] = x1 + (x2 - x1) * t + (Math.random() - 0.5) * jitter;
+                    targetPositions[idx * 3 + 1] = y1 + (y2 - y1) * t + (Math.random() - 0.5) * jitter;
+                    targetPositions[idx * 3 + 2] = (Math.random() - 0.5) * jitter;
+                    idx++;
+                }
+            }
+
+            const angles1 = [0, 120, 240].map(d => d * Math.PI / 180);
+            const angles2 = [60, 180, 300].map(d => d * Math.PI / 180);
+            const getPt = (angle) => ({ x: r * Math.sin(angle), y: r * Math.cos(angle) });
+            const pts1 = angles1.map(getPt);
+            const pts2 = angles2.map(getPt);
+
+            const particlesPerLine = Math.floor((PARTICLE_COUNT * 0.5) / 6);
+
+            for (let i = 0; i < 3; i++) {
+                const p1 = pts1[i];
+                const p2 = pts1[(i + 1) % 3];
+                addLine(p1.x, p1.y, p2.x, p2.y, particlesPerLine);
+                const p3 = pts2[i];
+                const p4 = pts2[(i + 1) % 3];
+                addLine(p3.x, p3.y, p4.x, p4.y, particlesPerLine);
+            }
+
+            const ringParticles = Math.floor(PARTICLE_COUNT * 0.3);
+            for (let i = 0; i < ringParticles; i++) {
+                if (idx >= PARTICLE_COUNT) break;
+                const theta = Math.random() * Math.PI * 2;
+                const ringR = r * 1.1;
+                targetPositions[idx * 3] = ringR * Math.cos(theta);
+                targetPositions[idx * 3 + 1] = ringR * Math.sin(theta);
+                targetPositions[idx * 3 + 2] = 0;
+                idx++;
+            }
+
+            // 剩余粒子填充
+            while (idx < PARTICLE_COUNT) {
+                const theta = Math.random() * Math.PI * 2;
+                const randR = Math.random() * r;
+                targetPositions[idx * 3] = randR * Math.cos(theta);
+                targetPositions[idx * 3 + 1] = randR * Math.sin(theta);
+                targetPositions[idx * 3 + 2] = (Math.random() - 0.5) * 20;
+                idx++;
+            }
+        }
+
+        function generateCollapseTargets() {
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                // 极高密度奇点
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                const r = Math.random() * 10;
+
+                targetPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                targetPositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                targetPositions[i * 3 + 2] = r * Math.cos(phi);
+            }
+        }
+
+        // 生成复杂魔法阵 (参照图片)
+        function generateComplexCircleTargets() {
+            let idx = 0;
+            const R_OUTER = 180; // 再次缩小尺寸，防止超出屏幕
+
+            // 辅助：画圆
+            function addCircle(cx, cy, r, count, zOffset = 0) {
+                for (let i = 0; i < count; i++) {
+                    if (idx >= PARTICLE_COUNT) return;
+                    const theta = Math.random() * Math.PI * 2;
+                    targetPositions[idx * 3] = cx + r * Math.cos(theta);
+                    targetPositions[idx * 3 + 1] = cy + r * Math.sin(theta);
+                    targetPositions[idx * 3 + 2] = zOffset;
+                    idx++;
+                }
+            }
+
+            // 辅助：画线
+            function addLine(x1, y1, x2, y2, count) {
+                for (let i = 0; i < count; i++) {
+                    if (idx >= PARTICLE_COUNT) return;
+                    const t = Math.random();
+                    targetPositions[idx * 3] = x1 + (x2 - x1) * t;
+                    targetPositions[idx * 3 + 1] = y1 + (y2 - y1) * t;
+                    targetPositions[idx * 3 + 2] = 0;
+                    idx++;
+                }
+            }
+
+            // 辅助：画多边形
+            function addPolygon(cx, cy, r, sides, count, rotationOffset = 0) {
+                const points = [];
+                for (let i = 0; i < sides; i++) {
+                    const angle = (i * 360 / sides + rotationOffset) * Math.PI / 180;
+                    points.push({ x: cx + r * Math.cos(angle), y: cy + r * Math.sin(angle) });
+                }
+                const particlesPerLine = Math.floor(count / sides);
+                for (let i = 0; i < sides; i++) {
+                    const p1 = points[i];
+                    const p2 = points[(i + 1) % sides];
+                    addLine(p1.x, p1.y, p2.x, p2.y, particlesPerLine);
+                }
+            }
+
+            // 1. 外圈大圆环 (双层)
+            addCircle(0, 0, R_OUTER, 3000);
+            addCircle(0, 0, R_OUTER * 0.95, 2000);
+
+            // 2. 5个卫星圆 (位于外圈上) + 内部三角形
+            for (let i = 0; i < 5; i++) {
+                const angle = (i * 72 - 18) * Math.PI / 180; // -18度修正让顶点朝上
+                const cx = R_OUTER * Math.cos(angle);
+                const cy = R_OUTER * Math.sin(angle);
+                const r_small = 30; // 缩小
+
+                // 小圆
+                addCircle(cx, cy, r_small, 600);
+                // 内部三角形
+                addPolygon(cx, cy, r_small * 0.8, 3, 400, -90);
+            }
+
+            // 3. 中心六芒星
+            const r_hex = R_OUTER * 0.6;
+            addPolygon(0, 0, r_hex, 3, 1500, 30);
+            addPolygon(0, 0, r_hex, 3, 1500, 90);
+
+            // 4. 符文带
+            const r_rune = R_OUTER * 0.75;
+            const runeCount = 3000;
+            for (let i = 0; i < runeCount; i++) {
+                if (idx >= PARTICLE_COUNT) break;
+                const theta = Math.random() * Math.PI * 2;
+                const r_offset = (Math.random() - 0.5) * 20;
+                const x = (r_rune + r_offset) * Math.cos(theta);
+                const y = (r_rune + r_offset) * Math.sin(theta);
+                targetPositions[idx * 3] = x;
+                targetPositions[idx * 3 + 1] = y;
+                targetPositions[idx * 3 + 2] = 0;
+                idx++;
+            }
+
+            // 5. 中心装饰圆
+            addCircle(0, 0, R_OUTER * 0.2, 600);
+
+            // 5.5 中央古文字 (Ancient Runes) - 模拟古老符文
+            const R_TEXT = 100;
+            const CHAR_COUNT = 8;
+            const CHAR_SIZE = 22;
+
+            for (let i = 0; i < CHAR_COUNT; i++) {
+                const angle = (i * 360 / CHAR_COUNT) * Math.PI / 180;
+                const cx = R_TEXT * Math.cos(angle);
+                const cy = R_TEXT * Math.sin(angle);
+
+                // 模拟文字：生成随机的笔画
+                // 每个文字由 3-4 条线段组成，形成类似符文的结构
+                const strokes = 3 + Math.floor(Math.random() * 2);
+                for (let s = 0; s < strokes; s++) {
+                    // 随机起始点和终点，限制在字符方块内
+                    // 为了让文字看起来更有结构感，我们可以限制坐标在简单的网格上
+                    const x1 = cx + (Math.floor(Math.random() * 3) - 1) * CHAR_SIZE * 0.4;
+                    const y1 = cy + (Math.floor(Math.random() * 3) - 1) * CHAR_SIZE * 0.4;
+                    const x2 = cx + (Math.floor(Math.random() * 3) - 1) * CHAR_SIZE * 0.4;
+                    const y2 = cy + (Math.floor(Math.random() * 3) - 1) * CHAR_SIZE * 0.4;
+
+                    if (x1 !== x2 || y1 !== y2) {
+                        addLine(x1, y1, x2, y2, 40);
+                    }
+                }
+            }
+
+            // --- 新增部分 ---
+
+            // 6. 五个围绕的子法阵 (Sub-Magic Circles) - 插空放置
+            const R_SUB = 280;
+            for (let i = 0; i < 5; i++) { // 改为5个
+                // 插空：i*72 + 18 (原卫星圆是 i*72 - 18，差36度)
+                const angle = (i * 72 + 18) * Math.PI / 180;
+                const cx = R_SUB * Math.cos(angle);
+                const cy = R_SUB * Math.sin(angle);
+
+                // 子法阵外圈
+                addCircle(cx, cy, 40, 800);
+                // 子法阵六芒星
+                addPolygon(cx, cy, 25, 3, 300, i * 72);
+                addPolygon(cx, cy, 25, 3, 300, i * 72 + 60);
+            }
+
+            // 6.5 散落粒子 (Scattered Particles)
+            const scatterCount = 2000;
+            for (let i = 0; i < scatterCount; i++) {
+                if (idx >= PARTICLE_COUNT) break;
+                const theta = Math.random() * Math.PI * 2;
+                // 分布在法阵(180)和星云(350)之间
+                const r = 180 + Math.random() * 170;
+                targetPositions[idx * 3] = r * Math.cos(theta);
+                targetPositions[idx * 3 + 1] = r * Math.sin(theta);
+                targetPositions[idx * 3 + 2] = (Math.random() - 0.5) * 50; // 较分散的Z轴
+                idx++;
+            }
+
+            // 7. 能量连接与星云 (Energy Connections & Nebula)
+
+            // A. 连接光束：主法阵 -> 子法阵 (5条)
+            for (let i = 0; i < 5; i++) {
+                const angle = (i * 72 + 18) * Math.PI / 180;
+                const x1 = R_OUTER * Math.cos(angle);
+                const y1 = R_OUTER * Math.sin(angle);
+                const x2 = R_SUB * Math.cos(angle);
+                const y2 = R_SUB * Math.sin(angle);
+
+                addLine(x1, y1, x2, y2, 150);
+            }
+
+            // B. 螺旋星云带 -> 最终汇聚成闭合光环
+            const R_START = 280;
+            const R_RING = 420;
+
+            while (idx < PARTICLE_COUNT) {
+                // 混合生成：旋臂 + 外环
+                const isRing = Math.random() > 0.4; // 60% 粒子在环上
+
+                let r, theta, z;
+
+                if (isRing) {
+                    // 外层闭合光环
+                    const ringWidth = 40;
+                    // 高斯分布式的随机半径，让环边缘柔和
+                    const rnd = (Math.random() + Math.random() + Math.random()) / 3 - 0.5;
+                    r = R_RING + rnd * ringWidth * 2;
+                    theta = Math.random() * Math.PI * 2;
+                    z = (Math.random() - 0.5) * 15;
+                } else {
+                    // 连接旋臂：从5个子法阵延伸并融入外环
+                    const armIndex = Math.floor(Math.random() * 5);
+                    const armAngleBase = (armIndex * 72 + 18) * Math.PI / 180;
+
+                    const t = Math.random(); // 0 -> 1
+                    r = R_START + t * (R_RING - R_START);
+
+                    // 螺旋弯曲，使其切向汇入外环
+                    const angleOffset = t * 0.6;
+                    const width = 0.15 + t * 0.2;
+
+                    theta = armAngleBase + angleOffset + (Math.random() - 0.5) * width;
+                    z = (Math.random() - 0.5) * 20;
+                }
+
+                targetPositions[idx * 3] = r * Math.cos(theta);
+                targetPositions[idx * 3 + 1] = r * Math.sin(theta);
+                targetPositions[idx * 3 + 2] = z;
+                idx++;
+            }
+        }
+
+        // --- 重置功能 ---
+        function resetToSphere() {
+            currentState = STATE_SPHERE;
+            particleSystem.rotation.set(0, 0, 0);
+            particleSystem.scale.setScalar(1.0);
+
+            const color = new THREE.Color();
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                // 重置位置
+                const r = 300 * (Math.random() > 0.2 ? 1 : Math.cbrt(Math.random()));
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+
+                positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                positions[i * 3 + 2] = r * Math.cos(phi);
+
+                // 重置颜色
+                color.setHSL(0.05 + Math.random() * 0.05, 1.0, 0.5);
+                colors[i * 3] = color.r;
+                colors[i * 3 + 1] = color.g;
+                colors[i * 3 + 2] = color.b;
+            }
+
+            document.getElementById('status').innerText = "系统重置 - 初始状态";
+            document.getElementById('status').style.color = "#00ff00";
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'r' || e.key === 'R') {
+                resetToSphere();
+            }
+        });
+
+        // --- 动画循环 ---
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.05;
+
+            const positionsAttr = particleSystem.geometry.attributes.position;
+            const colorsAttr = particleSystem.geometry.attributes.color;
+            const currentPositions = positionsAttr.array;
+            const currentColors = colorsAttr.array;
+
+            // --- 状态机 ---
+
+            if (currentState === STATE_SPHERE) {
+                // 3D球体状态
+                // 交互：单指左右移动旋转
+                if (handDetected) {
+                    // 映射 indexFingerX (0-1) 到旋转速度
+                    const targetRotationY = (indexFingerX - 0.5) * 0.2;
+                    particleSystem.rotation.y += targetRotationY;
+                } else {
+                    particleSystem.rotation.y += 0.005; // 自动慢速旋转
+                }
+
+                // 粒子在球面上轻微浮动，增强3D感
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    // 简单的呼吸效果
+                    const scale = 1 + Math.sin(time + positions[i * 3] * 0.01) * 0.002;
+                    currentPositions[i * 3] *= scale;
+                    currentPositions[i * 3 + 1] *= scale;
+                    currentPositions[i * 3 + 2] *= scale;
+                }
+
+                if (isFist && handDetected) {
+                    currentState = STATE_COLLAPSING;
+                    generateCollapseTargets();
+                    document.getElementById('status').innerText = "奇点坍缩 - 能量积蓄";
+                    document.getElementById('status').style.color = "#ff0000";
+                }
+
+            } else if (currentState === STATE_COLLAPSING) {
+                // 坍缩 + 奇点风暴
+                const speed = 0.15;
+
+                // 颜色循环：橙 -> 红 -> 白金
+                // 使用 time 变量生成循环颜色
+                const cycle = (Math.sin(time * 0.5) + 1) / 2; // 0 - 1
+                let r, g, b;
+
+                if (cycle < 0.33) { // 橙
+                    r = 1.0; g = 0.5; b = 0.0;
+                } else if (cycle < 0.66) { // 红
+                    r = 1.0; g = 0.0; b = 0.0;
+                } else { // 白金
+                    r = 1.0; g = 0.9; b = 0.6;
+                }
+
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    // 1. 向中心坍缩
+                    currentPositions[i * 3] += (targetPositions[i * 3] - currentPositions[i * 3]) * speed;
+                    currentPositions[i * 3 + 1] += (targetPositions[i * 3 + 1] - currentPositions[i * 3 + 1]) * speed;
+                    currentPositions[i * 3 + 2] += (targetPositions[i * 3 + 2] - currentPositions[i * 3 + 2]) * speed;
+
+                    // 2. 太阳风暴效果：部分粒子被抛射
+                    if (Math.random() < 0.05) { // 5%的粒子处于风暴状态
+                        const stormScale = 100 + Math.random() * 100;
+                        currentPositions[i * 3] += randoms[i * 3] * stormScale;
+                        currentPositions[i * 3 + 1] += randoms[i * 3 + 1] * stormScale;
+                        currentPositions[i * 3 + 2] += randoms[i * 3 + 2] * stormScale;
+                    }
+
+                    // 3. 颜色更新 (平滑过渡)
+                    currentColors[i * 3] += (r - currentColors[i * 3]) * 0.1;
+                    currentColors[i * 3 + 1] += (g - currentColors[i * 3 + 1]) * 0.1;
+                    currentColors[i * 3 + 2] += (b - currentColors[i * 3 + 2]) * 0.1;
+                }
+
+                // 交互：张开手掌 -> 爆发
+                if (!isFist && handDetected) {
+                    currentState = STATE_EXPLODING;
+                    generateHexagramTargets();
+                    animationProgress = 0;
+                    // 重置旋转，让魔法阵正对屏幕
+                    particleSystem.rotation.set(0, 0, 0);
+                    document.getElementById('status').innerText = "魔法阵展开";
+                    document.getElementById('status').style.color = "#ffaa00";
+                }
+
+            } else if (currentState === STATE_EXPLODING) {
+                animationProgress += 0.03;
+                const speed = 0.1;
+
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    currentPositions[i * 3] += (targetPositions[i * 3] - currentPositions[i * 3]) * speed;
+                    currentPositions[i * 3 + 1] += (targetPositions[i * 3 + 1] - currentPositions[i * 3 + 1]) * speed;
+                    currentPositions[i * 3 + 2] += (targetPositions[i * 3 + 2] - currentPositions[i * 3 + 2]) * speed;
+
+                    // 颜色过渡到橙红色
+                    currentColors[i * 3] += (1.0 - currentColors[i * 3]) * 0.05;
+                    currentColors[i * 3 + 1] += (0.3 - currentColors[i * 3 + 1]) * 0.05;
+                    currentColors[i * 3 + 2] += (0.0 - currentColors[i * 3 + 2]) * 0.05;
+                }
+
+                // 爆发时快速旋转
+                particleSystem.rotation.z += 0.1;
+
+                if (animationProgress > 1.5) {
+                    currentState = STATE_HEXAGRAM;
+                    document.getElementById('status').innerText = "魔法阵激活 - 双指缩放/单指旋转";
+                }
+
+            } else if (currentState === STATE_HEXAGRAM) {
+                // 颜色变换：更有层次感的旋转渐变
+                const tempColor = new THREE.Color();
+
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    // 粒子微动
+                    const px = currentPositions[i * 3];
+                    const py = currentPositions[i * 3 + 1];
+
+                    currentPositions[i * 3] += (Math.random() - 0.5) * 2;
+                    currentPositions[i * 3 + 1] += (Math.random() - 0.5) * 2;
+
+                    // 计算极坐标
+                    const angle = Math.atan2(py, px);
+                    const dist = Math.sqrt(px * px + py * py);
+
+                    // 复合波形生成颜色：
+                    // 1. 旋转波 - 速度减慢 - 森严感
+                    // 2. 径向波 - 增加层次感
+                    // 3. 螺旋因子
+
+                    // Hue: 0.0(红) ~ 0.12(金橙)
+                    const wave = Math.sin(angle * 3 + dist * 0.005 - time * 0.1);
+                    const hue = 0.06 + 0.06 * wave;
+
+                    // 亮度也随距离变化，中心更亮，增加立体感
+                    const lightness = 0.6 + 0.2 * Math.sin(dist * 0.01 - time * 0.1);
+
+                    tempColor.setHSL(hue, 1.0, lightness);
+
+                    // 颜色更新 (Lerp)
+                    currentColors[i * 3] += (tempColor.r - currentColors[i * 3]) * 0.05;
+                    currentColors[i * 3 + 1] += (tempColor.g - currentColors[i * 3 + 1]) * 0.05;
+                    currentColors[i * 3 + 2] += (tempColor.b - currentColors[i * 3 + 2]) * 0.05;
+                }
+
+                // --- 交互 ---
+                if (handDetected) {
+                    // 1. 旋转 (单指左右)
+                    const rotationSpeed = (indexFingerX - 0.5) * 0.15;
+                    particleSystem.rotation.z += rotationSpeed;
+
+                    // 2. 缩放 (两指距离)
+                    let targetScale = 1.0;
+                    if (pinchDistance > 0.02) {
+                        targetScale = 0.5 + (pinchDistance * 5);
+                    }
+
+                    // 平滑缩放
+                    particleSystem.scale.setScalar(
+                        particleSystem.scale.x + (targetScale - particleSystem.scale.x) * 0.1
+                    );
+                } else {
+                    particleSystem.rotation.z += 0.005;
+                }
+
+                // 检测双手拉开 -> 变为复杂魔法阵
+                if (twoHandsDetected && handDistance > 0.5) {
+                    currentState = STATE_COMPLEX_CIRCLE;
+                    generateComplexCircleTargets();
+                    document.getElementById('status').innerText = "高阶魔法阵 - 激活";
+                    document.getElementById('status').style.color = "#00ffff";
+                }
+
+            } else if (currentState === STATE_COMPLEX_CIRCLE) {
+                // 复杂魔法阵状态
+
+                // --- 交互：双手/手指控制展开 ---
+                let targetExpansion = 1.0;
+
+                if (twoHandsDetected) {
+                    targetExpansion = Math.max(0, Math.min(1, (handDistance - 0.1) * 2.5));
+                } else if (handDetected) {
+                    targetExpansion = Math.max(0, Math.min(1, (pinchDistance - 0.02) * 8.0));
+                }
+
+                expansionProgress += (targetExpansion - expansionProgress) * 0.03;
+
+                // --- 交互：旋转控制 ---
+                if (handDetected) {
+                    const rotationSpeed = (indexFingerX - 0.5) * 0.15;
+                    particleSystem.rotation.z += rotationSpeed;
+                } else {
+                    particleSystem.rotation.z -= 0.002; // 自动旋转
+                }
+
+                // 1. 移动动画 (基于展开进度)
+                const maxRadius = 500;
+                const currentVisibleRadius = maxRadius * expansionProgress;
+
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    const tx = targetPositions[i * 3];
+                    const ty = targetPositions[i * 3 + 1];
+                    const tz = targetPositions[i * 3 + 2];
+
+                    const distToCenter = Math.sqrt(tx * tx + ty * ty);
+
+                    let activeTargetX, activeTargetY, activeTargetZ;
+
+                    if (distToCenter < currentVisibleRadius) {
+                        activeTargetX = tx;
+                        activeTargetY = ty;
+                        activeTargetZ = tz;
+                    } else {
+                        activeTargetX = 0;
+                        activeTargetY = 0;
+                        activeTargetZ = 0;
+                    }
+
+                    currentPositions[i * 3] += (activeTargetX - currentPositions[i * 3]) * 0.05;
+                    currentPositions[i * 3 + 1] += (activeTargetY - currentPositions[i * 3 + 1]) * 0.05;
+                    currentPositions[i * 3 + 2] += (activeTargetZ - currentPositions[i * 3 + 2]) * 0.05;
+
+                    // 2. 颜色变换：旋转渐变 (青 -> 蓝 -> 紫)
+                    const px = currentPositions[i * 3];
+                    const py = currentPositions[i * 3 + 1];
+
+                    const angle = Math.atan2(py, px);
+                    const dist = Math.sqrt(px * px + py * py);
+
+                    const wave = Math.sin(angle * 5 + dist * 0.01 - time * 0.1);
+                    const hue = 0.6 + 0.1 * wave;
+                    const lightness = 0.6 + 0.3 * Math.sin(dist * 0.02 - time * 0.1);
+
+                    const tempColor = new THREE.Color().setHSL(hue, 1.0, lightness);
+
+                    if (distToCenter > currentVisibleRadius) {
+                        tempColor.multiplyScalar(0);
+                    }
+
+                    currentColors[i * 3] += (tempColor.r - currentColors[i * 3]) * 0.1;
+                    currentColors[i * 3 + 1] += (tempColor.g - currentColors[i * 3 + 1]) * 0.1;
+                    currentColors[i * 3 + 2] += (tempColor.b - currentColors[i * 3 + 2]) * 0.1;
+                }
+
+                particleSystem.rotation.z -= 0.002;
+            }
+
+            positionsAttr.needsUpdate = true;
+            colorsAttr.needsUpdate = true;
+            renderer.render(scene, camera);
+        }
+
+        // --- MediaPipe Hands ---
+        const videoElement = document.getElementById('video-input');
+
+        function onResults(results) {
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                handDetected = true;
+                handLandmarks = results.multiHandLandmarks[0];
+
+                if (results.multiHandLandmarks.length === 2) {
+                    twoHandsDetected = true;
+                    const hand1 = results.multiHandLandmarks[0][0];
+                    const hand2 = results.multiHandLandmarks[1][0];
+                    handDistance = Math.hypot(hand1.x - hand2.x, hand1.y - hand2.y);
+                } else {
+                    twoHandsDetected = false;
+                }
+
+                const wrist = handLandmarks[0];
+                const indexTip = handLandmarks[8];
+                const thumbTip = handLandmarks[4];
+
+                indexFingerX = 1 - indexTip.x;
+                pinchDistance = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y);
+
+                const tips = [8, 12, 16, 20];
+                let avgDist = 0;
+                tips.forEach(idx => {
+                    const tip = handLandmarks[idx];
+                    const dist = Math.hypot(tip.x - wrist.x, tip.y - wrist.y);
+                    avgDist += dist;
+                });
+                avgDist /= 4;
+
+                isFist = avgDist < 0.25;
+
+            } else {
+                handDetected = false;
+                twoHandsDetected = false;
+                isFist = false;
+            }
+        }
+
+        const hands = new Hands({
+            locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+            }
+        });
+
+        hands.setOptions({
+            maxNumHands: 2,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        hands.onResults(onResults);
+
+        const cameraUtils = new Camera(videoElement, {
+            onFrame: async () => {
+                await hands.send({ image: videoElement });
+            },
+            width: 640,
+            height: 480
+        });
+
+        // --- 修复部分：将摄像头启动逻辑绑定到按钮点击事件 ---
+        document.getElementById('startBtn').addEventListener('click', async () => {
+            const startOverlay = document.getElementById('startOverlay');
+            const statusEl = document.getElementById('status');
+
+            try {
+                // 1. 先尝试请求一次权限，确保弹窗出现
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                // 立即停止这个流，我们只是需要权限
+                stream.getTracks().forEach(track => track.stop());
+
+                // 2. 启动MediaPipe的摄像头
+                await cameraUtils.start();
+
+                // 3. 隐藏启动界面
+                startOverlay.style.display = 'none';
+                statusEl.innerText = "初始化... 请将手放入画面";
+                statusEl.style.color = "#00ff00";
+
+            } catch (err) {
+                console.error('摄像头启动失败:', err);
+                statusEl.innerText = "摄像头权限被拒绝，请检查浏览器设置";
+                statusEl.style.color = "#ff0000";
+                // 可以选择性地显示一个提示，而不是完全隐藏按钮
+                startOverlay.querySelector('p').innerText = '错误：无法访问摄像头。请刷新页面重试。';
+            }
+        });
+
+        // --- 初始化Three.js和动画循环 ---
+        // 注意：不再自动启动摄像头
+        initThree();
+        animate();
+
+    </script>
+</body>
+
+</html>

@@ -82,6 +82,7 @@ export const readAudioFile = async (fileName) => {
 
 // Legacy / Window Attachment for Renderer
 if (typeof window !== 'undefined') {
+    // In Web-Only mode, we ALWAYS use this adapter.
     window.electronAPI = {
         generateImage,
         editImage,

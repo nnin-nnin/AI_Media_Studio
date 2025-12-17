@@ -353,10 +353,34 @@ function setupVideoGenerationEventListeners() {
                             Your browser does not support video.
                         </video>
                         <div style="margin-top:1.5rem; display:flex; gap:12px;">
+                             <button class="secondary-btn" id="btn-save-assets">Save to Assets</button>
                              <button class="secondary-btn" id="btn-download-video">Download</button>
                         </div>
                     </div>
                 `;
+
+                // Auto-Save to Assets
+                try {
+                    window.AssetManager.add({
+                        type: 'video',
+                        url: result.video_url,
+                        prompt: prompt || "Generated Video",
+                        metadata: { duration, model: "doubao-video", ratio: activeRatio }
+                    });
+                    console.log("Video auto-saved to assets");
+                    // No sidebar in this view to refresh, but GlobalSidebar will pick it up
+                } catch (err) {
+                    console.error("Auto-save failed:", err);
+                }
+
+                // Update Save Button Visual
+                setTimeout(() => {
+                    const saveBtn = document.getElementById('btn-save-assets');
+                    if (saveBtn) {
+                        saveBtn.innerHTML = "Saved ✓";
+                        saveBtn.disabled = true;
+                    }
+                }, 500);
 
                 document.getElementById('btn-download-video')?.addEventListener('click', () => {
                     const a = document.createElement('a');

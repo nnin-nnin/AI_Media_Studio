@@ -2,48 +2,24 @@
   "name": "ai-course",
   "version": "1.0.0",
   "description": "AI多媒体课程项目",
-  "main": "src/main/main.js",
+  "main": "src/server/server.js",
   "type": "module",
   "author": "Damian Yu",
-  "build": {
-    "appId": "com.example.myapp",
-    "productName": "AICourse",
-    "copyright": "Copyright © 2025 Damian Yu",
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "src/**/*",
-      "package.json"
-    ],
-    "mac": {
-      "target": "dmg"
-    },
-    "win": {
-      "target": "nsis"
-    },
-    "linux": {
-      "target": "AppImage"
-    }
-  },
   "scripts": {
     "start": "node src/server/server.js",
-    "start:electron": "electron .",
-    "build": "electron-builder"
+    "debug": "export DEBUG=true && echo 'Starting in DEBUG MODE...' && node src/server/server.js"
   },
   "license": "MIT",
-  "devDependencies": {
-    "electron": "^39.0.0",
-    "electron-builder": "^26.0.12",
-    "electron-reload": "^2.0.0-alpha.1"
-  },
+  "devDependencies": {},
   "dependencies": {
+    "@mediapipe/camera_utils": "^0.3.1675466862",
+    "@mediapipe/drawing_utils": "^0.3.1675466124",
+    "@mediapipe/hands": "^0.4.1675469240",
     "axios": "^1.0.0",
     "body-parser": "^2.2.1",
-    "chokidar": "^4.0.3",
     "cors": "^2.8.5",
-    "electron-squirrel-startup": "^1.0.1",
     "express": "^5.2.1",
-    "openai": "^4.0.0"
+    "openai": "^4.0.0",
+    "three": "^0.182.0"
   }
 }

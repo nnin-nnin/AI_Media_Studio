@@ -152,7 +152,7 @@ class AIService {
 
       // 检查Python脚本是否存在
       if (!fs.existsSync(scriptPath)) {
-        throw new Error('声音克隆脚本不存在');
+        throw new Error('声音克隆脚本不存在: ' + scriptPath);
       }
 
       // 使用虚拟环境中的Python
@@ -213,6 +213,7 @@ class AIService {
     if (dataUrl.startsWith('data:audio/wav')) return 'wav';
     if (dataUrl.startsWith('data:audio/mp3')) return 'mp3';
     if (dataUrl.startsWith('data:audio/mpeg')) return 'mp3';
+    if (dataUrl.startsWith('data:audio/webm')) return 'webm';
     return 'wav'; // 默认
   }
 

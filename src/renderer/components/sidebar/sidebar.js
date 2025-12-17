@@ -2,10 +2,19 @@
  * Global Sidebar Component (Studio Core Layout)
  * Zones: A (Hub), B (Engines), C (Sessions)
  */
+/**
+ * Global Sidebar Component (Studio Core Layout)
+ * Zones: A (Hub), B (Engines), C (Sessions)
+ */
 class GlobalSidebar {
     constructor() {
         this.activeItem = 'dashboard';
         this.isCollapsed = false;
+
+        // Listen for asset updates to refresh "Recent Work"
+        window.addEventListener('assets-updated', () => {
+            this.redraw();
+        });
     }
 
     toggle() {
@@ -16,8 +25,37 @@ class GlobalSidebar {
         }
     }
 
+    redraw() {
+        const sidebarContainer = document.getElementById('app-sidebar');
+        if (sidebarContainer) {
+            sidebarContainer.innerHTML = this.render(this.activeItem);
+        }
+    }
+
     render(activeItem = 'dashboard') {
         this.activeItem = activeItem;
+
+        // Fetch Recent Assets (Top 5)
+        const recentAssets = window.AssetManager ? window.AssetManager.getRecent('all', 5) : [];
+
+        let recentWorkHTML = '';
+        if (recentAssets.length > 0) {
+            recentWorkHTML = recentAssets.map(asset => {
+                let targetPage = 'assets';
+                let icon = 'folder';
+
+                // Map type to studio page
+                if (asset.type === 'image') { targetPage = 'face-swap'; icon = 'image'; }
+                else if (asset.type === 'video') { targetPage = 'video-generation'; icon = 'video'; }
+                else if (asset.type === 'audio') { targetPage = 'voice-cloning'; icon = 'mic'; }
+
+                // Use prompt or ID as label
+                const label = asset.prompt || `Asset ${asset.id.substring(0, 4)}`;
+                return this.renderSessionItem(label, icon, targetPage); // Can we pass asset ID? For now just nav.
+            }).join('');
+        } else {
+            recentWorkHTML = `<div class="session-item" style="cursor:default; opacity:0.5; padding-left:14px;">No recent work</div>`;
+        }
 
         // Define navigation structure
         return `
@@ -52,12 +90,10 @@ class GlobalSidebar {
 
                 <div class="nav-divider"></div>
 
-                <!-- Zone C: RECENT SESSIONS (Mockup) -->
+                <!-- Zone C: RECENT WORK (Dynamic) -->
                 <div class="sidebar-group-label">RECENT WORK</div>
                 <div class="session-list">
-                     ${this.renderSessionItem('Cyberpunk City', 'image', 'face-swap')}
-                     ${this.renderSessionItem('Rainy Day Vibe', 'video', 'video-generation')}
-                     ${this.renderSessionItem('Podcast Intro', 'mic', 'voice-cloning')}
+                     ${recentWorkHTML}
                 </div>
             </div>
 
@@ -90,7 +126,7 @@ class GlobalSidebar {
         return `
             <div class="session-item" onclick="window.app.navigate('${targetPage}')">
                 ${icon}
-                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${label}</span>
+                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${label}">${label}</span>
             </div>
         `;
     }

@@ -123,10 +123,17 @@
     resize: none;
     font-family: inherit;
     font-size: 15px;
-    color: var(--text-primary);
+    color: #000000;
+    /* Pure black for maximum contrast */
+    font-weight: 500;
     background: transparent;
     min-height: 80px;
     line-height: 1.5;
+}
+
+.vg-textarea:focus {
+    background: transparent;
+    color: #000000;
 }
 
 .vg-textarea::placeholder {

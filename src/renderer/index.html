@@ -6,10 +6,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Media Studio</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="components/login/login.css">
+
+    <!-- Import Map for Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+    <!-- MediaPipe Globals -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
-    <div id="app" class="app-layout">
+    <!-- Login Portal Overlay (Reference Style) -->
+    <div id="login-portal">
+        <canvas id="magic-canvas"></canvas>
+
+        <!-- Video Input (Top Right) -->
+        <video id="video-input" playsinline></video>
+
+        <!-- UI Layer (Top Left) -->
+        <div id="ui-layer">
+            <h1 class="magic-title">魔法六芒星阵 - 手势互动</h1>
+            <div class="instruction">
+                <p>1. <b>双拳握紧 (Fist)</b>：凝聚能量 (各类风暴)</p>
+                <p>2. <b>双手张开 (Open Hands)</b>：释放法阵 (召唤六芒星)</p>
+                <p>3. <b>双手拉开距离</b>：展开高阶阵列 (Complex Matrix)</p>
+            </div>
+            <div id="status">系统初始化...</div>
+        </div>
+    </div>
+
+    <div id="app" class="app-layout" style="display:none;"> <!-- Hidden initially -->
         <!-- 全局侧边栏容器 -->
         <aside id="app-sidebar"></aside>
 
@@ -35,13 +71,52 @@
     <script src="pages/assets/assets.js"></script>
 
     <!-- Components -->
-    <script src="./components/toast.js"></script>
+    <!-- Components -->
+    <script type="module" src="./components/toast.js"></script>
     <script src="./components/sidebar/sidebar.js"></script>
 
     <!-- Utilities & Core -->
-    <script src="utils/web-api.js"></script>
+    <script type="module" src="utils/web-api.js"></script>
     <script src="utils/asset-manager.js"></script>
     <script src="app.js"></script>
+
+    <!-- Login Initialization -->
+    <script type="module">
+        import { LoginManager } from './components/login/login-manager.js';
+
+        // Initialize App Function
+        const unlockApp = () => {
+            const app = document.getElementById('app');
+            console.log("System Unlocked");
+            app.style.display = 'flex'; // Reveal App
+            app.classList.add('fade-in');
+
+            // Trigger any app init if needed
+            if (window.AssetManager) window.AssetManager.refresh();
+        };
+
+        // Authentication "Middleware" Selection
+        // Scheme 1: Check Server Configuration to decide Auth Strategy
+        fetch('/api/config')
+            .then(res => res.json())
+            .then(config => {
+                if (config.debugMode === true) {
+                    // Strategy A: Mock Auth (Debug Mode)
+                    console.log("[Auth] Debug Environment Detected. Swapping to Mock Authentication.");
+                    document.getElementById('login-portal').style.display = 'none';
+                    unlockApp();
+                } else {
+                    // Strategy B: Real Auth (Production Mode)
+                    console.log("[Auth] Production Environment. enabling Biometric Lock.");
+                    new LoginManager('login-portal', unlockApp);
+                }
+            })
+            .catch(err => {
+                // Default to Secure if config fails
+                console.error("[Auth] Config check failed. Defaulting to Secure Mode.", err);
+                new LoginManager('login-portal', unlockApp);
+            });
+    </script>
 </body>
 
 </html>

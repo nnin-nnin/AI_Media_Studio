@@ -273,12 +273,12 @@ function setupFaceSwapEventListeners() {
             // Get Parameters
             const activeRatio = document.querySelector('.ratio-option.active')?.dataset.ratio || "1:1";
 
-            // Map Ratio to Size
+            // Map Ratio to Size (Must be >= 921,600 pixels)
             let width = 1024, height = 1024;
-            if (activeRatio === '16:9') { width = 1024; height = 576; }
-            if (activeRatio === '4:3') { width = 1024; height = 768; }
-            if (activeRatio === '3:4') { width = 768; height = 1024; }
-            if (activeRatio === '9:16') { width = 576; height = 1024; }
+            if (activeRatio === '16:9') { width = 1280; height = 720; }
+            if (activeRatio === '4:3') { width = 1280; height = 960; }
+            if (activeRatio === '3:4') { width = 960; height = 1280; }
+            if (activeRatio === '9:16') { width = 720; height = 1280; }
 
             const resBox = document.querySelector('.result-preview');
             resBox.innerHTML = `
@@ -413,8 +413,11 @@ function setupFaceSwapEventListeners() {
     // Initial render
     renderAssetsTab();
 
+    // Force refresh to ensure data is consistent (fixes race condition or stale data)
+    window.AssetManager.refresh();
+
     // Listen for global asset updates
-    window.addEventListener('assets-updated', () => {
-        renderAssetsTab();
-    });
+    const updateHandler = () => renderAssetsTab();
+    window.removeEventListener('assets-updated', updateHandler); // Attempt cleanup (not effective with anon function previously, but good practice going forward if we lift this)
+    window.addEventListener('assets-updated', updateHandler);
 }

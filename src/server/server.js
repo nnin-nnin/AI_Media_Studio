@@ -8,7 +8,7 @@ import fs from 'fs';
 import bodyParser from 'body-parser';
 
 // Import AI Service (reusing existing logic)
-import AIService from '../main/ai/ai-service.js';
+import AIService from './ai/ai-service.js';
 import AssetStore from './asset-store.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,6 +29,13 @@ app.use(express.static(rendererPath));
 // Static files (Uploads)
 const uploadsPath = path.join(__dirname, '..', '..', 'data', 'uploads');
 app.use('/uploads', express.static(uploadsPath));
+
+// --- System Config ---
+app.get('/api/config', (req, res) => {
+    res.json({
+        debugMode: process.env.DEBUG === 'true'
+    });
+});
 
 
 // --- Asset Routes ---
