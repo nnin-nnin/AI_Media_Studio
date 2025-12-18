@@ -90,6 +90,20 @@ export class MagicCircle {
         this.setVisible(true);
     }
 
+    reset() {
+        this.currentState = 0; // SPHERE
+        this.expansionProgress = 0;
+        this.animationProgress = 0;
+        this.particleSystem.scale.setScalar(1);
+        this.particleSystem.rotation.set(0, 0, 0);
+        // Reset positions to original sphere positions
+        const positions = this.particleSystem.geometry.attributes.position.array;
+        for (let i = 0; i < this.particleCount * 3; i++) {
+            positions[i] = this.positions[i];
+        }
+        this.particleSystem.geometry.attributes.position.needsUpdate = true;
+    }
+
     setInteractionState(state) {
         this.interaction = { ...this.interaction, ...state };
     }

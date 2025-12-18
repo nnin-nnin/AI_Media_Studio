@@ -10,6 +10,7 @@ import bodyParser from 'body-parser';
 // Import AI Service (reusing existing logic)
 import AIService from './ai/ai-service.js';
 import AssetStore from './asset-store.js';
+import AuthService from './auth/auth-service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -37,20 +38,43 @@ app.get('/api/config', (req, res) => {
     });
 });
 
-// --- Security Middleware ---
+// --- Auth Routes ---
+app.get('/api/auth/ritual-session', (req, res) => {
+    const nonce = AuthService.createRitualSession();
+    res.json({ status: 'success', nonce });
+});
 
-// 1. Simple API Key Authentication
-const APP_API_KEY = process.env.APP_API_KEY || "ai-course-secret-key-2025";
-const authenticateAPI = (req, res, next) => {
-    // Skip auth for static files/config
-    if (req.path.startsWith('/uploads') || req.path === '/api/config') return next();
-
-    const clientKey = req.headers['x-api-key'];
-    if (!clientKey || clientKey !== APP_API_KEY) {
-        return res.status(401).json({ status: 'error', message: 'Unauthorized: Invalid API Key' });
+app.post('/api/auth/ritual-unlock', async (req, res) => {
+    try {
+        const { ritualLog, nonce } = req.body;
+        const result = await AuthService.verifyRitual(ritualLog, nonce);
+        res.json({ status: 'success', data: result });
+    } catch (e) {
+        console.error("Ritual Unlock Failed:", e.message);
+        res.status(401).json({ status: 'error', message: e.message });
     }
-    next();
-};
+});
+
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const result = await AuthService.login(username, password);
+        res.json({ status: 'success', data: result });
+    } catch (e) {
+        res.status(401).json({ status: 'error', message: e.message });
+    }
+});
+
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        const result = await AuthService.register(username, password);
+        res.json({ status: 'success', data: result });
+    } catch (e) {
+        res.status(400).json({ status: 'error', message: e.message });
+    }
+});
+
 
 // 2. Simple In-Memory Rate Limiter
 const rateLimit = new Map();
@@ -79,7 +103,13 @@ const rateLimiter = (req, res, next) => {
 };
 
 app.use('/api', rateLimiter);
-app.use('/api', authenticateAPI);
+
+// --- Protected Routes ---
+// Apply verify token to all /api routes EXCEPT auth and config
+app.use('/api', (req, res, next) => {
+    if (req.path.startsWith('/auth') || req.path === '/config') return next();
+    AuthService.authenticateToken(req, res, next);
+});
 
 // --- Asset Routes ---
 app.get('/api/assets', (req, res) => {
@@ -150,10 +180,17 @@ app.post('/api/ai/voice', async (req, res) => {
     }
 });
 
-// Helper to manage temp files if needed, though AIService handles its own.
 
 // Start Server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`Server running at http://localhost:${PORT}`);
     console.log(`Frontend served from: ${rendererPath}`);
+
+    // Auto-register default student user if not exists
+    try {
+        await AuthService.register('student', 'magic-password');
+        console.log("Default student account ensured.");
+    } catch (e) {
+        // Ignore if already exists
+    }
 });

@@ -37,38 +37,8 @@
         <div id="ui-layer">
             <h1 class="magic-title">AI Media Studio</h1>
 
-            <!-- Login Form -->
-            <div id="auth-form-container" class="auth-box">
-                <div class="auth-tabs">
-                    <button class="active" id="tab-login">Login</button>
-                    <button id="tab-register">Register</button>
-                </div>
-
-                <form id="login-form">
-                    <div class="input-group">
-                        <input type="text" id="username" placeholder="Username" required autocomplete="username">
-                    </div>
-                    <div class="input-group">
-                        <input type="password" id="password" placeholder="Password" required
-                            autocomplete="current-password">
-                    </div>
-                    <button type="submit" class="auth-btn">Enter Studio</button>
-                    <p class="error-msg" id="login-error"></p>
-                </form>
-
-                <form id="register-form" style="display:none;">
-                    <div class="input-group">
-                        <input type="text" id="reg-username" placeholder="Choose Username" required
-                            autocomplete="username">
-                    </div>
-                    <div class="input-group">
-                        <input type="password" id="reg-password" placeholder="Choose Password" required
-                            autocomplete="new-password">
-                    </div>
-                    <button type="submit" class="auth-btn">Create Account</button>
-                    <p class="error-msg" id="reg-error"></p>
-                </form>
-            </div>
+            <!-- Login Form (Removed per user request) -->
+            <!-- <div id="auth-form-container" class="auth-box"> ... </div> -->
 
             <!-- <div class="instruction"> ... removed ... </div> -->
             <div id="status">系统初始化...</div>
@@ -107,7 +77,7 @@
 
     <!-- Utilities & Core -->
     <script type="module" src="utils/web-api.js"></script>
-    <script src="utils/asset-manager.js"></script>
+    <script type="module" src="utils/asset-manager.js"></script>
     <script src="app.js"></script>
 
     <!-- Login Initialization -->

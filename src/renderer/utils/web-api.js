@@ -4,7 +4,8 @@
 let authToken = localStorage.getItem('ai_auth_token') || null;
 
 // Helper function for API calls
-export async function fetchAPI(endpoint, data = {}) {
+// Helper function for API calls
+export async function fetchAPI(endpoint, data = {}, options = {}) {
     try {
         const headers = {
             'Content-Type': 'application/json'
@@ -14,11 +15,16 @@ export async function fetchAPI(endpoint, data = {}) {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
 
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: headers,
-            body: JSON.stringify(data)
-        });
+        const config = {
+            method: options.method || 'POST', // Default to POST for backward compatibility
+            headers: headers
+        };
+
+        if (config.method !== 'GET' && config.method !== 'HEAD') {
+            config.body = JSON.stringify(data);
+        }
+
+        const response = await fetch(endpoint, config);
 
         if (response.status === 401 || response.status === 403) {
             // Token expired or invalid
@@ -49,6 +55,27 @@ export async function fetchAPI(endpoint, data = {}) {
 export const login = async (username, password) => {
     try {
         const res = await fetchAPI('/api/auth/login', { username, password });
+        if (res.status === 'success') {
+            authToken = res.data.token;
+            localStorage.setItem('ai_auth_token', authToken);
+            return res.data;
+        }
+    } catch (e) {
+        throw e;
+    }
+};
+
+/**
+ * Security Hardening: Ritual-based Unlock
+ */
+export const getRitualSession = async () => {
+    const res = await fetchAPI('/api/auth/ritual-session', {}, { method: 'GET' });
+    return res.nonce;
+};
+
+export const unlockWithRitual = async (ritualLog, nonce) => {
+    try {
+        const res = await fetchAPI('/api/auth/ritual-unlock', { ritualLog, nonce });
         if (res.status === 'success') {
             authToken = res.data.token;
             localStorage.setItem('ai_auth_token', authToken);
@@ -128,6 +155,8 @@ if (typeof window !== 'undefined') {
     // In Web-Only mode, we ALWAYS use this adapter.
     window.electronAPI = {
         login,
+        getRitualSession,
+        unlockWithRitual,
         register,
         logout,
         generateImage,

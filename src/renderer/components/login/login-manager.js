@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { MagicCircle } from './magic-circle.js';
 import { HandTracker } from './hand-tracker.js';
+import { getRitualSession, unlockWithRitual } from '../../utils/web-api.js';
 
 export class LoginManager {
     constructor(containerId, onUnlock) {
@@ -20,14 +21,27 @@ export class LoginManager {
         this.lockTimer = 0;
         this.requiredLockTime = 60; // Frames (~1s)
 
+        // Login State
+        this.isAuthenticating = false;
+        this.lastAuthAttempt = 0;
+        this.ritualLog = [];
+        this.ritualNonce = null;
+
         this.init();
     }
 
-    init() {
+    async init() {
         this.setupUI();
         this.setupThreeJS();
         this.setupMediaPipe();
         this.animate();
+
+        // Security: Get a ritual session nonce from server
+        try {
+            this.ritualNonce = await getRitualSession();
+        } catch (e) {
+            console.error("Failed to get ritual session:", e);
+        }
     }
 
     setupUI() {
@@ -113,10 +127,24 @@ export class LoginManager {
     }
 
     handleHandData(data) {
-        if (this.isUnlocked) return;
+        if (this.isUnlocked || this.isAuthenticating) return;
 
         const statusEl = this.container.querySelector('.hud-status');
         const now = Date.now();
+
+        // Record movement log for server-side verification
+        if (data.found || this.ritualLog.length > 0) {
+            this.ritualLog.push({
+                timestamp: now,
+                found: data.found,
+                isFist: data.isFist,
+                twoHandsDetected: data.twoHandsDetected,
+                handDistance: data.handDistance,
+                expansionProgress: this.magicCircle ? this.magicCircle.expansionProgress : 0
+            });
+            // Keep log size reasonable (last 10 seconds / 300 frames)
+            if (this.ritualLog.length > 400) this.ritualLog.shift();
+        }
 
         // Init counters if missing
         if (!this.stateCounters) {
@@ -229,29 +257,55 @@ export class LoginManager {
         }
     }
 
-    triggerUnlock() {
-        if (this.isUnlocked) return;
-        this.isUnlocked = true;
+    async triggerUnlock() {
+        const now = Date.now();
+        if (this.isUnlocked || this.isAuthenticating || (now - this.lastAuthAttempt < 3000)) return;
 
+        this.isAuthenticating = true;
+        this.lastAuthAttempt = now;
         const statusEl = this.container.querySelector('.hud-status');
-        if (statusEl) statusEl.innerText = "ACCESS GRANTED.";
 
-        // Explode rings
-        this.magicCircles.forEach(mc => mc.explode());
+        // 1. Authenticate with Backend
+        if (statusEl) statusEl.innerText = "VERIFYING RITUAL SIGNATURE...";
 
-        // Stop camera immediately to free resources
-        this.handTracker.stop();
+        try {
+            // SECURITY: Instead of sending hardcoded password, we send the MOVEMENT LOG
+            // The server will "replay" the log to verify the gesture was actually performed.
+            await unlockWithRitual(this.ritualLog, this.ritualNonce);
 
-        // UI Transition
-        this.container.classList.add('portal-opening');
+            this.isUnlocked = true;
+            if (statusEl) statusEl.innerText = "ACCESS GRANTED.";
 
-        // Fast Unlock (0.5s instead of 1.5s)
-        setTimeout(() => {
-            this.container.style.display = 'none';
-            // Stop Three.js loop
-            this.renderer.setAnimationLoop(null);
-            if (this.onUnlock) this.onUnlock();
-        }, 500);
+            // 2. Explode rings (Visual Reward)
+            this.magicCircles.forEach(mc => mc.explode());
+
+            // 3. Stop camera immediately to free resources
+            this.handTracker.stop();
+
+            // 4. UI Transition
+            this.container.classList.add('portal-opening');
+
+            // 5. Reveal App
+            setTimeout(() => {
+                this.container.style.display = 'none';
+                this.renderer.setAnimationLoop(null);
+                if (this.onUnlock) this.onUnlock();
+            }, 500);
+
+        } catch (e) {
+            console.error("Authentication failed:", e);
+            this.isAuthenticating = false;
+            this.unlockTriggered = false; // Reset trigger
+            if (statusEl) {
+                statusEl.innerText = "AUTH FAILED. RESTART RITUAL.";
+                statusEl.style.color = "red";
+            }
+            // Reset state??
+            // Maybe reset to Sphere after delay
+            setTimeout(() => {
+                this.magicCircle.reset(); // If reset method exists, or just manually set state
+            }, 2000);
+        }
     }
 
     animate() {

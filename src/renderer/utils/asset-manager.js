@@ -2,21 +2,35 @@
  * AssetManager (Persistent)
  * Communicates with the Backend API to store/retrieve assets.
  */
+import { fetchAPI } from './web-api.js';
+
 class AssetManager {
     constructor() {
         this.assets = [];
-        this.refresh(); // Load initial data
+        // Delay refresh slightly to ensure token is ready if login just happened
+        // But ideally, we should wait for a 'logged-in' event.
+        // For now, we wrap in try/catch silently or listen to event.
+        this.init();
+    }
+
+    init() {
+        if (localStorage.getItem('ai_auth_token')) {
+            this.refresh();
+        }
+
+        // Listen for auth success to refresh
+        window.addEventListener('auth-success', () => this.refresh());
     }
 
     async refresh() {
         try {
-            const res = await fetch('/api/assets');
-            if (res.ok) {
-                this.assets = await res.json();
+            const data = await fetchAPI('/api/assets', {}, { method: 'GET' });
+            if (data) {
+                this.assets = data;
                 this.notify();
             }
         } catch (e) {
-            console.error("Failed to load assets from server", e);
+            console.warn("Failed to load assets:", e.message);
         }
     }
 
@@ -26,15 +40,8 @@ class AssetManager {
      */
     async add(asset) {
         try {
-            const res = await fetch('/api/assets', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(asset)
-            });
-
-            if (res.ok) {
-                const result = await res.json();
-                // Optimistic update or refresh? Refresh ensures proper local URL
+            const result = await fetchAPI('/api/assets', asset, { method: 'POST' });
+            if (result && result.status === 'success') {
                 await this.refresh();
                 return result.asset;
             }
@@ -47,13 +54,11 @@ class AssetManager {
      * Delete an asset by ID
      */
     async delete(id) {
-        // Optimistic UI update
         this.assets = this.assets.filter(a => a.id !== id);
         this.notify();
 
         try {
-            await fetch(`/api/assets/${id}`, { method: 'DELETE' });
-            // Confirm sync
+            await fetchAPI(`/api/assets/${id}`, {}, { method: 'DELETE' });
             this.refresh();
         } catch (e) {
             console.error("Failed to delete asset", e);

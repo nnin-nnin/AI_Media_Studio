@@ -13,22 +13,118 @@ class AuthService {
         return user;
     }
 
-    async register(username, password) {
-        if (!username || !password) throw new Error("Username and password required");
-        if (password.length < 6) throw new Error("Password must be at least 6 characters");
+    // --- Ritual Verification (Security Hardening) ---
 
-        // Check if user exists
-        const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
-        if (existing) throw new Error("Username already taken");
+    constructor() {
+        this.activeRituals = new Map(); // nonce -> { startTime, expiry }
+    }
 
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hash = await bcrypt.hash(password, salt);
+    createRitualSession() {
+        const nonce = Math.random().toString(36).substring(7);
+        const expiry = Date.now() + 5 * 60 * 1000; // 5 minute window
+        this.activeRituals.set(nonce, { startTime: Date.now(), expiry });
+        return nonce;
+    }
 
-        // Insert
-        const info = db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)').run(username, hash);
+    /**
+     * verifyRitual
+     * Replays the gesture logic on raw hand data sent by client.
+     * @param {Array} ritualLog - Array of { timestamp, isFist, twoHandsDetected, handDistance, etc }
+     * @param {string} nonce - Session nonce
+     */
+    async verifyRitual(ritualLog, nonce) {
+        // 1. Validate Nonce
+        const session = this.activeRituals.get(nonce);
+        if (!session) throw new Error("Invalid or missing ritual session");
+        if (Date.now() > session.expiry) {
+            this.activeRituals.delete(nonce);
+            throw new Error("Ritual session expired");
+        }
+        this.activeRituals.delete(nonce); // Use once
 
-        return { id: info.lastInsertRowid, username };
+        if (!Array.isArray(ritualLog) || ritualLog.length < 50) {
+            throw new Error("Insufficient ritual data");
+        }
+
+        // 2. Replay State Machine Logic
+        let state = 0; // 0: Sphere, 1: Collapsing, 2: Exploding/Hex, 3: Expansion, 4: Done
+        let fistStartTime = 0;
+        let lastStateChange = 0;
+        let fistFrames = 0;
+        let openFrames = 0;
+
+        for (const frame of ritualLog) {
+            const { isFist, twoHandsDetected, handDistance, expansionProgress, timestamp } = frame;
+
+            if (state === 0) { // SPHERE
+                if (isFist) {
+                    fistFrames++;
+                } else {
+                    fistFrames = 0;
+                }
+                if (fistFrames > 10) {
+                    state = 1; // COLLAPSING
+                    fistStartTime = timestamp;
+                    lastStateChange = timestamp;
+                }
+            }
+            else if (state === 1) { // COLLAPSING
+                if (!isFist) {
+                    openFrames++;
+                } else {
+                    openFrames = 0;
+                }
+                if (openFrames > 5) {
+                    // Check if held long enough (min 1s)
+                    if (timestamp - lastStateChange > 1000) {
+                        state = 2; // EXPLODING/HEX
+                        lastStateChange = timestamp;
+                    } else {
+                        throw new Error("Ritual invalid: Charge time too short");
+                    }
+                }
+            }
+            else if (state === 2) { // HEXAGRAM -> COMPLEX
+                if (twoHandsDetected && handDistance > 0.4) {
+                    state = 3; // EXPANSION
+                    lastStateChange = timestamp;
+                }
+                // Timeout if HEX state hangs too long? 
+            }
+            else if (state === 3) { // COMPLEX -> UNLOCK
+                if (expansionProgress > 0.95) {
+                    if (timestamp - lastStateChange > 1000) {
+                        state = 4; // UNLOCKED
+                    }
+                } else {
+                    // Reset if hands come close? In client we do this. Here we just wait for the right sequence.
+                    lastStateChange = timestamp;
+                }
+            }
+        }
+
+        if (state !== 4) {
+            throw new Error("Ritual incomplete: Sequence failed verification");
+        }
+
+        // 3. Success! Generate session for 'student'
+        return this.issueToken('student');
+    }
+
+    async issueToken(username) {
+        const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+        if (!user) throw new Error("User not found");
+
+        const token = jwt.sign(
+            { id: user.id, username: user.username },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        return {
+            user: this._sanitizeUser(user),
+            token
+        };
     }
 
     async login(username, password) {

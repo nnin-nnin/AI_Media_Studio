@@ -35,10 +35,19 @@ export class HandTracker {
 
         this.hands.onResults(this.onResults.bind(this));
 
+        this.isRunning = true; // Flag for safety
+
         if (this.videoElement) {
             this.camera = new Camera(this.videoElement, {
                 onFrame: async () => {
-                    await this.hands.send({ image: this.videoElement });
+                    if (this.isRunning && this.hands) {
+                        try {
+                            await this.hands.send({ image: this.videoElement });
+                        } catch (e) {
+                            // Ignore errors during shutdown
+                            console.warn("MediaPipe send warning:", e.message);
+                        }
+                    }
                 },
                 width: 1280,
                 height: 720
@@ -48,6 +57,8 @@ export class HandTracker {
     }
 
     onResults(results) {
+        if (!this.isRunning) return;
+
         // Analyze gesture
         let gestureData = {
             found: false,
@@ -111,7 +122,18 @@ export class HandTracker {
     }
 
     stop() {
-        if (this.camera) this.camera.stop();
-        if (this.hands) this.hands.close();
+        this.isRunning = false; // Stop sending frames immediately
+        if (this.camera) {
+            this.camera.stop();
+            this.camera = null;
+        }
+        if (this.hands) {
+            this.hands.close();
+            this.hands = null;
+        }
+        // Also clear video src to release WebGL texture if needed
+        if (this.videoElement) {
+            this.videoElement.srcObject = null;
+        }
     }
 }
