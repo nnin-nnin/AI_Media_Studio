@@ -1,16 +1,33 @@
 // web-api.js
 // Replaces Electron IPC with HTTP calls to the Node.js Express server
 
+let authToken = localStorage.getItem('ai_auth_token') || null;
+
 // Helper function for API calls
-export async function fetchAPI(endpoint, data) {
+export async function fetchAPI(endpoint, data = {}) {
     try {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+
+        if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+
         const response = await fetch(endpoint, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: headers,
             body: JSON.stringify(data)
         });
+
+        if (response.status === 401 || response.status === 403) {
+            // Token expired or invalid
+            console.warn("Auth failed, clearing token");
+            localStorage.removeItem('ai_auth_token');
+            authToken = null;
+            window.dispatchEvent(new Event('auth-failed')); // Trigger re-login UI
+            throw new Error('Authentication required');
+        }
 
         if (!response.ok) {
             const error = await response.json();
@@ -23,11 +40,36 @@ export async function fetchAPI(endpoint, data) {
         if (window.Toast) {
             window.Toast.show(e.message || 'API Connection Failed', 'error');
         }
-        return { status: 'error', message: e.message };
+        // return { status: 'error', message: e.message }; // Let caller handle error better
+        throw e;
     }
 }
 
-// Helper to trigger browser download
+// Auth Functions
+export const login = async (username, password) => {
+    try {
+        const res = await fetchAPI('/api/auth/login', { username, password });
+        if (res.status === 'success') {
+            authToken = res.data.token;
+            localStorage.setItem('ai_auth_token', authToken);
+            return res.data;
+        }
+    } catch (e) {
+        throw e;
+    }
+};
+
+export const register = async (username, password) => {
+    return fetchAPI('/api/auth/register', { username, password });
+};
+
+export const logout = () => {
+    authToken = null;
+    localStorage.removeItem('ai_auth_token');
+    window.location.reload();
+};
+
+// ... Existing Helpers ...
 function downloadDataUrl(dataUrl, fileName) {
     const link = document.createElement('a');
     link.href = dataUrl;
@@ -55,6 +97,7 @@ export const cloneVoice = async (options) => {
 };
 
 export const saveImageFile = async (fileName, dataURL) => {
+    // ... unchanged
     console.log('Web: Triggering download for', fileName);
     downloadDataUrl(dataURL, fileName);
     return fileName;
@@ -84,6 +127,9 @@ export const readAudioFile = async (fileName) => {
 if (typeof window !== 'undefined') {
     // In Web-Only mode, we ALWAYS use this adapter.
     window.electronAPI = {
+        login,
+        register,
+        logout,
         generateImage,
         editImage,
         generateVideo,
@@ -94,5 +140,5 @@ if (typeof window !== 'undefined') {
         readImageFile,
         readAudioFile
     };
-    console.log('Web API Adapter initialized');
+    console.log('Web API Adapter initialized (Secure)');
 }

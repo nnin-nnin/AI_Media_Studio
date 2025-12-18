@@ -35,12 +35,42 @@
 
         <!-- UI Layer (Top Left) -->
         <div id="ui-layer">
-            <h1 class="magic-title">魔法六芒星阵 - 手势互动</h1>
-            <div class="instruction">
-                <p>1. <b>双拳握紧 (Fist)</b>：凝聚能量 (各类风暴)</p>
-                <p>2. <b>双手张开 (Open Hands)</b>：释放法阵 (召唤六芒星)</p>
-                <p>3. <b>双手拉开距离</b>：展开高阶阵列 (Complex Matrix)</p>
+            <h1 class="magic-title">AI Media Studio</h1>
+
+            <!-- Login Form -->
+            <div id="auth-form-container" class="auth-box">
+                <div class="auth-tabs">
+                    <button class="active" id="tab-login">Login</button>
+                    <button id="tab-register">Register</button>
+                </div>
+
+                <form id="login-form">
+                    <div class="input-group">
+                        <input type="text" id="username" placeholder="Username" required autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="password" placeholder="Password" required
+                            autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="auth-btn">Enter Studio</button>
+                    <p class="error-msg" id="login-error"></p>
+                </form>
+
+                <form id="register-form" style="display:none;">
+                    <div class="input-group">
+                        <input type="text" id="reg-username" placeholder="Choose Username" required
+                            autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <input type="password" id="reg-password" placeholder="Choose Password" required
+                            autocomplete="new-password">
+                    </div>
+                    <button type="submit" class="auth-btn">Create Account</button>
+                    <p class="error-msg" id="reg-error"></p>
+                </form>
             </div>
+
+            <!-- <div class="instruction"> ... removed ... </div> -->
             <div id="status">系统初始化...</div>
         </div>
     </div>

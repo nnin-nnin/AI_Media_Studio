@@ -37,6 +37,49 @@ app.get('/api/config', (req, res) => {
     });
 });
 
+// --- Security Middleware ---
+
+// 1. Simple API Key Authentication
+const APP_API_KEY = process.env.APP_API_KEY || "ai-course-secret-key-2025";
+const authenticateAPI = (req, res, next) => {
+    // Skip auth for static files/config
+    if (req.path.startsWith('/uploads') || req.path === '/api/config') return next();
+
+    const clientKey = req.headers['x-api-key'];
+    if (!clientKey || clientKey !== APP_API_KEY) {
+        return res.status(401).json({ status: 'error', message: 'Unauthorized: Invalid API Key' });
+    }
+    next();
+};
+
+// 2. Simple In-Memory Rate Limiter
+const rateLimit = new Map();
+const rateLimiter = (req, res, next) => {
+    const ip = req.ip;
+    const now = Date.now();
+    const windowMs = 15 * 60 * 1000; // 15 minutes
+    const maxRequests = 100;
+
+    const record = rateLimit.get(ip) || { count: 0, startTime: now };
+
+    if (now - record.startTime > windowMs) {
+        // Reset
+        record.count = 1;
+        record.startTime = now;
+    } else {
+        record.count++;
+    }
+
+    rateLimit.set(ip, record);
+
+    if (record.count > maxRequests) {
+        return res.status(429).json({ status: 'error', message: 'Too many requests, please try again later.' });
+    }
+    next();
+};
+
+app.use('/api', rateLimiter);
+app.use('/api', authenticateAPI);
 
 // --- Asset Routes ---
 app.get('/api/assets', (req, res) => {
