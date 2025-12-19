@@ -47,6 +47,10 @@ function loadFaceSwapPage(container) {
                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
                              <input type="file" style="display:none" accept="image/*">
                         </div>
+                        <!-- Camera Button -->
+                        <div class="fs-slot" id="fs-btn-camera" title="Take Photo" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                        </div>
                         <!-- Empty Placeholder Slots (Visual only) -->
                         <div class="fs-slot" style="opacity:0.5; cursor:default; border-style:dashed;"></div>
                         <div class="fs-slot" style="opacity:0.5; cursor:default; border-style:dashed;"></div>
@@ -155,6 +159,49 @@ Mention colors, lighting, and style."></textarea>
                 </div>
             </div>
         </div>
+
+        <!-- Camera Modal -->
+        <div id="fs-camera-modal" class="fs-modal" style="display:none;">
+            <div class="fs-modal-content">
+                <div class="fs-modal-header">
+                    <span>Capture Reference</span>
+                    <button id="fs-camera-close">&times;</button>
+                </div>
+                <div class="fs-camera-container">
+                    <video id="fs-video-preview" autoplay playsinline></video>
+                    <canvas id="fs-capture-canvas" style="display:none;"></canvas>
+                </div>
+                <div class="fs-modal-footer">
+                    <button class="primary-btn" id="fs-btn-capture">Snap Photo</button>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .fs-modal {
+                position: fixed; top:0; left:0; width:100%; height:100%;
+                background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+                display: flex; align-items: center; justify-content: center; z-index: 1000;
+            }
+            .fs-modal-content {
+                background: var(--bg-deep); border: 1px solid var(--glass-border);
+                border-radius: 16px; width: 500px; max-width: 90%; overflow: hidden;
+            }
+            .fs-modal-header {
+                padding: 15px 20px; border-bottom: 1px solid var(--glass-border);
+                display: flex; justify-content: space-between; align-items: center;
+            }
+            #fs-camera-close {
+                background: none; border: none; color: var(--text-secondary);
+                font-size: 24px; cursor: pointer;
+            }
+            .fs-camera-container {
+                width: 100%; aspect-ratio: 4/3; background: #000;
+                display: flex; align-items: center; justify-content: center;
+            }
+            #fs-video-preview { width: 100%; height: 100%; object-fit: cover; }
+            .fs-modal-footer { padding: 20px; text-align: center; }
+        </style>
     `;
 
     setupFaceSwapEventListeners();
@@ -240,6 +287,85 @@ function setupFaceSwapEventListeners() {
             initialInput.addEventListener('change', (e) => handleFileSelect(e, slot1, defaultIconHTML));
         }
     }
+
+    // 2.5 Camera Logic
+    const btnCamera = document.getElementById('fs-btn-camera');
+    const cameraModal = document.getElementById('fs-camera-modal');
+    const cameraClose = document.getElementById('fs-camera-close');
+    const btnCapture = document.getElementById('fs-btn-capture');
+    const videoPreview = document.getElementById('fs-video-preview');
+    const captureCanvas = document.getElementById('fs-capture-canvas');
+    let cameraStream = null;
+
+    btnCamera?.addEventListener('click', async () => {
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: { width: { ideal: 1280 }, height: { ideal: 720 } }
+            });
+            videoPreview.srcObject = cameraStream;
+            cameraModal.style.display = 'flex';
+        } catch (err) {
+            console.error("Camera access denied:", err);
+            alert("Could not access camera. Please check permissions.");
+        }
+    });
+
+    const stopCamera = () => {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+        cameraModal.style.display = 'none';
+        videoPreview.srcObject = null;
+    };
+
+    cameraClose?.addEventListener('click', stopCamera);
+
+    btnCapture?.addEventListener('click', () => {
+        if (!videoPreview.videoWidth) return;
+
+        const ctx = captureCanvas.getContext('2d');
+        captureCanvas.width = videoPreview.videoWidth;
+        captureCanvas.height = videoPreview.videoHeight;
+
+        // Quality check
+        const minDim = 300;
+        if (captureCanvas.width < minDim || captureCanvas.height < minDim) {
+            alert(`Camera resolution too low (${captureCanvas.width}x${captureCanvas.height}px).`);
+            stopCamera();
+            return;
+        }
+
+        ctx.drawImage(videoPreview, 0, 0, captureCanvas.width, captureCanvas.height);
+        const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.9);
+
+        // Update Slot
+        const slotElement = document.getElementById('slot-ref-1');
+        if (slotElement) {
+            slotElement.innerHTML = `
+                <img src="${dataUrl}">
+                <div class="remove-btn" title="Remove">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </div>
+            `;
+            slotElement.classList.add('has-image');
+            slotElement.dataset.hasImage = "true";
+
+            slotElement.querySelector('.remove-btn').addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                slotElement.innerHTML = defaultIconHTML;
+                slotElement.classList.remove('has-image');
+                delete slotElement.dataset.hasImage;
+
+                const newInput = slotElement.querySelector('input');
+                if (newInput) {
+                    newInput.addEventListener('change', (ev2) => handleFileSelect(ev2, slotElement, defaultIconHTML));
+                }
+            });
+        }
+
+        stopCamera();
+    });
 
     // 3. Aspect Ratio Selection (Event Delegation)
     const ratioGrid = document.querySelector('.ratio-grid');

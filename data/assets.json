@@ -1,5 +1,44 @@
 [
   {
+    "id": "mjcrxfmi0y7usu2aimug",
+    "timestamp": 1766142982526,
+    "type": "video",
+    "url": "/uploads/mjcrxfmi0y7usu2aimug.mp4",
+    "originalUrl": "https://ark-content-generation-cn-beijing.tos-cn-beijing.volces.com/doubao-seedance-1-0-pro-fast/02176614293095000000000000000000000ffffac154822d02892.mp4?X-Tos-Algorithm=TOS4-HMAC-SHA256&X-Tos-Credential=AKLTYWJkZTExNjA1ZDUyNDc3YzhjNTM5OGIyNjBhNDcyOTQ%2F20251219%2Fcn-beijing%2Ftos%2Frequest&X-Tos-Date=20251219T111601Z&X-Tos-Expires=86400&X-Tos-Signature=bad2c7f86701e5ace8938ce0511dd02890617e3dacfebc1bc475428ff0c4523e&X-Tos-SignedHeaders=host",
+    "prompt": "背景变成森林 出来一只老虎",
+    "metadata": {
+      "duration": 5,
+      "model": "doubao-video",
+      "ratio": "16:9"
+    }
+  },
+  {
+    "id": "mjcrvx47rjh6tt0mrlj",
+    "timestamp": 1766142912044,
+    "type": "video",
+    "url": "/uploads/mjcrvx47rjh6tt0mrlj.mp4",
+    "originalUrl": "https://ark-content-generation-cn-beijing.tos-cn-beijing.volces.com/doubao-seedance-1-0-pro-fast/02176614287419100000000000000000000ffffac1548227bd8cc.mp4?X-Tos-Algorithm=TOS4-HMAC-SHA256&X-Tos-Credential=AKLTYWJkZTExNjA1ZDUyNDc3YzhjNTM5OGIyNjBhNDcyOTQ%2F20251219%2Fcn-beijing%2Ftos%2Frequest&X-Tos-Date=20251219T111458Z&X-Tos-Expires=86400&X-Tos-Signature=6932dcf67cc12c288a014c811e557900a70edcc83cdd94d30c3c3e5794c35a96&X-Tos-SignedHeaders=host",
+    "prompt": "背景变成森林 出来一只狮子",
+    "metadata": {
+      "duration": 5,
+      "model": "doubao-video",
+      "ratio": "16:9"
+    }
+  },
+  {
+    "id": "mjcrufc86oxl986gvc",
+    "timestamp": 1766142841574,
+    "type": "image",
+    "url": "/uploads/mjcrufc86oxl986gvc.jpeg",
+    "originalUrl": "https://ark-content-generation-v2-cn-beijing.tos-cn-beijing.volces.com/doubao-seedream-4-0/021766142826491f6399b08c9f01fc6d7334c071c896555e6e507_0.jpeg?X-Tos-Algorithm=TOS4-HMAC-SHA256&X-Tos-Credential=AKLTYWJkZTExNjA1ZDUyNDc3YzhjNTM5OGIyNjBhNDcyOTQ%2F20251219%2Fcn-beijing%2Ftos%2Frequest&X-Tos-Date=20251219T111357Z&X-Tos-Expires=86400&X-Tos-Signature=7083f3daad196e94fe9156b57bd426994831a0b8c220d28f074276dcdfba6b28&X-Tos-SignedHeaders=host",
+    "prompt": "背景变成森林",
+    "metadata": {
+      "width": 1280,
+      "height": 720,
+      "model": "doubao-seedream"
+    }
+  },
+  {
     "id": "mjcqnftbqhyghg1shec",
     "timestamp": 1766140835410,
     "type": "image",
