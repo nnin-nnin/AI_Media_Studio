@@ -225,13 +225,17 @@ class AIService {
 
   /**
    * 执行Python脚本
-   * @param {string} command - 命令
+   * @param {string} command - 命令 (已弃用，强制使用 python3)
    * @param {Array} args - 参数
    * @returns {Promise<Object>} 执行结果
    */
-  static executePythonScript(command, args) {
+  static async executePythonScript(command, args) {
     return new Promise((resolve, reject) => {
-      const process = spawn(command, args);
+      // Use absolute path to ensure we get the system python3 where dependencies are installed
+      const pythonPath = '/usr/bin/python3';
+      console.log(`[AIService] Spawning Python: ${pythonPath} ${args.join(' ')}`);
+
+      const process = spawn(pythonPath, args);
 
       let stdoutData = '';
       let stderrData = '';

@@ -31,32 +31,33 @@
 /* Cards Grid */
 .cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    width: 100%;
 }
 
 .feature-card {
     background: var(--bg-card);
     border: var(--glass-border);
-    border-radius: var(--radius-xl);
+    border-radius: 20px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     backdrop-filter: blur(10px);
-    height: 100%;
-    min-height: 420px;
+    width: 100%;
+    aspect-ratio: 4 / 5;
 }
 
 .feature-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(0, 0, 0, 0.1);
-    box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.1);
+    transform: translateY(-6px);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
 }
 
 .card-media {
-    height: 200px;
+    height: 45%;
     width: 100%;
     background: rgba(0, 0, 0, 0.3);
     position: relative;
@@ -99,7 +100,7 @@
 
 .card-title {
     font-size: 1.25rem;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-primary);
 }
 
@@ -115,7 +116,7 @@
 
 .card-features li {
     color: var(--text-secondary);
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     line-height: 1.5;
     display: flex;
     align-items: flex-start;
