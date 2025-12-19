@@ -1,1 +1,80 @@
-[]
+[
+  {
+    "id": "mjcqnftbqhyghg1shec",
+    "timestamp": 1766140835410,
+    "type": "image",
+    "url": "/uploads/mjcqnftbqhyghg1shec.jpeg",
+    "originalUrl": "https://ark-content-generation-v2-cn-beijing.tos-cn-beijing.volces.com/doubao-seedream-4-0/0217661408148023f557f99638b5e18fc2ec2d6c4abb5d27c4495_0.jpeg?X-Tos-Algorithm=TOS4-HMAC-SHA256&X-Tos-Credential=AKLTYWJkZTExNjA1ZDUyNDc3YzhjNTM5OGIyNjBhNDcyOTQ%2F20251219%2Fcn-beijing%2Ftos%2Frequest&X-Tos-Date=20251219T104033Z&X-Tos-Expires=86400&X-Tos-Signature=6513b9cdd6f27884787f23643cbc0e4f8c07f38fa422d7a57f8f9a52cdd2d35d&X-Tos-SignedHeaders=host",
+    "prompt": "背景变成白色",
+    "metadata": {
+      "width": 1280,
+      "height": 720,
+      "model": "doubao-seedream"
+    }
+  },
+  {
+    "id": "mjccfn0vvpydhqhtoo",
+    "timestamp": 1766116957988,
+    "type": "image",
+    "url": "/uploads/mjccfn0vvpydhqhtoo.jpeg",
+    "originalUrl": "https://ark-content-generation-v2-cn-beijing.tos-cn-beijing.volces.com/doubao-seedream-4-0/021766116943395ec3db73c4849487ff7f18447ab3797c294d19f_0.jpeg?X-Tos-Algorithm=TOS4-HMAC-SHA256&X-Tos-Credential=AKLTYWJkZTExNjA1ZDUyNDc3YzhjNTM5OGIyNjBhNDcyOTQ%2F20251219%2Fcn-beijing%2Ftos%2Frequest&X-Tos-Date=20251219T040236Z&X-Tos-Expires=86400&X-Tos-Signature=2216e30e78ee5238afa18708132bf6672f550d4446582958bb2c1afef3af7948&X-Tos-SignedHeaders=host",
+    "prompt": "生成全身照",
+    "metadata": {
+      "width": 1280,
+      "height": 720,
+      "model": "doubao-seedream"
+    }
+  },
+  {
+    "id": "mjbj8oyuk1bue01phyh",
+    "timestamp": 1766068064026,
+    "type": "video",
+    "url": "/uploads/mjbj8oyuk1bue01phyh.mp4",
+    "originalUrl": "https://ark-content-generation-cn-beijing.tos-cn-beijing.volces.com/doubao-seedance-1-0-pro-fast/02176606779480100000000000000000000ffffac154822a633e3.mp4?X-Tos-Algorithm=TOS4-HMAC-SHA256&X-Tos-Credential=AKLTYWJkZTExNjA1ZDUyNDc3YzhjNTM5OGIyNjBhNDcyOTQ%2F20251218%2Fcn-beijing%2Ftos%2Frequest&X-Tos-Date=20251218T142346Z&X-Tos-Expires=86400&X-Tos-Signature=4fdb086fe074af01e78d3a582d527478f64bfa4f5b743fb54eca473798443865&X-Tos-SignedHeaders=host",
+    "prompt": "变成超人飞起来",
+    "metadata": {
+      "duration": 5,
+      "model": "doubao-video",
+      "ratio": "16:9"
+    }
+  },
+  {
+    "id": "mjbj54vvhnvno87ws9h",
+    "timestamp": 1766067759691,
+    "type": "image",
+    "url": "/uploads/mjbj54vvhnvno87ws9h.jpeg",
+    "originalUrl": "https://ark-content-generation-v2-cn-beijing.tos-cn-beijing.volces.com/doubao-seedream-4-0/0217660677389944b4b7d656bffcdc9cfc98fb1f23cda5a7b36b0_0.jpeg?X-Tos-Algorithm=TOS4-HMAC-SHA256&X-Tos-Credential=AKLTYWJkZTExNjA1ZDUyNDc3YzhjNTM5OGIyNjBhNDcyOTQ%2F20251218%2Fcn-beijing%2Ftos%2Frequest&X-Tos-Date=20251218T142234Z&X-Tos-Expires=86400&X-Tos-Signature=a84d4d20444c5cd06909cd54f7fa75f62a456bfe4d8a953a9133be6d0444c022&X-Tos-SignedHeaders=host",
+    "prompt": "变成超人",
+    "metadata": {
+      "width": 1024,
+      "height": 1024,
+      "model": "doubao-seedream"
+    }
+  },
+  {
+    "id": "mjbiwnw9xzswojoinee",
+    "timestamp": 1766067368858,
+    "type": "image",
+    "url": "/uploads/mjbiwnw9xzswojoinee.jpeg",
+    "originalUrl": "https://ark-content-generation-v2-cn-beijing.tos-cn-beijing.volces.com/doubao-seedream-4-0/02176606735379936e5ad32e3806a7503d1b9484cfb9294fe7c5e_0.jpeg?X-Tos-Algorithm=TOS4-HMAC-SHA256&X-Tos-Credential=AKLTYWJkZTExNjA1ZDUyNDc3YzhjNTM5OGIyNjBhNDcyOTQ%2F20251218%2Fcn-beijing%2Ftos%2Frequest&X-Tos-Date=20251218T141559Z&X-Tos-Expires=86400&X-Tos-Signature=4f53584a98087675aab613a3b4756e3ddaf8ab3e2973eacb1d33d85d1507cb3a&X-Tos-SignedHeaders=host&x-tos-process=image%2Fwatermark%2Cimage_YXNzZXRzL3dhdGVybWFya192MS5wbmc_eC10b3MtcHJvY2Vzcz1pbWFnZS9yZXNpemUscF83OA%3D%3D%2Cx_69%2Cy_69",
+    "prompt": "生成一颗大树",
+    "metadata": {
+      "width": 1024,
+      "height": 1024,
+      "model": "doubao-seedream"
+    }
+  },
+  {
+    "id": "mjb8dkby1oqr66fa43q",
+    "timestamp": 1766049676745,
+    "type": "image",
+    "url": "/uploads/mjb8dkby1oqr66fa43q.jpeg",
+    "originalUrl": "https://ark-content-generation-v2-cn-beijing.tos-cn-beijing.volces.com/doubao-seedream-4-0/021766049656532c7e2097deca8a5943df57d9ada75d6e43d616d_0.jpeg?X-Tos-Algorithm=TOS4-HMAC-SHA256&X-Tos-Credential=AKLTYWJkZTExNjA1ZDUyNDc3YzhjNTM5OGIyNjBhNDcyOTQ%2F20251218%2Fcn-beijing%2Ftos%2Frequest&X-Tos-Date=20251218T092112Z&X-Tos-Expires=86400&X-Tos-Signature=0316f8d32185463d4200ab336d9c10214b261c62a8bcb15bcd20f6471d52e45e&X-Tos-SignedHeaders=host",
+    "prompt": "衣服换成蜘蛛侠的衣服",
+    "metadata": {
+      "width": 1280,
+      "height": 720,
+      "model": "doubao-seedream"
+    }
+  }
+]

@@ -51,7 +51,7 @@ class GlobalSidebar {
 
                 // Use prompt or ID as label
                 const label = asset.prompt || `Asset ${asset.id.substring(0, 4)}`;
-                return this.renderSessionItem(label, icon, targetPage); // Can we pass asset ID? For now just nav.
+                return this.renderSessionItem(label, icon, asset.id);
             }).join('');
         } else {
             recentWorkHTML = `<div class="session-item" style="cursor:default; opacity:0.5; padding-left:14px;">No recent work</div>`;
@@ -121,10 +121,10 @@ class GlobalSidebar {
         `;
     }
 
-    renderSessionItem(label, iconType, targetPage) {
+    renderSessionItem(label, iconType, assetId) {
         const icon = this.getIcon(iconType, 14); // Smaller icon for sessions
         return `
-            <div class="session-item" onclick="window.app.navigate('${targetPage}')">
+            <div class="session-item" onclick="window.MediaPreview.open('${assetId}')">
                 ${icon}
                 <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${label}">${label}</span>
             </div>

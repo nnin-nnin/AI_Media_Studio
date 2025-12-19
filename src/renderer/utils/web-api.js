@@ -11,10 +11,6 @@ export async function fetchAPI(endpoint, data = {}, options = {}) {
             'Content-Type': 'application/json'
         };
 
-        if (authToken) {
-            headers['Authorization'] = `Bearer ${authToken}`;
-        }
-
         const config = {
             method: options.method || 'POST', // Default to POST for backward compatibility
             headers: headers
@@ -150,6 +146,10 @@ export const readAudioFile = async (fileName) => {
     return null;
 };
 
+export const listModels = async () => {
+    return fetchAPI('/api/ai/models', {}, { method: 'GET' });
+};
+
 // Legacy / Window Attachment for Renderer
 if (typeof window !== 'undefined') {
     // In Web-Only mode, we ALWAYS use this adapter.
@@ -167,7 +167,8 @@ if (typeof window !== 'undefined') {
         saveAudioFile,
         getTempDir,
         readImageFile,
-        readAudioFile
+        readAudioFile,
+        listModels
     };
     console.log('Web API Adapter initialized (Secure)');
 }

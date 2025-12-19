@@ -76,7 +76,7 @@ class AuthService {
                 }
                 if (openFrames > 5) {
                     // Check if held long enough (min 1s)
-                    if (timestamp - lastStateChange > 1000) {
+                    if (timestamp - lastStateChange > 800) {
                         state = 2; // EXPLODING/HEX
                         lastStateChange = timestamp;
                     } else {
@@ -92,12 +92,11 @@ class AuthService {
                 // Timeout if HEX state hangs too long? 
             }
             else if (state === 3) { // COMPLEX -> UNLOCK
-                if (expansionProgress > 0.95) {
-                    if (timestamp - lastStateChange > 1000) {
+                if (expansionProgress > 0.85) {
+                    if (timestamp - lastStateChange > 800) {
                         state = 4; // UNLOCKED
                     }
                 } else {
-                    // Reset if hands come close? In client we do this. Here we just wait for the right sequence.
                     lastStateChange = timestamp;
                 }
             }

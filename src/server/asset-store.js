@@ -76,7 +76,7 @@ class AssetStore {
         const asset = this.assets[index];
 
         // Delete local file
-        if (asset.url.startsWith('/uploads/')) {
+        if (asset.url && asset.url.startsWith('/uploads/')) {
             const filename = path.basename(asset.url);
             const localPath = path.join(UPLOADS_DIR, filename);
             if (fs.existsSync(localPath)) {
@@ -96,6 +96,7 @@ class AssetStore {
     // --- Helpers ---
 
     async downloadFile(url, dest) {
+        if (!url) throw new Error("URL is required for download");
         // If it's already a data URL, write directly
         if (url.startsWith('data:')) {
             const matches = url.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
@@ -122,6 +123,7 @@ class AssetStore {
     }
 
     getExtension(url) {
+        if (!url) return 'png';
         if (url.startsWith('data:image/jpeg')) return 'jpg';
         if (url.startsWith('data:image/png')) return 'png';
         if (url.startsWith('data:video/mp4')) return 'mp4';

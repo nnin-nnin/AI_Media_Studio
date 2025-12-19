@@ -16,6 +16,40 @@ const client = new OpenAI({
 });
 
 /**
+ * Helper for axios calls with retry logic to handle ECONNRESET and transient network errors
+ * @param {Object} config - Axios config
+ * @param {number} maxRetries - Maximum number of retries
+ * @returns {Promise<Object>} Axios response
+ */
+async function axiosWithRetry(config, maxRetries = 3) {
+  let lastError;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await axios({
+        ...config,
+        timeout: 60000, // 60s timeout for safety
+        headers: {
+          ...config.headers,
+          'Connection': 'close' // Disable keep-alive to avoid ECONNRESET on stale sockets
+        }
+      });
+    } catch (error) {
+      lastError = error;
+      const isRetryable = error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT' || (error.response && error.response.status >= 500);
+
+      if (isRetryable && i < maxRetries - 1) {
+        const delay = Math.pow(2, i) * 1000;
+        console.warn(`⚠️ API call failed (${error.code || (error.response && error.response.status)}). Retrying in ${delay}ms... (Attempt ${i + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
+}
+
+/**
  * 生成视频
  * @param {Object} options - 视频生成选项
  * @param {string} options.prompt - 描述你想要的视频画面/风格
@@ -73,28 +107,28 @@ export async function generateVideo({
 
     // 创建生成任务 - 使用正确的API调用方式
     console.error("正在调用API创建视频生成任务...");
-    
+
     // 直接使用axios调用API，而不是OpenAI SDK（因为视频生成API与标准聊天API不同）
-    const response = await axios.post(
-      "https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks",
-      {
+    // 使用 axiosWithRetry 增强鲁棒性
+    const response = await axiosWithRetry({
+      method: 'post',
+      url: "https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks",
+      data: {
         model: model,
         content: content,
       },
-      {
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json"
-        }
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
       }
-    );
-    
+    });
+
     // 检查API响应
     if (!response || !response.data) {
       console.error("❌ API调用失败，未返回结果");
       return null;
     }
-    
+
     console.error("API返回结果:", JSON.stringify(response.data, null, 2));
 
     // 检查任务ID是否存在
@@ -108,17 +142,16 @@ export async function generateVideo({
 
     // 轮询
     while (true) {
-      // 使用axios轮询任务状态
-      const statusResponse = await axios.get(
-        `https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/${task_id}`,
-        {
-          headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Content-Type": "application/json"
-          }
+      // 使用 axiosWithRetry 轮询任务状态
+      const statusResponse = await axiosWithRetry({
+        method: 'get',
+        url: `https://ark.cn-beijing.volces.com/api/v3/contents/generations/tasks/${task_id}`,
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
         }
-      );
-      
+      });
+
       const result = statusResponse.data;
       const status = result.status;
 
@@ -140,20 +173,27 @@ export async function generateVideo({
 
         // 下载保存到本地
         try {
-          const downloadResponse = await axios.get(video_url, { responseType: "arraybuffer" });
+          const downloadResponse = await axiosWithRetry({
+            method: 'get',
+            url: video_url,
+            responseType: "arraybuffer"
+          });
           fs.writeFileSync(output_path, downloadResponse.data);
           console.error(`💾 已保存到本地: ${output_path}`);
         } catch (dl_err) {
           console.error("⚠️ 下载失败，但生成成功。请手动用浏览器打开上面的视频URL保存。");
           console.error("下载错误详情:", dl_err);
         }
-
+        if (!video_url) {
+          console.error("Video Generation Task Succeeded but NO URL found in result:", JSON.stringify(result, null, 2));
+          return null;
+        }
         return video_url;
 
       } else if (status === "failed") {
-        console.error("❌ 视频生成失败");
-        console.error("错误信息: ", result);
-        return null;
+        console.error("❌ 视频生成失败", JSON.stringify(result, null, 2));
+        const failureReason = result.failure_reason || (result.error && result.error.message) || "Unknown failure during video generation";
+        throw new Error(failureReason);
 
       } else {
         console.error(`⌛ 当前状态: ${status}，${poll_interval}秒后重试...`);
@@ -162,10 +202,12 @@ export async function generateVideo({
     }
   } catch (error) {
     console.error("视频生成过程中出现错误:", error);
+    let errorMsg = error.message;
     // 如果是API错误，输出详细信息
-    if (error.response) {
+    if (error.response && error.response.data && error.response.data.error) {
       console.error("API错误响应:", error.response.status, error.response.data);
+      errorMsg = error.response.data.error.message || errorMsg;
     }
-    return null;
+    throw new Error(errorMsg);
   }
 }

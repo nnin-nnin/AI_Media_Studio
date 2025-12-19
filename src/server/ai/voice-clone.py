@@ -130,6 +130,13 @@ def main():
     text = sys.argv[2]
     output_file = sys.argv[3] if len(sys.argv) > 3 else "my_custom_voice_output.mp3"
     
+    # 解析模型参数
+    global TARGET_MODEL
+    for arg in sys.argv:
+        if arg.startswith("--model="):
+            TARGET_MODEL = arg.split("=")[1]
+            print(f"[Config] Using custom model: {TARGET_MODEL}", file=sys.stderr)
+    
     try:
         # 1) 本地→COS→URL 或直接使用URL
         audio_url = ensure_url(audio_input)

@@ -90,6 +90,17 @@ function loadVoiceCloningPage(container) {
                             
                             <span class="bg-label" style="margin-top:20px;">Similarity</span>
                             <input type="range" class="vc-slider" id="similarity-slider" min="0" max="100" value="75">
+
+                            <div class="studio-setting-group" style="margin-top:24px; padding-top:20px; border-top:1px solid var(--glass-border);">
+                                <span class="bg-label">Model Configuration</span>
+                                <div style="margin-top:12px;">
+                                    <label style="display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px;">Endpoint ID</label>
+                                    <select id="vc-model-select" class="studio-select-glass">
+                                        <option value="${window.SettingsManager.get('audioModel')}">${window.SettingsManager.get('audioModel')}</option>
+                                        <option disabled>Loading models...</option>
+                                    </select>
+                                </div>
+                            </div>
                          </div>
 
                          <!-- Tab: Assets -->
@@ -227,6 +238,9 @@ function setupVoiceCloningEventListeners() {
         });
     });
 
+    // 4.5 Model Settings Logic
+    initModelSelect('vc-model-select', 'audioModel', 'audio');
+
     // 5. Generate Logic
     const generateBtn = document.getElementById('generate-voice-btn');
     generateBtn?.addEventListener('click', async () => {
@@ -273,10 +287,14 @@ function setupVoiceCloningEventListeners() {
             // Call API
             const result = await window.electronAPI.cloneVoice({
                 text: prompt,
-                audio: audioData
+                audio: audioData,
+                model: window.SettingsManager.get('audioModel') || "cosyvoice-v2"
             });
 
             if (result && result.status === 'success') {
+                if (!result.audio_url) {
+                    throw new Error("AI generated success but no audio URL was returned.");
+                }
                 resBox.innerHTML = `
                     <div style="text-align: center; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                         <audio controls autoplay style="width: 300px; border-radius:30px; box-shadow:0 10px 30px rgba(0,0,0,0.1);">
@@ -534,3 +552,29 @@ function setupVoiceCloningEventListeners() {
 }
 
 window.loadVoiceCloningPage = loadVoiceCloningPage;
+
+/**
+ * Initialize a standard select for model selection
+ */
+async function initModelSelect(selectId, settingsKey, type = null) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    try {
+        const url = type ? `/api/ai/models?type=${type}` : '/api/ai/models';
+        const resp = await fetch(url);
+        const data = await resp.json();
+        if (data.status === 'success') {
+            const current = window.SettingsManager.get(settingsKey);
+            select.innerHTML = data.models.map(m => `
+                <option value="${m.id}" ${m.id === current ? 'selected' : ''}>${m.name}</option>
+            `).join('');
+        }
+    } catch (err) {
+        console.error("Failed to fetch models:", err);
+    }
+
+    select.addEventListener('change', (e) => {
+        window.SettingsManager.set(settingsKey, e.target.value);
+    });
+}

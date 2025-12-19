@@ -73,6 +73,13 @@ class AssetManager {
         return this.assets.filter(a => a.type === type).slice(0, limit);
     }
 
+    /**
+     * Get a specific asset by ID
+     */
+    get(id) {
+        return this.assets.find(a => String(a.id) === String(id));
+    }
+
     getAll() {
         return this.assets;
     }

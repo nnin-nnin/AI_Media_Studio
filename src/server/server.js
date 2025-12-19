@@ -51,7 +51,7 @@ app.post('/api/auth/ritual-unlock', async (req, res) => {
         res.json({ status: 'success', data: result });
     } catch (e) {
         console.error("Ritual Unlock Failed:", e.message);
-        res.status(401).json({ status: 'error', message: e.message });
+        res.status(400).json({ status: 'error', message: e.message });
     }
 });
 
@@ -107,7 +107,8 @@ app.use('/api', rateLimiter);
 // --- Protected Routes ---
 // Apply verify token to all /api routes EXCEPT auth and config
 app.use('/api', (req, res, next) => {
-    if (req.path.startsWith('/auth') || req.path === '/config') return next();
+    const path = req.path || '';
+    if (path.startsWith('/auth') || path === '/config') return next();
     AuthService.authenticateToken(req, res, next);
 });
 
@@ -122,7 +123,7 @@ app.post('/api/assets', async (req, res) => {
         res.json({ status: 'success', asset });
     } catch (e) {
         console.error("Save Asset Error:", e);
-        res.status(500).json({ status: 'error', message: e.message });
+        res.status(400).json({ status: 'error', message: e.message });
     }
 });
 
@@ -140,6 +141,7 @@ app.post('/api/ai/image', async (req, res) => {
     try {
         console.log("Generating Image with options:", req.body);
         const result = await AIService.generateImage(req.body);
+        if (result.status === 'error') return res.status(400).json(result);
         res.json(result);
     } catch (error) {
         console.error("Image Gen Error:", error);
@@ -151,6 +153,7 @@ app.post('/api/ai/edit-image', async (req, res) => {
     try {
         console.log("Editing Image with options:", req.body);
         const result = await AIService.editImage(req.body);
+        if (result.status === 'error') return res.status(400).json(result);
         res.json(result);
     } catch (error) {
         console.error("Image Edit Error:", error);
@@ -162,6 +165,7 @@ app.post('/api/ai/video', async (req, res) => {
     try {
         console.log("Generating Video with options:", req.body);
         const result = await AIService.generateVideo(req.body);
+        if (result.status === 'error') return res.status(400).json(result);
         res.json(result);
     } catch (error) {
         console.error("Video Gen Error:", error);
@@ -173,9 +177,21 @@ app.post('/api/ai/voice', async (req, res) => {
     try {
         console.log("Cloning Voice with options:", req.body);
         const result = await AIService.cloneVoice(req.body);
+        if (result.status === 'error') return res.status(400).json(result);
         res.json(result);
     } catch (error) {
         console.error("Voice Clone Error:", error);
+        res.status(500).json({ status: 'error', message: error.message });
+    }
+});
+
+app.get('/api/ai/models', async (req, res) => {
+    try {
+        const { type } = req.query;
+        const result = await AIService.listModels(type);
+        res.json(result);
+    } catch (error) {
+        console.error("List Models API Error:", error);
         res.status(500).json({ status: 'error', message: error.message });
     }
 });

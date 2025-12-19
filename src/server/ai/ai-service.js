@@ -38,6 +38,7 @@ class AIService {
     try {
       const imageUrl = await this.textToImage(options);
 
+      if (!imageUrl) throw new Error("AI service returned an empty URL");
       return {
         status: 'success',
         image_url: imageUrl
@@ -95,6 +96,7 @@ class AIService {
   static async editImage(options) {
     const imageUrl = await imageToImage(options);
 
+    if (!imageUrl) throw new Error("AI service returned an empty URL");
     return {
       status: 'success',
       image_url: imageUrl
@@ -110,6 +112,7 @@ class AIService {
     try {
       const videoUrl = await generateVideo(options);
 
+      if (!videoUrl) throw new Error("AI service returned an empty video URL");
       return {
         status: 'success',
         video_url: videoUrl
@@ -159,7 +162,9 @@ class AIService {
       const venvPythonPath = path.join(__dirname, '..', '..', '..', '.venv', 'bin', 'python');
       const pythonPath = fs.existsSync(venvPythonPath) ? venvPythonPath : (process.env.PYTHON_PATH || 'python3');
 
-      const args = [scriptPath, audioFilePath, options.text, outputFilePath];
+      // Add model to arguments if provided
+      const model = options.model || 'cosyvoice-v2';
+      const args = [scriptPath, audioFilePath, options.text, outputFilePath, `--model=${model}`];
 
       const result = await this.executePythonScript(pythonPath, args);
 
@@ -173,6 +178,7 @@ class AIService {
           fs.unlinkSync(audioFilePath);
           fs.unlinkSync(outputFilePath);
 
+          console.log("Voice Cloning Succeeded, returning audio data URL (length: " + outputDataUrl.length + ")");
           return {
             status: 'success',
             audio_url: outputDataUrl
@@ -267,6 +273,70 @@ class AIService {
         });
       });
     });
+  }
+
+  /**
+   * 获取可选模型列表（支持分类过滤）
+   * @param {string} type - 模型类型: 'image', 'video', 'audio', or null for all
+   * @returns {Promise<Object>} 结果对象
+   */
+  static async listModels(type = null) {
+    try {
+      console.log(`Fetching ${type || 'all'} models from Ark API...`);
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("ARK API Timeout")), 5000)
+      );
+
+      const response = await Promise.race([
+        client.models.list(),
+        timeoutPromise
+      ]);
+
+      console.log("Ark API response received:", !!response);
+
+      let models = response.data.map(m => ({
+        id: m.id,
+        name: m.id
+      }));
+
+      // 按类型过滤 (Filter by type)
+      if (type) {
+        const filters = {
+          'image': ['seedream', 'seededit', 'cv-', 'image'],
+          'video': ['seedance', 'video'],
+          'audio': ['cosyvoice', 'voice', 'audio']
+        };
+        const keywords = filters[type] || [];
+        models = models.filter(m =>
+          keywords.some(kw => m.id.toLowerCase().includes(kw))
+        );
+      }
+
+      return {
+        status: 'success',
+        models
+      };
+    } catch (error) {
+      console.error("List Models Error:", error.message);
+
+      // Fallback: 根据类型返回过滤后的默认值
+      const allFallbacks = [
+        { id: "doubao-seedream-4-0-250828", name: "Doubao Image (Seedream 4.0)", type: 'image' },
+        { id: "doubao-seedance-1-0-pro-fast-251015", name: "Doubao Video (Seedance 1.0 Fast)", type: 'video' },
+        { id: "cosyvoice-v2", name: "CosyVoice V2 (Standard)", type: 'audio' }
+      ];
+
+      const filteredFallbacks = type
+        ? allFallbacks.filter(m => m.type === type)
+        : allFallbacks;
+
+      return {
+        status: 'success',
+        models: filteredFallbacks.map(({ id, name }) => ({ id, name })),
+        warning: "Failed to fetch remote models, using defaults."
+      };
+    }
   }
 }
 

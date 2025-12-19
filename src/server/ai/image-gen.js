@@ -32,8 +32,11 @@ export async function imageToImage({
     image: image,
     watermark: watermark,
   });
-  const url = resp.data[0].url;
-  if (saveTo) await download(url, saveTo);
+  if (!resp.data || !resp.data[0] || !resp.data[0].url) {
+    console.error("AI Response missing URL:", JSON.stringify(resp, null, 2));
+  }
+  const url = resp.data[0]?.url;
+  if (saveTo && url) await download(url, saveTo);
   return url;
 }
 

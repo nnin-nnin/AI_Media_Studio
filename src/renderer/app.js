@@ -1,4 +1,25 @@
 // app.js - 主应用文件
+
+// --- Global API Interceptor (Centralized Authorization) ---
+const originalFetch = window.fetch;
+window.fetch = async (resource, config = {}) => {
+    // Check if the URL is an internal API call
+    const isInternalApi = typeof resource === 'string' && resource.startsWith('/api/');
+
+    if (isInternalApi) {
+        // Automatically inject Authorization header if token exists
+        const token = localStorage.getItem('ai_auth_token');
+        if (token) {
+            config.headers = {
+                ...config.headers,
+                'Authorization': `Bearer ${token}`
+            };
+        }
+    }
+
+    return originalFetch(resource, config);
+};
+
 document.addEventListener('DOMContentLoaded', function () {
     // 初始化应用
     initializeApp();

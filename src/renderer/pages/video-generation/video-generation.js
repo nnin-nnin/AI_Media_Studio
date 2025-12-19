@@ -40,13 +40,16 @@ function loadVideoGenerationPage(container) {
                 <!-- 2. Interactive Input Section -->
                 <div class="vg-input-section">
                     <!-- Image Upload Slot (Initially hidden or shown based on mode) -->
-                    <div class="vg-slots-row" id="vg-image-slot-row" style="display:none;">
+                    <div class="vg-slots-row" id="vg-image-slot-row" style="display:none; align-items:center; gap:12px;">
                         <div class="vg-slot" id="vg-slot-ref" title="Upload Reference Image">
                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
                              <input type="file" style="display:none" accept="image/*">
                         </div>
-                        <div style="font-size:12px; color:var(--text-secondary); display:flex; align-items:center; margin-left:10px;">
-                            Start with an image (optional)
+                        <div class="vg-slot" id="vg-btn-camera" title="Take a Photo" style="background:var(--primary-glass);">
+                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-secondary); display:flex; align-items:center;">
+                            Start with an image
                         </div>
                     </div>
 
@@ -114,6 +117,17 @@ function loadVideoGenerationPage(container) {
                                 <span id="motion-display" style="font-size:12px; color:var(--text-primary);">5</span>
                             </div>
                             <input type="range" class="vg-slider" id="motion-slider" min="1" max="10" value="5">
+
+                            <div class="studio-setting-group" style="margin-top:24px; padding-top:20px; border-top:1px solid var(--glass-border);">
+                                <span class="bg-label">Model Configuration</span>
+                                <div style="margin-top:12px;">
+                                    <label style="display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px;">Endpoint ID</label>
+                                    <select id="vg-model-select" class="studio-select-glass">
+                                        <option value="${window.SettingsManager.get('videoModel')}">${window.SettingsManager.get('videoModel')}</option>
+                                        <option disabled>Loading models...</option>
+                                    </select>
+                                </div>
+                            </div>
                          </div>
 
                          <!-- Tab: Assets -->
@@ -154,7 +168,51 @@ function loadVideoGenerationPage(container) {
                 </div>
             </div>
             
+            
         </div>
+
+        <!-- Camera Modal -->
+        <div id="vg-camera-modal" class="vg-modal" style="display:none;">
+            <div class="vg-modal-content">
+                <div class="vg-modal-header">
+                    <span>Capture Reference</span>
+                    <button id="vg-camera-close">&times;</button>
+                </div>
+                <div class="vg-camera-container">
+                    <video id="vg-video-preview" autoplay playsinline></video>
+                    <canvas id="vg-capture-canvas" style="display:none;"></canvas>
+                </div>
+                <div class="vg-modal-footer">
+                    <button class="primary-btn" id="vg-btn-capture">Snap Photo</button>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .vg-modal {
+                position: fixed; top:0; left:0; width:100%; height:100%;
+                background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+                display: flex; align-items: center; justify-content: center; z-index: 1000;
+            }
+            .vg-modal-content {
+                background: var(--bg-deep); border: 1px solid var(--glass-border);
+                border-radius: 16px; width: 500px; max-width: 90%; overflow: hidden;
+            }
+            .vg-modal-header {
+                padding: 15px 20px; border-bottom: 1px solid var(--glass-border);
+                display: flex; justify-content: space-between; align-items: center;
+            }
+            #vg-camera-close {
+                background: none; border: none; color: var(--text-secondary);
+                font-size: 24px; cursor: pointer;
+            }
+            .vg-camera-container {
+                width: 100%; aspect-ratio: 4/3; background: #000;
+                display: flex; align-items: center; justify-content: center;
+            }
+            #vg-video-preview { width: 100%; height: 100%; object-fit: cover; }
+            .vg-modal-footer { padding: 20px; text-align: center; }
+        </style>
     `;
 
     setupVideoGenerationEventListeners();
@@ -192,26 +250,37 @@ function setupVideoGenerationEventListeners() {
             const file = e.target.files[0];
             const reader = new FileReader();
             reader.onload = (evt) => {
-                slotElement.innerHTML = `
-                    <img src="${evt.target.result}">
-                    <div class="remove-btn" title="Remove">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </div>
-                `;
-                slotElement.classList.add('has-image');
-                slotElement.dataset.hasImage = "true"; // Mark for logic
-
-                slotElement.querySelector('.remove-btn').addEventListener('click', (ev) => {
-                    ev.stopPropagation();
-                    slotElement.innerHTML = defaultHTML;
-                    slotElement.classList.remove('has-image');
-                    delete slotElement.dataset.hasImage;
-                    // Re-attach listener
-                    const newInput = slotElement.querySelector('input');
-                    if (newInput) {
-                        newInput.addEventListener('change', (ev2) => handleFileSelect(ev2, slotElement, defaultHTML));
+                const img = new Image();
+                img.onload = () => {
+                    const minDim = 300;
+                    if (img.width < minDim || img.height < minDim) {
+                        alert(`Image too small (${img.width}x${img.height}px). Minimum required is ${minDim}x${minDim}px.`);
+                        e.target.value = ""; // Clear input
+                        return;
                     }
-                });
+
+                    slotElement.innerHTML = `
+                        <img src="${evt.target.result}">
+                        <div class="remove-btn" title="Remove">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </div>
+                    `;
+                    slotElement.classList.add('has-image');
+                    slotElement.dataset.hasImage = "true"; // Mark for logic
+
+                    slotElement.querySelector('.remove-btn').addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        slotElement.innerHTML = defaultHTML;
+                        slotElement.classList.remove('has-image');
+                        delete slotElement.dataset.hasImage;
+                        // Re-attach listener
+                        const newInput = slotElement.querySelector('input');
+                        if (newInput) {
+                            newInput.addEventListener('change', (ev2) => handleFileSelect(ev2, slotElement, defaultHTML));
+                        }
+                    });
+                };
+                img.src = evt.target.result;
             };
             reader.readAsDataURL(file);
         }
@@ -228,6 +297,85 @@ function setupVideoGenerationEventListeners() {
             initialInput.addEventListener('change', (e) => handleFileSelect(e, slot, defaultIconHTML));
         }
     }
+
+    // Camera Logic
+    const btnCamera = document.getElementById('vg-btn-camera');
+    const cameraModal = document.getElementById('vg-camera-modal');
+    const cameraClose = document.getElementById('vg-camera-close');
+    const btnCapture = document.getElementById('vg-btn-capture');
+    const videoPreview = document.getElementById('vg-video-preview');
+    const captureCanvas = document.getElementById('vg-capture-canvas');
+    let cameraStream = null;
+
+    btnCamera?.addEventListener('click', async () => {
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({
+                video: { width: { ideal: 1280 }, height: { ideal: 720 } }
+            });
+            videoPreview.srcObject = cameraStream;
+            cameraModal.style.display = 'flex';
+        } catch (err) {
+            console.error("Camera access denied:", err);
+            alert("Could not access camera. Please check permissions.");
+        }
+    });
+
+    const stopCamera = () => {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+        cameraModal.style.display = 'none';
+        videoPreview.srcObject = null;
+    };
+
+    cameraClose?.addEventListener('click', stopCamera);
+
+    btnCapture?.addEventListener('click', () => {
+        if (!videoPreview.videoWidth) return;
+
+        const ctx = captureCanvas.getContext('2d');
+        captureCanvas.width = videoPreview.videoWidth;
+        captureCanvas.height = videoPreview.videoHeight;
+
+        // Quality check
+        const minDim = 300;
+        if (captureCanvas.width < minDim || captureCanvas.height < minDim) {
+            alert(`Camera resolution too low (${captureCanvas.width}x${captureCanvas.height}px).`);
+            stopCamera();
+            return;
+        }
+
+        ctx.drawImage(videoPreview, 0, 0, captureCanvas.width, captureCanvas.height);
+        const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.9);
+
+        // Update Slot
+        const slotRef = document.getElementById('vg-slot-ref');
+        if (slotRef) {
+            slotRef.innerHTML = `
+                <img src="${dataUrl}">
+                <div class="remove-btn" title="Remove">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </div>
+            `;
+            slotRef.classList.add('has-image');
+            slotRef.dataset.hasImage = "true";
+
+            slotRef.querySelector('.remove-btn').addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                slotRef.innerHTML = defaultIconHTML;
+                slotRef.classList.remove('has-image');
+                delete slotRef.dataset.hasImage;
+                // Re-attach file listener
+                const newInput = slotRef.querySelector('input');
+                if (newInput) {
+                    newInput.addEventListener('change', (ev2) => handleFileSelect(ev2, slotRef, defaultIconHTML));
+                }
+            });
+        }
+
+        stopCamera();
+    });
 
     // 3. Aspect Ratio (Event Delegation)
     const ratioGrid = document.querySelector('.ratio-grid');
@@ -277,6 +425,9 @@ function setupVideoGenerationEventListeners() {
         });
     });
 
+    // 5.5 Model Settings Logic
+    initModelSelect('vg-model-select', 'videoModel', 'video');
+
     // 6. Generate Logic
     const generateBtn = document.getElementById('generate-video-btn');
     generateBtn?.addEventListener('click', async () => {
@@ -320,7 +471,8 @@ function setupVideoGenerationEventListeners() {
                 image_url: hasImage ? imgElement.src : null,
                 duration: duration,
                 resolution: "720p", // Defaulting as before
-                ratio: activeRatio // Passing ratio just in case backend uses it
+                ratio: activeRatio, // Passing ratio just in case backend uses it
+                model: window.SettingsManager.get('videoModel') // Using configured model
             };
 
             const resBox = document.querySelector('.result-preview');
@@ -346,6 +498,9 @@ function setupVideoGenerationEventListeners() {
             }
 
             if (result && result.status === 'success') {
+                if (!result.video_url) {
+                    throw new Error("AI generated success but no video URL was returned.");
+                }
                 resBox.innerHTML = `
                     <div style="text-align: center; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                         <video controls autoplay loop style="max-width: 100%; max-height: 80%; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.3);">
@@ -420,3 +575,29 @@ function setupVideoGenerationEventListeners() {
 
 // Make it globally available
 window.loadVideoGenerationPage = loadVideoGenerationPage;
+
+/**
+ * Initialize a standard select for model selection
+ */
+async function initModelSelect(selectId, settingsKey, type = null) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    try {
+        const url = type ? `/api/ai/models?type=${type}` : '/api/ai/models';
+        const resp = await fetch(url);
+        const data = await resp.json();
+        if (data.status === 'success') {
+            const current = window.SettingsManager.get(settingsKey);
+            select.innerHTML = data.models.map(m => `
+                <option value="${m.id}" ${m.id === current ? 'selected' : ''}>${m.name}</option>
+            `).join('');
+        }
+    } catch (err) {
+        console.error("Failed to fetch models:", err);
+    }
+
+    select.addEventListener('change', (e) => {
+        window.SettingsManager.set(settingsKey, e.target.value);
+    });
+}

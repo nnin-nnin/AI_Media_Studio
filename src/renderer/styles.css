@@ -583,6 +583,115 @@ textarea:focus {
     }
 }
 
+/* --- Searchable Dropdown --- */
+.search-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+.search-dropdown-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: white;
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.search-dropdown-input:focus {
+    border-color: #3b82f6;
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.search-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.search-dropdown-menu.visible {
+    display: block;
+    animation: slideUp 0.2s ease-out;
+}
+
+.search-dropdown-item {
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.search-dropdown-item:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: white;
+}
+
+.search-dropdown-item.no-results {
+    cursor: default;
+    opacity: 0.5;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- Styled Select Glass --- */
+.studio-select-glass {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: white;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 14px;
+    transition: all 0.2s;
+}
+
+.studio-select-glass:hover {
+    background-color: rgba(30, 41, 59, 0.6);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.studio-select-glass:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.studio-select-glass option {
+    background-color: #0f172a;
+    color: white;
+}
+
 /* --- Mobile / Tablet Responsive --- */
 @media (max-width: 1200px) {
     .home-split-container {
