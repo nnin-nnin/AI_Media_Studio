@@ -39,29 +39,33 @@
 .feature-card {
     background: var(--bg-card);
     border: var(--glass-border);
-    border-radius: 20px;
+    border-radius: var(--radius-xl);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* Bouncy transition */
     position: relative;
     backdrop-filter: blur(10px);
     width: 100%;
     aspect-ratio: 4 / 5;
+    box-shadow: 10px 10px 0px #333333;
+    /* Hard shadow */
 }
 
 .feature-card:hover {
-    transform: translateY(-6px);
-    border-color: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
+    transform: translateY(-10px) rotate(-1deg);
+    border-color: #333333;
+    box-shadow: 15px 15px 0px #333333;
 }
 
 .card-media {
     height: 45%;
     width: 100%;
-    background: rgba(0, 0, 0, 0.3);
+    background: #FFD93D;
     position: relative;
     overflow: hidden;
+    border-bottom: 4px solid #333333;
 }
 
 .card-media img,

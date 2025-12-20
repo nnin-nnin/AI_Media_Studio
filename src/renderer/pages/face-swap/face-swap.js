@@ -539,7 +539,25 @@ function setupFaceSwapEventListeners() {
     // 6. Toolbar
     document.getElementById('btn-clear-prompt')?.addEventListener('click', () => {
         const el = document.getElementById('fs-prompt-input');
-        if (el) el.value = "A futuristic cyberpunk city with neon lights and flying cars, cinematic lighting.";
+        if (el) {
+            el.value = "";
+            el.focus();
+        }
+    });
+
+    document.getElementById('btn-gen-prompt')?.addEventListener('click', () => {
+        const el = document.getElementById('fs-prompt-input');
+        if (el) {
+            const prompts = [
+                "A futuristic cyberpunk city with neon lights and flying cars, cinematic lighting.",
+                "Ethereal landscape with floating islands and purple waterfalls, studio ghibli style.",
+                "Detailed portrait of a cosmic explorer in a gold spacesuit, nebula background.",
+                "Vintage oil painting of a Victorian robot drinking tea in a garden.",
+                "3D isometric room design for a cozy gaming setup, soft pastel lighting."
+            ];
+            el.value = prompts[Math.floor(Math.random() * prompts.length)];
+            el.focus();
+        }
     });
 
 

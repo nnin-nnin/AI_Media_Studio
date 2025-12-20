@@ -3,40 +3,40 @@
 @import './studio-layout.css';
 @import './components/sidebar/sidebar.css';
 
-/* 1. Design Tokens */
+/* 1. Design Tokens: Cartoon Edition */
 :root {
-    /* Backgrounds: Light Theme */
-    --bg-core: #f1f5f9;
-    /* Slate 100 */
-    --bg-glass: rgba(255, 255, 255, 0.85);
-    /* Highly opaque white glass */
-    --bg-card: rgba(255, 255, 255, 0.7);
+    /* Backgrounds: Vibrant & Playful */
+    --bg-core: #FFFAF0;
+    /* Floral White */
+    --bg-glass: rgba(255, 255, 255, 0.95);
+    --bg-card: #FFFFFF;
 
-    /* Borders & Effects */
-    --glass-border: 1px solid rgba(0, 0, 0, 0.06);
-    --glass-shine: 1px solid rgba(255, 255, 255, 0.6);
-    --radius-xl: 24px;
-    --radius-lg: 16px;
-    --radius-md: 12px;
+    /* Borders & Effects: Bubbly & Bold */
+    --glass-border: 4px solid #333333;
+    /* Thick comic-style border */
+    --glass-shine: 2px solid rgba(255, 255, 255, 1);
+    --radius-xl: 40px;
+    /* Extra bubbly */
+    --radius-lg: 30px;
+    --radius-md: 20px;
 
-    /* Text */
-    --text-primary: #1e293b;
-    /* Slate 800 */
-    --text-secondary: #64748b;
-    /* Slate 500 */
+    /* Text: Bold & Clear */
+    --text-primary: #333333;
+    --text-secondary: #555555;
 
-    /* Brand & Accents */
-    --gradient-magic: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-    --shadow-magic: 0 10px 25px -5px rgba(59, 130, 246, 0.3);
+    /* Brand & Accents: Pop Color Palette */
+    --gradient-magic: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
+    --shadow-magic: 8px 8px 0px #333333;
+    /* Hard shadow pop-art */
 
     /* UI Elements */
-    --btn-secondary-bg: rgba(0, 0, 0, 0.05);
-    --btn-secondary-border: rgba(0, 0, 0, 0.08);
-    --btn-secondary-hover: rgba(0, 0, 0, 0.08);
+    --btn-secondary-bg: #4facfe;
+    --btn-secondary-border: #333333;
+    --btn-secondary-hover: #00f2fe;
 
     /* Layout */
-    --gap-base: 1.5rem;
-    --pad-global: 2rem;
+    --gap-base: 2rem;
+    --pad-global: 2.5rem;
 }
 
 * {
@@ -51,10 +51,11 @@ body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     height: 100vh;
     overflow: hidden;
-    /* Subtle light mesh gradient */
-    background-image:
-        radial-gradient(at 0% 0%, hsla(210, 100%, 96%, 1) 0, transparent 50%),
-        radial-gradient(at 100% 100%, hsla(260, 100%, 96%, 1) 0, transparent 50%);
+    /* Playful Cartoon Pattern: Polka Dots */
+    background-image: radial-gradient(#FFD93D 10%, transparent 10%),
+        radial-gradient(#FF6B6B 10%, transparent 10%);
+    background-size: 60px 60px;
+    background-position: 0 0, 30px 30px;
 }
 
 #app {
