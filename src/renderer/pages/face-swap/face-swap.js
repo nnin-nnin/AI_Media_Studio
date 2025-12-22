@@ -17,16 +17,13 @@ function loadFaceSwapPage(container) {
 
     container.innerHTML = `
         <div class="studio-layout fade-in">
-            <!-- Col 1: Global Nav -->
-            <div class="studio-nav" id="global-sidebar"></div>
-
             <!-- Col 2: Controls (Left Panel) -->
             <div class="studio-controls face-swap-controls">
                 
                 <!-- 1. Header & Mode -->
-                <div class="fs-header">
-                    <div style="font-weight:600; font-size:14px;">Generative Session</div>
-                    <div class="fs-mode-switch">
+                <div class="studio-header">
+                    <div style="font-weight:600; font-size:14px;">Image Studio</div>
+                    <div class="studio-mode-switch">
                         <button class="mode-btn" data-mode="text">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                             Text
@@ -39,29 +36,37 @@ function loadFaceSwapPage(container) {
                 </div>
 
                 <!-- 2. Interactive Input Section -->
-                <div class="fs-input-section">
+                <div class="studio-input-section">
                     <!-- Reference Slots (Hidden in Text mode) -->
-                    <div class="fs-slots-row" id="fs-slots-row">
+                    <div class="studio-slots-row" id="fs-slots-row">
                         <!-- Upload Slot 1 -->
-                        <div class="fs-slot" id="slot-ref-1" title="Add Image Reference">
+                        <div class="studio-slot" id="slot-ref-1" title="Add Image Reference">
                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
                              <input type="file" style="display:none" accept="image/*">
                         </div>
                         <!-- Camera Button -->
-                        <div class="fs-slot" id="fs-btn-camera" title="Take Photo" style="cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                        <div class="studio-slot" id="fs-btn-camera" title="Take Photo">
                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
                         </div>
                         <!-- Empty Placeholder Slots (Visual only) -->
-                        <div class="fs-slot" style="opacity:0.5; cursor:default; border-style:dashed;"></div>
-                        <div class="fs-slot" style="opacity:0.5; cursor:default; border-style:dashed;"></div>
+                        <div class="studio-slot" style="opacity:0.5; cursor:default; border-style:dashed;"></div>
+                        <div class="studio-slot" style="opacity:0.5; cursor:default; border-style:dashed;"></div>
+                    </div>
+
+                    <!-- Quick Selection Tags -->
+                    <div class="studio-tags-row">
+                        <div class="studio-tag" data-prompt="A powerful superhero flying in the sky, wearing a blue suit with a red cape, muscular physique, heroic pose, cinematic lighting, 8k resolution.">${window.i18n.t('IMAGE_TAG_SUPERMAN')}</div>
+                        <div class="studio-tag" data-prompt="Batman standing on a Gotham rooftop at night, dark rain, bats flying in background, tactical suit, moody atmosphere, cinematic, hyper-realistic.">${window.i18n.t('IMAGE_TAG_BATMAN')}</div>
+                        <div class="studio-tag" data-prompt="Cyberpunk city street at night, neon lights, futuristic vehicles, rain on pavement, cyborg character, vibrant colors, cinematic, highly detailed.">${window.i18n.t('IMAGE_TAG_CYBERPUNK')}</div>
+                        <div class="studio-tag" data-prompt="A teenage geek student in a modern lab, wearing glasses and a hoodie, surrounded by high-tech holograms and computers, anime style, vibrant colors.">${window.i18n.t('IMAGE_TAG_ANIME')}</div>
                     </div>
 
                     <!-- Text Editor -->
-                    <div class="fs-text-editor">
-                        <textarea class="fs-textarea" id="fs-prompt-input" placeholder="Describe your image...
+                    <div class="studio-text-editor">
+                        <textarea class="studio-textarea" id="fs-prompt-input" placeholder="Describe your image...
 Mention colors, lighting, and style."></textarea>
                         
-                        <div class="fs-toolbar">
+                        <div class="studio-toolbar">
                              <button class="tool-icon-btn" id="btn-gen-prompt" title="Generate Prompt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg></button>
                              <button class="tool-icon-btn" id="btn-clear-prompt" title="Clear"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg></button>
                         </div>
@@ -69,18 +74,18 @@ Mention colors, lighting, and style."></textarea>
                 </div>
 
                 <!-- 3. Tabbed Component Panel -->
-                <div class="fs-tabs-panel">
-                    <div class="fs-tab-header">
-                        <button class="fs-tab-btn active" data-tab="settings">
+                <div class="studio-tabs-panel fs-tabs-panel">
+                    <div class="studio-tab-header">
+                        <button class="studio-tab-btn active" data-tab="settings">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                             Settings
                         </button>
-                        <button class="fs-tab-btn" data-tab="assets">
+                        <button class="studio-tab-btn" data-tab="assets">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
                             Assets
                         </button>
                     </div>
-                    <div class="fs-tab-content">
+                    <div class="studio-tab-content">
                          <!-- Tab: Settings -->
                          <div id="tab-settings" class="tab-pane">
                             <span class="bg-label">Aspect Ratio</span>
@@ -107,8 +112,11 @@ Mention colors, lighting, and style."></textarea>
                                 </div>
                             </div>
 
-                            <span class="bg-label" style="margin-top:20px;">Reference Strength</span>
-                            <input type="range" class="fs-slider" min="0" max="100" value="75" style="margin-top:8px;">
+                             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                                <span class="bg-label">Reference Strength</span>
+                                <span id="fs-strength-value" style="font-size: 11px; color: var(--primary); font-weight: 600;">75%</span>
+                             </div>
+                             <input type="range" class="studio-slider" id="fs-strength-slider" min="0" max="100" value="75" style="margin-top:8px;">
 
                             <div class="studio-setting-group" style="margin-top:24px; padding-top:20px; border-top:1px solid var(--glass-border);">
                                 <span class="bg-label">Model Configuration</span>
@@ -135,7 +143,7 @@ Mention colors, lighting, and style."></textarea>
                 </div>
 
                 <!-- 4. Action Area -->
-                <div class="fs-action-area">
+                <div class="studio-action-area fs-action-area">
                      <button class="primary-btn" id="generate-btn" style="width:100%;">
                         Generate
                      </button>
@@ -147,7 +155,7 @@ Mention colors, lighting, and style."></textarea>
             <div class="studio-viewport">
                 <!-- Simple Header -->
                 <div style="position:absolute; top:20px; right:20px; display:flex; gap:10px; z-index:10;">
-                    <button class="secondary-btn" style="background:var(--bg-glass); backdrop-filter:blur(10px);">Export</button>
+                    <div class="status-badge" style="background:rgba(255,255,255,0.1); padding:4px 8px; border-radius:4px; font-size:12px;">Ready</div>
                 </div>
 
                 <!-- Empty State / Result -->
@@ -288,6 +296,35 @@ function setupFaceSwapEventListeners() {
         }
     }
 
+    // 2.3 Text Editor Tools
+    const btnClearPrompt = document.getElementById('btn-clear-prompt');
+    if (btnClearPrompt) {
+        btnClearPrompt.addEventListener('click', () => {
+            const promptInput = document.getElementById('fs-prompt-input');
+            if (promptInput) promptInput.value = '';
+        });
+    }
+
+    // 2.4 Quick Prompt Tags
+    const tagsRow = document.querySelector('.studio-tags-row');
+    const promptInputArea = document.getElementById('fs-prompt-input');
+    if (tagsRow && promptInputArea) {
+        tagsRow.addEventListener('click', (e) => {
+            const tag = e.target.closest('.studio-tag');
+            if (tag) {
+                const prompt = tag.dataset.prompt;
+                promptInputArea.value = prompt;
+
+                // Visual feedback: Flash the input box
+                promptInputArea.style.transition = 'background-color 0.3s';
+                promptInputArea.style.backgroundColor = 'rgba(255, 217, 61, 0.2)'; // Faint yellow
+                setTimeout(() => {
+                    promptInputArea.style.backgroundColor = 'white';
+                }, 300);
+            }
+        });
+    }
+
     // 2.5 Camera Logic
     const btnCamera = document.getElementById('fs-btn-camera');
     const cameraModal = document.getElementById('fs-camera-modal');
@@ -379,8 +416,17 @@ function setupFaceSwapEventListeners() {
         });
     }
 
+    // 3.5 Strength Slider Value Update
+    const strengthSlider = document.getElementById('fs-strength-slider');
+    const strengthValueDisp = document.getElementById('fs-strength-value');
+    if (strengthSlider && strengthValueDisp) {
+        strengthSlider.addEventListener('input', (e) => {
+            strengthValueDisp.innerText = `${e.target.value}%`;
+        });
+    }
+
     // 4. Tab Switching (Settings / Assets)
-    const tabBtns = document.querySelectorAll('.fs-tab-btn');
+    const tabBtns = document.querySelectorAll('.studio-tab-btn');
     const tabSettings = document.getElementById('tab-settings');
     const tabAssets = document.getElementById('tab-assets');
 
@@ -424,6 +470,8 @@ function setupFaceSwapEventListeners() {
         try {
             // Get Parameters
             const activeRatio = document.querySelector('.ratio-option.active')?.dataset.ratio || "1:1";
+            const strengthSlider = document.getElementById('fs-strength-slider');
+            const strengthValue = strengthSlider ? parseFloat(strengthSlider.value) / 100 : 0.75;
 
             // Map Ratio to Size (Must be >= 921,600 pixels)
             let width = 1024, height = 1024;
@@ -434,13 +482,26 @@ function setupFaceSwapEventListeners() {
 
             const resBox = document.querySelector('.result-preview');
             resBox.innerHTML = `
-                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:var(--text-secondary);">
-                    <div class="spinner" style="margin-bottom:15px; width:30px; height:30px; border:3px solid var(--glass-border); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
-                    <p>Creating masterpiece...</p>
+                <div class="energy-overlay">
+                    <div class="energy-bar-container">
+                        <div class="energy-fill" id="energy-progress" style="width: 10%;"></div>
+                    </div>
+                    <div class="energy-label">Gathering Energy... ⚡</div>
                 </div>
-                <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
             `;
-            resBox.classList.remove('empty');
+
+            let progress = 10;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 12;
+                if (progress > 94) progress = 94;
+                const fill = document.getElementById('energy-progress');
+                const label = document.querySelector('.energy-label');
+                if (fill) fill.style.width = `${progress}%`;
+                if (label) {
+                    if (progress > 30) label.innerText = "Processing Pixels... 🪄";
+                    if (progress > 70) label.innerText = "Finishing Touches... ✨";
+                }
+            }, 800);
 
             let result;
             if (hasImage) {
@@ -448,6 +509,7 @@ function setupFaceSwapEventListeners() {
                 const opts = {
                     image: imgElement.src,
                     prompt: prompt || "Enhance this image",
+                    strength: strengthValue,
                     model: window.SettingsManager.get('imageModel') || "doubao-seedream-4-0-250828"
                 };
                 if (window.electronAPI && window.electronAPI.editImage) {
@@ -531,6 +593,7 @@ function setupFaceSwapEventListeners() {
                 </div>
             `;
         } finally {
+            if (typeof progressInterval !== 'undefined') clearInterval(progressInterval);
             generateBtn.innerHTML = oldText;
             generateBtn.disabled = false;
         }
@@ -540,7 +603,7 @@ function setupFaceSwapEventListeners() {
     document.getElementById('btn-clear-prompt')?.addEventListener('click', () => {
         const el = document.getElementById('fs-prompt-input');
         if (el) {
-            el.value = "";
+            el.value = '';
             el.focus();
         }
     });

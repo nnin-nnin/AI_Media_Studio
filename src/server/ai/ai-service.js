@@ -131,6 +131,51 @@ class AIService {
    * @returns {Promise<Object>} 结果对象
    */
   static async cloneVoice(options) {
+    // Standard names used in our scripts
+    const requiredEnvs = ["DASHSCOPE_API_KEY", "TENCENT_SECRET_ID", "TENCENT_SECRET_KEY", "TENCENT_COS_BUCKET"];
+
+    // Mapping for alternative names (e.g. TENCENTCLOUD_ prefix is official)
+    const aliases = {
+      "TENCENT_SECRET_ID": ["TENCENTCLOUD_SECRET_ID"],
+      "TENCENT_SECRET_KEY": ["TENCENTCLOUD_SECRET_KEY"]
+    };
+
+    // Fill missing ones from aliases
+    requiredEnvs.forEach(key => {
+      if (!process.env[key] && aliases[key]) {
+        const alias = aliases[key].find(a => process.env[a]);
+        if (alias) {
+          process.env[key] = process.env[alias];
+          console.log(`[AIService] Environment: Aliasing ${alias} -> ${key}`);
+        }
+      }
+    });
+
+    const envStatus = {};
+    requiredEnvs.forEach(key => {
+      envStatus[key] = process.env[key] ? 'PRESENT' : 'MISSING';
+    });
+
+    console.log("[AIService] Voice Cloning Env Check:", JSON.stringify(envStatus, null, 2));
+
+    const missingEnvs = requiredEnvs.filter(env => !process.env[env]);
+
+    // Only switch to mock if EVERYTHING is missing AND we are in debug mode.
+    // If the user has some keys, they probably want the real thing.
+    if (missingEnvs.length === requiredEnvs.length && process.env.DEBUG === 'true') {
+      console.log("[AIService] All credentials missing & DEBUG=true. Falling back to Mock Mode.");
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return {
+        status: 'success',
+        isMock: true,
+        audio_url: "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3"
+      };
+    }
+
+    if (missingEnvs.length > 0) {
+      throw new Error(`Missing required environment variables for real voice cloning: ${missingEnvs.join(', ')}. Please check your terminal environment.`);
+    }
+
     try {
       // 创建临时音频文件
       const tempDir = path.join(__dirname, '..', '..', '..', 'temp');
@@ -166,6 +211,7 @@ class AIService {
       const model = options.model || 'cosyvoice-v2';
       const args = [scriptPath, audioFilePath, options.text, outputFilePath, `--model=${model}`];
 
+      console.log(`[AIService] Starting real Voice Cloning with Python: ${pythonPath}`);
       const result = await this.executePythonScript(pythonPath, args);
 
       if (result.status === 'success') {
@@ -231,24 +277,26 @@ class AIService {
    */
   static async executePythonScript(command, args) {
     return new Promise((resolve, reject) => {
-      // Use absolute path to ensure we get the system python3 where dependencies are installed
-      const pythonPath = '/usr/bin/python3';
+      // Use the provided command (pythonPath) instead of hardcoding
+      const pythonPath = command || 'python3';
       console.log(`[AIService] Spawning Python: ${pythonPath} ${args.join(' ')}`);
 
-      const process = spawn(pythonPath, args);
+      const pyProcess = spawn(pythonPath, args, {
+        env: { ...process.env } // Explicitly pass environment
+      });
 
       let stdoutData = '';
       let stderrData = '';
 
-      process.stdout.on('data', (data) => {
+      pyProcess.stdout.on('data', (data) => {
         stdoutData += data.toString();
       });
 
-      process.stderr.on('data', (data) => {
+      pyProcess.stderr.on('data', (data) => {
         stderrData += data.toString();
       });
 
-      process.on('close', (code) => {
+      pyProcess.on('close', (code) => {
         if (code === 0) {
           try {
             // 尝试解析stdout中的JSON结果
@@ -270,7 +318,7 @@ class AIService {
         }
       });
 
-      process.on('error', (error) => {
+      pyProcess.on('error', (error) => {
         reject({
           status: 'error',
           message: `执行Python脚本时出错: ${error.message}`

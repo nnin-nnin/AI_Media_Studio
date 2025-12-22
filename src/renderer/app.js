@@ -20,10 +20,11 @@ window.fetch = async (resource, config = {}) => {
     return originalFetch(resource, config);
 };
 
-document.addEventListener('DOMContentLoaded', function () {
-    // 初始化应用
-    initializeApp();
-});
+// 暴露初始化函数给外部回调
+window.initializeApp = initializeApp;
+
+// Wait for explicit call from index.html (which waits for i18n)
+// document.addEventListener('DOMContentLoaded', ...);
 
 /**
  * 初始化应用
@@ -63,6 +64,22 @@ function initializeApp() {
 
     // Set global event listeners
     setupGlobalEventListeners();
+
+    // Listen for language changes to refresh UI
+    window.addEventListener('language-changed', () => {
+        console.log("Language changed, refreshing UI...");
+        // Update document title
+        if (window.i18n) document.title = window.i18n.t('APP_TITLE');
+
+        // Refresh Sidebar
+        if (window.GlobalSidebar) {
+            window.GlobalSidebar.redraw();
+        }
+
+        // Refresh Current Page
+        const hash = window.location.hash.slice(1) || 'dashboard';
+        showPage(hash);
+    });
 }
 
 /**
@@ -151,5 +168,11 @@ function updateActivePage(page) {
     const activeElement = document.querySelector(`[data-page="${page}"]`);
     if (activeElement) {
         activeElement.classList.add('active');
+    }
+
+    // 控制语言切换栏的显隐 (仅在首页显示)
+    const utilBar = document.getElementById('global-util-bar');
+    if (utilBar) {
+        utilBar.style.display = (page === 'dashboard' || page === 'home') ? 'flex' : 'none';
     }
 }

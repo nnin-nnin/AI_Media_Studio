@@ -42,6 +42,21 @@
 
         <!-- 主内容区域 -->
         <div id="content-wrapper">
+            <!-- Global Utility Bar (Floating) -->
+            <div id="global-util-bar">
+                <button class="lang-switch-btn" id="main-lang-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <path
+                            d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                        </path>
+                    </svg>
+                    <span id="lang-label">中文</span>
+                </button>
+            </div>
+
             <!-- 顶部导航栏 (Optional per page) -->
             <!-- <header id="main-header"></header> -->
 
@@ -55,7 +70,7 @@
 
     <!-- JavaScript 模块 -->
     <!-- JavaScript 模块 -->
-    <script src="pages/dashboard/dashboard.js"></script>
+    <script src="pages/dashboard/dashboard.js?v=2"></script>
     <script src="pages/face-swap/face-swap.js"></script>
     <script src="pages/video-generation/video-generation.js"></script>
     <script src="pages/voice-cloning/voice-cloning.js"></script>
@@ -69,6 +84,7 @@
     <script src="./components/sidebar/sidebar.js"></script>
 
     <!-- Utilities & Core -->
+    <script type="module" src="utils/i18n.js"></script>
     <script type="module" src="utils/web-api.js"></script>
     <script type="module" src="utils/asset-manager.js"></script>
     <script src="utils/settings-manager.js"></script>
@@ -77,6 +93,11 @@
     <!-- Login Initialization -->
     <script type="module">
         import { LoginManager } from './components/login/login-manager.js';
+        import i18n from './utils/i18n.js';
+        import ThemeManager from './utils/theme-manager.js';
+
+        // Initialize Theme
+        ThemeManager.init();
 
         // Initialize App Function
         const unlockApp = () => {
@@ -88,6 +109,35 @@
             // Trigger any app init if needed
             if (window.AssetManager) window.AssetManager.refresh();
         };
+
+        // Initialize i18n and then start app logic
+        await i18n.init();
+        console.log("i18n initialized with:", i18n.lang);
+        document.title = i18n.t('APP_TITLE');
+
+        // Start High-level UI logic
+        if (window.initializeApp) window.initializeApp();
+
+        // Update Language Switcher UI
+        const langLabel = document.getElementById('lang-label');
+        const langToggle = document.getElementById('main-lang-toggle');
+
+        const updateLangUI = (lang) => {
+            if (langLabel) langLabel.innerText = lang === 'zh' ? 'English' : '中文';
+        };
+
+        updateLangUI(i18n.lang);
+
+        if (langToggle) {
+            langToggle.onclick = () => {
+                const newLang = i18n.lang === 'zh' ? 'en' : 'zh';
+                i18n.switchLanguage(newLang);
+            };
+        }
+
+        window.addEventListener('language-changed', (e) => {
+            updateLangUI(e.detail.lang);
+        });
 
         // Authentication "Middleware" Selection
         // Scheme 1: Check Server Configuration to decide Auth Strategy

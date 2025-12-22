@@ -14,15 +14,15 @@ function loadDashboardPage(container) {
         const link = document.createElement('link');
         link.id = 'dashboard-css';
         link.rel = 'stylesheet';
-        link.href = 'pages/dashboard/dashboard.css';
+        link.href = 'pages/dashboard/dashboard.css?v=2';
         document.head.appendChild(link);
     }
 
     const dashboardHTML = `
         <div class="dashboard-container">
             <div class="dashboard-header">
-                <h1 class="dashboard-title">Dashboard</h1>
-                <p class="dashboard-subtitle">Select a tool to start creating</p>
+                <h1 class="dashboard-title">${window.i18n.t('DASHBOARD_TITLE')}</h1>
+                <p class="dashboard-subtitle">${window.i18n.t('DASHBOARD_SUBTITLE')}</p>
             </div>
 
             <div class="cards-grid">
@@ -32,11 +32,11 @@ function loadDashboardPage(container) {
                         <!-- Placeholder for Face Swap Preview -->
                     </div>
                     <div class="card-content">
-                        <div class="card-title">Image Studio</div>
+                        <div class="card-title">${window.i18n.t('STUDIO_IMAGE')}</div>
                         <ul class="card-features">
-                            <li>Professional grade face replacement</li>
-                            <li>Multi-face support</li>
-                            <li>Real-time preview</li>
+                            <li>${window.i18n.t('DASHBOARD_IMAGE_DESC_1')}</li>
+                            <li>${window.i18n.t('DASHBOARD_IMAGE_DESC_2')}</li>
+                            <li>${window.i18n.t('DASHBOARD_IMAGE_DESC_3')}</li>
                         </ul>
                         <div class="card-action">
                              <button class="use-btn">
@@ -44,7 +44,7 @@ function loadDashboardPage(container) {
                                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                     <circle cx="12" cy="7" r="4"></circle>
                                 </svg>
-                                Swap Faces
+                                ${window.i18n.t('DASHBOARD_ACTION_IMAGE')}
                             </button>
                         </div>
                     </div>
@@ -56,18 +56,18 @@ function loadDashboardPage(container) {
                         <!-- Placeholder for Video Preview -->
                     </div>
                     <div class="card-content">
-                        <div class="card-title">Video Studio</div>
+                        <div class="card-title">${window.i18n.t('STUDIO_VIDEO')}</div>
                         <ul class="card-features">
-                            <li>Create videos from text or image prompts</li>
-                            <li>High fidelity motion generation</li>
-                            <li>Customizable aspect ratios</li>
+                            <li>${window.i18n.t('DASHBOARD_VIDEO_DESC_1')}</li>
+                            <li>${window.i18n.t('DASHBOARD_VIDEO_DESC_2')}</li>
+                            <li>${window.i18n.t('DASHBOARD_VIDEO_DESC_3')}</li>
                         </ul>
                         <div class="card-action">
                             <button class="use-btn">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polygon points="5 3 19 12 5 21 5 3"></polygon>
                                 </svg>
-                                Start Creating
+                                ${window.i18n.t('DASHBOARD_ACTION_VIDEO')}
                             </button>
                         </div>
                     </div>
@@ -79,11 +79,11 @@ function loadDashboardPage(container) {
                         <!-- Placeholder for Voice Preview -->
                     </div>
                     <div class="card-content">
-                        <div class="card-title">Audio Studio</div>
+                        <div class="card-title">${window.i18n.t('STUDIO_AUDIO')}</div>
                         <ul class="card-features">
-                            <li>Instant voice cloning from audio</li>
-                            <li>Text-to-Speech generation</li>
-                            <li>Multi-language support</li>
+                            <li>${window.i18n.t('DASHBOARD_AUDIO_DESC_1')}</li>
+                            <li>${window.i18n.t('DASHBOARD_AUDIO_DESC_2')}</li>
+                            <li>${window.i18n.t('DASHBOARD_AUDIO_DESC_3')}</li>
                         </ul>
                         <div class="card-action">
                              <button class="use-btn">
@@ -93,7 +93,7 @@ function loadDashboardPage(container) {
                                     <line x1="12" y1="19" x2="12" y2="23"></line>
                                     <line x1="8" y1="23" x2="16" y2="23"></line>
                                 </svg>
-                                Clone Voice
+                                ${window.i18n.t('DASHBOARD_ACTION_AUDIO')}
                             </button>
                         </div>
                     </div>
@@ -101,24 +101,22 @@ function loadDashboardPage(container) {
 
                 <!-- 4. Real-time Vision Card (Vision Studio) -->
                 <div class="feature-card" onclick="window.app.navigate('realtime-vision')">
-                    <div class="card-media media-placeholder vision" style="background: var(--primary-glass); display:flex; align-items:center; justify-content:center;">
-                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" style="opacity:0.8;">
-                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-                        </svg>
+                    <div class="card-media media-placeholder vision" style="display:flex; align-items:center; justify-content:center;">
+
                     </div>
                     <div class="card-content">
-                        <div class="card-title">Vision Studio</div>
+                        <div class="card-title">${window.i18n.t('STUDIO_VISION')}</div>
                         <ul class="card-features">
-                            <li>Real-time AI style transformation</li>
-                            <li>Ultra-low latency streaming</li>
-                            <li>Interactive prompt-based styles</li>
+                            <li>${window.i18n.t('DASHBOARD_VISION_DESC_1')}</li>
+                            <li>${window.i18n.t('DASHBOARD_VISION_DESC_2')}</li>
+                            <li>${window.i18n.t('DASHBOARD_VISION_DESC_3')}</li>
                         </ul>
                         <div class="card-action">
-                             <button class="use-btn" style="background:var(--primary); color:white; border:none;">
+                             <button class="use-btn">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
                                 </svg>
-                                Enter Vision
+                                ${window.i18n.t('DASHBOARD_ACTION_VISION')}
                             </button>
                         </div>
                     </div>

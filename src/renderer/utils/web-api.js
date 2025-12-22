@@ -11,6 +11,10 @@ export async function fetchAPI(endpoint, data = {}, options = {}) {
             'Content-Type': 'application/json'
         };
 
+        if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+
         const config = {
             method: options.method || 'POST', // Default to POST for backward compatibility
             headers: headers

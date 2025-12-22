@@ -17,20 +17,19 @@ function loadVideoGenerationPage(container) {
 
     container.innerHTML = `
         <div class="studio-layout fade-in">
-            <!-- Col 1: Global Nav (Handled by App) -->
             
             <!-- Col 2: Controls (Left Panel) -->
             <div class="studio-controls video-gen-controls">
                 
                 <!-- 1. Header & Mode -->
-                <div class="vg-header">
-                    <div style="font-weight:600; font-size:14px;">Video Director</div>
-                    <div class="vg-mode-switch">
-                        <button class="mode-btn active" data-mode="text">
+                <div class="studio-header">
+                    <div style="font-weight:600; font-size:14px;">Video Studio</div>
+                    <div class="studio-mode-switch">
+                        <button class="mode-btn" data-mode="text">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                             Text
                         </button>
-                        <button class="mode-btn" data-mode="image">
+                        <button class="mode-btn active" data-mode="image">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
                             Image
                         </button>
@@ -38,26 +37,34 @@ function loadVideoGenerationPage(container) {
                 </div>
 
                 <!-- 2. Interactive Input Section -->
-                <div class="vg-input-section">
+                <div class="studio-input-section">
                     <!-- Image Upload Slot (Initially hidden or shown based on mode) -->
-                    <div class="vg-slots-row" id="vg-image-slot-row" style="display:none; align-items:center; gap:12px;">
-                        <div class="vg-slot" id="vg-slot-ref" title="Upload Reference Image">
-                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
+                    <div class="studio-slots-row" id="vg-image-slot-row" style="display:flex;">
+                        <div class="studio-slot" id="vg-slot-ref" title="Add Image Reference">
+                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
                              <input type="file" style="display:none" accept="image/*">
                         </div>
-                        <div class="vg-slot" id="vg-btn-camera" title="Take a Photo" style="background:var(--primary-glass);">
-                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                        <div class="studio-slot" id="vg-btn-camera" title="Take Photo">
+                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
                         </div>
-                        <div style="font-size:12px; color:var(--text-secondary); display:flex; align-items:center;">
-                            Start with an image
-                        </div>
+                        <!-- Empty Placeholder Slots (Visual only) -->
+                        <div class="studio-slot" style="opacity:0.5; cursor:default; border-style:dashed;"></div>
+                        <div class="studio-slot" style="opacity:0.5; cursor:default; border-style:dashed;"></div>
+                    </div>
+
+                    <!-- Quick Selection Tags -->
+                    <div class="studio-tags-row">
+                        <div class="studio-tag" data-prompt="A cinematic drone shot flying over a majestic mountain range at sunrise, high quality, realistic motion.">${window.i18n.t('VIDEO_TAG_CINEMATIC')}</div>
+                        <div class="studio-tag" data-prompt="Slow motion close-up of a blooming flower, morning dew, soft sunlight, artistic, macro video style.">${window.i18n.t('VIDEO_TAG_SLOW_MOTION')}</div>
+                        <div class="studio-tag" data-prompt="Futuristic city street at night, neon lights reflecting on wet pavement, flying cars passing by, sci-fi movement.">${window.i18n.t('VIDEO_TAG_CYBERPUNK')}</div>
+                        <div class="studio-tag" data-prompt="An epic space battle with laser beams and explosions, massive starships, cosmic nebula background, dynamic action.">${window.i18n.t('VIDEO_TAG_SPACE_BATTLE')}</div>
                     </div>
 
                     <!-- Text Editor -->
-                    <div class="vg-text-editor">
-                        <textarea class="vg-textarea" id="vg-prompt-input" placeholder="Describe the scene, movement, and style..."></textarea>
+                    <div class="studio-text-editor">
+                        <textarea class="studio-textarea" id="vg-prompt-input" placeholder="Describe the scene, movement, and style..."></textarea>
                         
-                        <div class="vg-toolbar">
+                        <div class="studio-toolbar">
                              <button class="tool-icon-btn" id="btn-gen-prompt" title="Generate Prompt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg></button>
                              <button class="tool-icon-btn" id="btn-clear-prompt" title="Clear"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path></svg></button>
                         </div>
@@ -65,18 +72,18 @@ function loadVideoGenerationPage(container) {
                 </div>
 
                 <!-- 3. Tabbed Component Panel -->
-                <div class="vg-tabs-panel">
-                    <div class="vg-tab-header">
-                        <button class="vg-tab-btn active" data-tab="settings">
+                <div class="studio-tabs-panel vg-tabs-panel">
+                    <div class="studio-tab-header">
+                        <button class="studio-tab-btn active" data-tab="settings">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                             Settings
                         </button>
-                        <button class="vg-tab-btn" data-tab="assets">
+                        <button class="studio-tab-btn" data-tab="assets">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
                             Assets
                         </button>
                     </div>
-                    <div class="vg-tab-content">
+                    <div class="studio-tab-content">
                          <!-- Tab: Settings -->
                          <div id="tab-settings" class="tab-pane">
                             <span class="bg-label">Aspect Ratio</span>
@@ -103,20 +110,18 @@ function loadVideoGenerationPage(container) {
                                 </div>
                             </div>
 
-                            <span class="bg-label" style="margin-top:20px;">Duration</span>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <span style="font-size:12px; color:var(--text-secondary);">Seconds</span>
-                                <span id="duration-display" style="font-size:12px; color:var(--text-primary);">5s</span>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                                <span class="bg-label">Duration</span>
+                                <span id="duration-display" style="font-size: 11px; color: var(--primary); font-weight: 600;">5s</span>
                             </div>
-                            <input type="range" class="vg-slider" id="duration-slider" min="5" max="10" step="5" value="5">
-                             <p style="font-size:10px; color:var(--text-secondary); margin-top:4px;">Currently limited to 5s or 10s by model.</p>
+                            <input type="range" class="studio-slider" id="duration-slider" min="5" max="10" step="5" value="5" style="margin-top:8px;">
+                            <p style="font-size:10px; color:var(--text-secondary); margin-top:4px;">Currently limited to 5s or 10s by model.</p>
 
-                            <span class="bg-label" style="margin-top:20px;">Motion Strength</span>
-                            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                <span style="font-size:12px; color:var(--text-secondary);">1-10</span>
-                                <span id="motion-display" style="font-size:12px; color:var(--text-primary);">5</span>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                                <span class="bg-label">Motion Strength</span>
+                                <span id="motion-display" style="font-size: 11px; color: var(--primary); font-weight: 600;">5</span>
                             </div>
-                            <input type="range" class="vg-slider" id="motion-slider" min="1" max="10" value="5">
+                            <input type="range" class="studio-slider" id="motion-slider" min="1" max="10" value="5" style="margin-top:8px;">
 
                             <div class="studio-setting-group" style="margin-top:24px; padding-top:20px; border-top:1px solid var(--glass-border);">
                                 <span class="bg-label">Model Configuration</span>
@@ -132,20 +137,18 @@ function loadVideoGenerationPage(container) {
 
                          <!-- Tab: Assets -->
                          <div id="tab-assets" class="tab-pane" style="display:none;">
-                            <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px;">
-                                <!-- Mock Assets -->
-                                <div style="aspect-ratio:16/9; background:#f1f5f9; border-radius:8px;"></div>
-                                <div style="aspect-ratio:16/9; background:#f1f5f9; border-radius:8px;"></div>
+                            <div id="vg-asset-list" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px;">
+                                <!-- Dynamic Assets -->
                             </div>
-                            <div style="text-align:center; margin-top:1rem; font-size:12px; color:var(--text-secondary);">
-                                Generative history
+                            <div id="vg-asset-empty" style="text-align:center; margin-top:1rem; font-size:12px; color:var(--text-secondary); display:none;">
+                                No history found
                             </div>
                          </div>
                     </div>
                 </div>
 
                 <!-- 4. Action Area -->
-                <div class="vg-action-area">
+                <div class="studio-action-area vg-action-area">
                      <button class="primary-btn" id="generate-video-btn" style="width:100%;">
                         Generate Video
                      </button>
@@ -406,7 +409,7 @@ function setupVideoGenerationEventListeners() {
     }
 
     // 5. Tabs
-    const tabBtns = document.querySelectorAll('.vg-tab-btn');
+    const tabBtns = document.querySelectorAll('.studio-tab-btn');
     const tabSettings = document.getElementById('tab-settings');
     const tabAssets = document.getElementById('tab-assets');
 
@@ -477,12 +480,27 @@ function setupVideoGenerationEventListeners() {
 
             const resBox = document.querySelector('.result-preview');
             resBox.innerHTML = `
-                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:var(--text-secondary);">
-                    <div class="spinner" style="margin-bottom:15px; width:30px; height:30px; border:3px solid var(--glass-border); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite;"></div>
-                    <p>Generating video... (this may take a while)</p>
+                <div class="energy-overlay">
+                    <div class="energy-bar-container">
+                        <div class="energy-fill" id="energy-progress" style="width: 5%;"></div>
+                    </div>
+                    <div class="energy-label">Igniting Engine... 🔥</div>
                 </div>
-                <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
             `;
+
+            let progress = 5;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 8;
+                if (progress > 96) progress = 96;
+                const fill = document.getElementById('energy-progress');
+                const label = document.querySelector('.energy-label');
+                if (fill) fill.style.width = `${progress}%`;
+                if (label) {
+                    if (progress > 20) label.innerText = "Rendering Frames... 🍿";
+                    if (progress > 50) label.innerText = "Applying Motion... 🎬";
+                    if (progress > 80) label.innerText = "Polishing... ✨";
+                }
+            }, 1200);
 
             let result;
             if (window.electronAPI && window.electronAPI.generateVideo) {
@@ -561,16 +579,87 @@ function setupVideoGenerationEventListeners() {
                 </div>
             `;
         } finally {
+            if (typeof progressInterval !== 'undefined') clearInterval(progressInterval);
             generateBtn.innerHTML = oldText;
             generateBtn.disabled = false;
         }
     });
 
-    // Toolbar
+    // Quick Prompt Tags
+    const tagsRow = document.querySelector('.studio-tags-row');
+    const promptInputArea = document.getElementById('vg-prompt-input');
+    if (tagsRow && promptInputArea) {
+        tagsRow.addEventListener('click', (e) => {
+            const tag = e.target.closest('.studio-tag');
+            if (tag) {
+                const prompt = tag.dataset.prompt;
+                promptInputArea.value = prompt;
+
+                // Visual feedback: Flash the input box
+                promptInputArea.style.transition = 'background-color 0.3s';
+                promptInputArea.style.backgroundColor = 'rgba(255, 217, 61, 0.2)'; // Unified Pop Yellow
+                setTimeout(() => {
+                    promptInputArea.style.backgroundColor = 'white';
+                }, 300);
+            }
+        });
+    }
+
+    // 7. Render Assets
+    function renderAssetsTab() {
+        const list = document.getElementById('vg-asset-list');
+        const empty = document.getElementById('vg-asset-empty');
+        if (!list) return;
+
+        const assets = window.AssetManager.getRecent('video', 20);
+
+        if (assets.length === 0) {
+            list.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+        }
+
+        empty.style.display = 'none';
+        list.innerHTML = assets.map(asset => `
+            <div class="asset-item" onclick="window.MediaPreview.open('${asset.id}')" style="aspect-ratio:16/9; border-radius:8px; overflow:hidden; position:relative; cursor:pointer; border:1px solid var(--glass-border); background:#000;">
+                <video src="${asset.url}" style="width:100%; height:100%; object-fit:cover;"></video>
+                <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:white; opacity:0.8;">
+                   <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // 8. Toolbar (Clear & Randomize)
     document.getElementById('btn-clear-prompt')?.addEventListener('click', () => {
         const el = document.getElementById('vg-prompt-input');
-        if (el) el.value = '';
+        if (el) {
+            el.value = '';
+            el.focus();
+        }
     });
+
+    document.getElementById('btn-gen-prompt')?.addEventListener('click', () => {
+        const el = document.getElementById('vg-prompt-input');
+        if (el) {
+            const prompts = [
+                "A cinematic drone shot flying over a majestic mountain range at sunrise, high quality.",
+                "Slow motion close-up of a blooming flower, morning dew, soft sunlight, artistic.",
+                "Futuristic city street at night, neon lights reflecting on wet pavement, flying cars.",
+                "An epic space battle with laser beams and explosions, massive starships, cosmic nebula.",
+                "A peaceful underwater coral reef with colorful fish swimming through sunbeams, 4k."
+            ];
+            el.value = prompts[Math.floor(Math.random() * prompts.length)];
+            el.focus();
+        }
+    });
+
+    // Initial render
+    renderAssetsTab();
+    window.AssetManager.refresh();
+
+    const updateHandler = () => renderAssetsTab();
+    window.addEventListener('assets-updated', updateHandler);
 }
 
 // Make it globally available

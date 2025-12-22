@@ -54,7 +54,7 @@ export class LoginManager {
 
         // Update HUD text
         const title = this.container.querySelector('.hud-title');
-        if (title) title.innerText = "BIOMETRIC SYNC REQUIRED";
+        if (title) title.innerText = window.i18n.t('LOGIN_TITLE');
     }
 
     setupThreeJS() {
@@ -92,7 +92,7 @@ export class LoginManager {
 
     async setupMediaPipe() {
         const statusEl = this.container.querySelector('.hud-status');
-        if (statusEl) statusEl.innerText = "INITIALIZING SENSORS...";
+        if (statusEl) statusEl.innerText = window.i18n.t('LOGIN_STATUS_INIT');
 
         this.handTracker = new HandTracker(this.videoElement, (data) => {
             this.handleHandData(data);
@@ -100,25 +100,25 @@ export class LoginManager {
 
         try {
             await this.handTracker.init();
-            if (statusEl) statusEl.innerText = "SENSORS ACTIVE. SHOW HANDS.";
+            if (statusEl) statusEl.innerText = window.i18n.t('LOGIN_STATUS_ACTIVE');
         } catch (e) {
             console.error(e);
             if (statusEl) {
-                statusEl.innerText = "CAMERA BLOCKED. CLICK ANYWHERE TO START.";
+                statusEl.innerText = window.i18n.t('LOGIN_STATUS_NO_CAMERA');
                 statusEl.style.color = "red";
                 statusEl.style.pointerEvents = "auto";
                 statusEl.style.cursor = "pointer";
 
                 // Add one-time click listener to retry
                 const retry = async () => {
-                    statusEl.innerText = "RETRYING SENSORS...";
+                    statusEl.innerText = window.i18n.t('LOGIN_STATUS_RETRYING');
                     try {
                         await this.handTracker.init();
-                        statusEl.innerText = "SENSORS ACTIVE.";
+                        statusEl.innerText = window.i18n.t('LOGIN_STATUS_ACTIVE');
                         statusEl.style.color = "#ffaa00";
                         document.removeEventListener('click', retry);
                     } catch (err) {
-                        statusEl.innerText = "FAILED AGAIN. CHECK PERMISSIONS.";
+                        statusEl.innerText = window.i18n.t('LOGIN_STATUS_FAILED');
                     }
                 };
                 document.addEventListener('click', retry);
@@ -187,15 +187,15 @@ export class LoginManager {
                     if (now - this.stateCounters.unlockHoldStart > 1000) {
                         if (!this.unlockTriggered) {
                             this.unlockTriggered = true;
-                            if (statusEl) statusEl.innerText = "SECURITY DISENGAGED.";
+                            if (statusEl) statusEl.innerText = window.i18n.t('LOGIN_STATUS_GRANTED');
                             this.triggerUnlock();
                         }
                     } else {
-                        if (statusEl) statusEl.innerText = "HOLD STABLE...";
+                        if (statusEl) statusEl.innerText = window.i18n.t('LOGIN_STATUS_STABLE');
                     }
                 } else {
                     this.stateCounters.unlockHoldStart = 0; // Reset if hands come closer
-                    if (statusEl) statusEl.innerText = "EXPAND MATRIX TO 100%...";
+                    if (statusEl) statusEl.innerText = window.i18n.t('LOGIN_STATUS_EXPAND');
                 }
             }
         }
@@ -220,7 +220,7 @@ export class LoginManager {
                     this.magicCircle.collapse();
                     this.stateCounters.lastStateChange = now;
                     if (statusEl) {
-                        statusEl.innerText = "ENERGY COLLAPSING... MAINTAIN FIST";
+                        statusEl.innerText = window.i18n.t('LOGIN_ACTION_CHARGING');
                         statusEl.style.color = "#ff3300";
                     }
                 }
@@ -233,7 +233,7 @@ export class LoginManager {
                     if (now - this.stateCounters.lastStateChange > 1000) { // Min charge time
                         this.magicCircle.explode();
                         if (statusEl) {
-                            statusEl.innerText = "RELEASE DETECTED. CASTING ARRAY...";
+                            statusEl.innerText = window.i18n.t('LOGIN_ACTION_RELEASE');
                             statusEl.style.color = "#ffaa00";
                         }
                     } else {
@@ -241,7 +241,7 @@ export class LoginManager {
                     }
                 } else if (this.magicCircle.currentState === 0) {
                     if (statusEl) {
-                        statusEl.innerText = "MAKE A FIST TO CHARGE ENERGY";
+                        statusEl.innerText = window.i18n.t('LOGIN_ACTION_CHARGE');
                         statusEl.style.color = "#ffffff";
                     }
                 }
@@ -252,7 +252,7 @@ export class LoginManager {
             this.stateCounters.openFrames = 0;
 
             if (statusEl && this.magicCircle.currentState === 0) {
-                statusEl.innerText = "SHOW HAND TO BEGIN RITUAL";
+                statusEl.innerText = window.i18n.t('LOGIN_ACTION_BEGIN');
             }
         }
     }
@@ -266,7 +266,7 @@ export class LoginManager {
         const statusEl = this.container.querySelector('.hud-status');
 
         // 1. Authenticate with Backend
-        if (statusEl) statusEl.innerText = "VERIFYING RITUAL SIGNATURE...";
+        if (statusEl) statusEl.innerText = window.i18n.t('LOGIN_STATUS_VERIFYING');
 
         try {
             // SECURITY: Instead of sending hardcoded password, we send the MOVEMENT LOG
@@ -274,7 +274,7 @@ export class LoginManager {
             await unlockWithRitual(this.ritualLog, this.ritualNonce);
 
             this.isUnlocked = true;
-            if (statusEl) statusEl.innerText = "ACCESS GRANTED.";
+            if (statusEl) statusEl.innerText = window.i18n.t('LOGIN_STATUS_GRANTED');
 
             // 2. Explode rings (Visual Reward)
             this.magicCircles.forEach(mc => mc.explode());
@@ -297,7 +297,7 @@ export class LoginManager {
             this.isAuthenticating = false;
             this.unlockTriggered = false; // Reset trigger
             if (statusEl) {
-                statusEl.innerText = "AUTH FAILED. RESTART RITUAL.";
+                statusEl.innerText = window.i18n.t('LOGIN_STATUS_FAILED');
                 statusEl.style.color = "red";
             }
             // Reset state??

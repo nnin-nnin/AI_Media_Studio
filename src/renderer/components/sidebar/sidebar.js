@@ -51,12 +51,14 @@ class GlobalSidebar {
                 else if (asset.type === 'vision') { targetPage = 'realtime-vision'; icon = 'zap'; }
 
                 // Use prompt or ID as label
-                const label = asset.prompt || `Asset ${asset.id.substring(0, 4)}`;
+                const label = asset.prompt || `${window.i18n.t('NAV_ASSETS')} ${asset.id.substring(0, 4)}`;
                 return this.renderSessionItem(label, icon, asset.id);
             }).join('');
         } else {
-            recentWorkHTML = `<div class="session-item" style="cursor:default; opacity:0.5; padding-left:14px;">No recent work</div>`;
+            recentWorkHTML = `<div class="session-item" style="cursor:default; opacity:0.5; padding-left:14px;">${window.i18n.t('COMMON_RECENT_EMPTY')}</div>`;
         }
+
+        const currentLang = window.i18n.lang;
 
         // Define navigation structure
         return `
@@ -78,22 +80,22 @@ class GlobalSidebar {
 
             <div class="sidebar-nav-list">
                 <!-- Zone A: HUB -->
-                ${this.renderNavItem('dashboard', 'Home', activeItem === 'dashboard', 'home')}
-                ${this.renderNavItem('assets', 'Assets', activeItem === 'assets', 'folder')}
+                ${this.renderNavItem('dashboard', window.i18n.t('NAV_HOME'), activeItem === 'dashboard', 'home')}
+                ${this.renderNavItem('assets', window.i18n.t('NAV_ASSETS'), activeItem === 'assets', 'folder')}
                 
                 <div class="nav-divider"></div>
                 
                 <!-- Zone B: CREATE ENGINES -->
-                <div class="sidebar-group-label">STUDIOS</div>
-                ${this.renderNavItem('face-swap', 'Image Studio', activeItem === 'face-swap', 'image')}
-                ${this.renderNavItem('video-generation', 'Video Studio', activeItem === 'video-generation', 'video')}
-                ${this.renderNavItem('voice-cloning', 'Audio Studio', activeItem === 'voice-cloning', 'mic')}
-                ${this.renderNavItem('realtime-vision', 'Vision Studio', activeItem === 'realtime-vision', 'zap')}
+                <div class="sidebar-group-label">${window.i18n.t('NAV_STUDIOS')}</div>
+                ${this.renderNavItem('face-swap', window.i18n.t('STUDIO_IMAGE'), activeItem === 'face-swap', 'image')}
+                ${this.renderNavItem('video-generation', window.i18n.t('STUDIO_VIDEO'), activeItem === 'video-generation', 'video')}
+                ${this.renderNavItem('voice-cloning', window.i18n.t('STUDIO_AUDIO'), activeItem === 'voice-cloning', 'mic')}
+                ${this.renderNavItem('realtime-vision', window.i18n.t('STUDIO_VISION'), activeItem === 'realtime-vision', 'zap')}
 
                 <div class="nav-divider"></div>
 
                 <!-- Zone C: RECENT WORK (Dynamic) -->
-                <div class="sidebar-group-label">RECENT WORK</div>
+                <div class="sidebar-group-label">${window.i18n.t('NAV_RECENT')}</div>
                 <div class="session-list">
                      ${recentWorkHTML}
                 </div>
@@ -107,6 +109,13 @@ class GlobalSidebar {
                         <span class="user-plan">Pro Plan</span>
                     </div>
                 </div>
+                <!-- Theme Toggle (Settings) -->
+                <button class="icon-btn theme-sidebar-btn" onclick="window.ThemeManager.toggle()" title="Switch Theme">
+                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+                    </svg>
+                </button>
             </div>
         `;
     }

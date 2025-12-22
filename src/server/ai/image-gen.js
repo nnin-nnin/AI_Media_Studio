@@ -22,6 +22,7 @@ export async function imageToImage({
   prompt,
   image,
   model = "doubao-seedream-4-0-250828",
+  strength = 0.75,
   watermark = false,
   saveTo,
 }) {
@@ -30,6 +31,7 @@ export async function imageToImage({
     model,
     prompt,
     image: image,
+    strength: strength,
     watermark: watermark,
   });
   if (!resp.data || !resp.data[0] || !resp.data[0].url) {

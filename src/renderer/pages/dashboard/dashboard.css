@@ -94,6 +94,10 @@
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
+.media-placeholder.vision {
+    background: linear-gradient(135deg, #FF9966 0%, #FF5E62 100%);
+}
+
 .card-content {
     padding: 1.5rem;
     display: flex;
