@@ -98,6 +98,31 @@ function loadDashboardPage(container) {
                         </div>
                     </div>
                 </div>
+
+                <!-- 4. Real-time Vision Card (Vision Studio) -->
+                <div class="feature-card" onclick="window.app.navigate('realtime-vision')">
+                    <div class="card-media media-placeholder vision" style="background: var(--primary-glass); display:flex; align-items:center; justify-content:center;">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" style="opacity:0.8;">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                        </svg>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-title">Vision Studio</div>
+                        <ul class="card-features">
+                            <li>Real-time AI style transformation</li>
+                            <li>Ultra-low latency streaming</li>
+                            <li>Interactive prompt-based styles</li>
+                        </ul>
+                        <div class="card-action">
+                             <button class="use-btn" style="background:var(--primary); color:white; border:none;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                     <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                                </svg>
+                                Enter Vision
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     `;

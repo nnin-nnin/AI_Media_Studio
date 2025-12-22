@@ -25,11 +25,11 @@ dashscope.api_key = os.getenv("DASHSCOPE_API_KEY")
 if not dashscope.api_key:
     raise ValueError("DASHSCOPE_API_KEY environment variable not set.")
 
-# 直接设置腾讯云COS配置
-os.environ["TENCENT_SECRET_ID"] = "[REDACTED_TENCENT_SECRET_ID]"
-os.environ["TENCENT_SECRET_KEY"] = "[REDACTED_TENCENT_SECRET_KEY]"
-os.environ["TENCENT_COS_BUCKET"] = "md-1301303353"
-os.environ["TENCENT_COS_REGION"] = "ap-beijing"
+# 获取腾讯云COS配置
+os.environ["TENCENT_SECRET_ID"] = os.getenv("TENCENT_SECRET_ID", "")
+os.environ["TENCENT_SECRET_KEY"] = os.getenv("TENCENT_SECRET_KEY", "")
+os.environ["TENCENT_COS_BUCKET"] = os.getenv("TENCENT_COS_BUCKET", "")
+os.environ["TENCENT_COS_REGION"] = os.getenv("TENCENT_COS_REGION", "ap-beijing")
 
 TARGET_MODEL = "cosyvoice-v2"
 VOICE_PREFIX = "myvoice"  # 仅允许数字和小写字母，小于十个字符

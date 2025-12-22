@@ -34,7 +34,8 @@ app.use('/uploads', express.static(uploadsPath));
 // --- System Config ---
 app.get('/api/config', (req, res) => {
     res.json({
-        debugMode: process.env.DEBUG === 'true'
+        debugMode: process.env.DEBUG === 'true',
+        decartApiKey: process.env.DECART_API_KEY || process.env.Decart_API_Key || ''
     });
 });
 

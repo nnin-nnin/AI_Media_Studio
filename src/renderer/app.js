@@ -123,6 +123,9 @@ function showPage(page) {
         case 'voice-cloning':
             if (window.loadVoiceCloningPage) window.loadVoiceCloningPage(mainContent);
             break;
+        case 'realtime-vision':
+            if (window.loadRealtimeVisionPage) window.loadRealtimeVisionPage(mainContent);
+            break;
         case 'assets':
             if (window.loadAssetsPage) window.loadAssetsPage(mainContent);
             break;
