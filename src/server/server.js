@@ -29,6 +29,13 @@ if (!fs.existsSync('data/uploads/')) {
 }
 
 logger.info("Starting server...", { env: config.env, port: config.port });
+console.log("[Config Debug] Loaded config:", JSON.stringify({
+    env: config.env,
+    skipAuth: config.auth.skipAuth,
+    dbPath: config.db.path,
+    hasArkKey: !!config.ai.arkApiKey,
+    hasDecartKey: !!config.ai.decartApiKey
+}, null, 2));
 
 // Middleware
 app.use(cors());
@@ -52,7 +59,7 @@ app.use('/uploads', express.static(uploadsPath));
 app.get('/api/config', (req, res) => {
     res.json({
         debugMode: config.debug,
-        decartApiKey: config.ai.arkApiKey,
+        decartApiKey: config.ai.decartApiKey,
         skipAuth: config.auth.skipAuth && config.env === 'development'
     });
 });

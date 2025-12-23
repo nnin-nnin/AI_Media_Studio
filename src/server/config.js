@@ -27,7 +27,8 @@ const config = {
         path: getEnv('DB_PATH', false, 'data/ai_course.sqlite')
     },
     ai: {
-        arkApiKey: getEnv('ARK_API_KEY', false, '') || getEnv('DECART_API_KEY', false, ''), // Support both for now
+        arkApiKey: getEnv('ARK_API_KEY', false, ''),
+        decartApiKey: getEnv('DECART_API_KEY', false, ''),
         dashscopeApiKey: getEnv('DASHSCOPE_API_KEY', false, ''),
         tencent: {
             secretId: getEnv('TENCENT_SECRET_ID', false, ''),

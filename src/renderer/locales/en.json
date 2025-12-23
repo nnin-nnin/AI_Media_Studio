@@ -93,5 +93,12 @@
     "CHAT_MIC_START": "Click to Speak",
     "CHAT_MIC_STOP": "Listening...",
     "CHAT_PROCESSING": "Processing response...",
-    "CHAT_WELCOME": "Select a character to start chatting!"
+    "CHAT_WELCOME": "Select a character to start chatting!",
+    "VISION_PRESET_TITLE": "Preset Styles",
+    "VISION_PRESET_VANGOGH": "Van Gogh",
+    "VISION_PRESET_CYBERPUNK": "Cyberpunk",
+    "VISION_PRESET_CLAYMATION": "Claymation",
+    "VISION_PRESET_ANIME": "Anime",
+    "VISION_PRESET_SKETCH": "Sketch",
+    "VISION_PRESET_LEGO": "Lego"
 }

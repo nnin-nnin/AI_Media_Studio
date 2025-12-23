@@ -93,5 +93,12 @@
     "CHAT_MIC_START": "点击开始说话",
     "CHAT_MIC_STOP": "正在聆听...",
     "CHAT_PROCESSING": "正在思考并配音...",
-    "CHAT_WELCOME": "请选择一个角色开始交流吧！"
+    "CHAT_WELCOME": "请选择一个角色开始交流吧！",
+    "VISION_PRESET_TITLE": "预设风格",
+    "VISION_PRESET_VANGOGH": "梵高星空",
+    "VISION_PRESET_CYBERPUNK": "赛博朋克",
+    "VISION_PRESET_CLAYMATION": "粘土动画",
+    "VISION_PRESET_ANIME": "日系动漫",
+    "VISION_PRESET_SKETCH": "素描手绘",
+    "VISION_PRESET_LEGO": "乐高世界"
 }
