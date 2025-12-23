@@ -1,10 +1,10 @@
-import 'dotenv/config';
+import config from './config.js';
+import logger from './utils/logger.js';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import fs from 'fs';
 import bodyParser from 'body-parser';
 
 // Import AI Service (reusing existing logic)
@@ -16,12 +16,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+logger.info("Starting server...", { env: config.env, port: config.port });
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' })); // Increase limit for image/audio data
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+
+app.use((req, res, next) => {
+    logger.info("Incoming Request", { method: req.method, url: req.url, ip: req.ip });
+    next();
+});
 
 // Static files (Frontend)
 const rendererPath = path.join(__dirname, '..', 'renderer');
@@ -34,8 +40,8 @@ app.use('/uploads', express.static(uploadsPath));
 // --- System Config ---
 app.get('/api/config', (req, res) => {
     res.json({
-        debugMode: process.env.DEBUG === 'true',
-        decartApiKey: process.env.DECART_API_KEY || process.env.Decart_API_Key || ''
+        debugMode: config.debug,
+        decartApiKey: config.ai.arkApiKey // Maintain backward compat with frontend usage
     });
 });
 
@@ -51,7 +57,7 @@ app.post('/api/auth/ritual-unlock', async (req, res) => {
         const result = await AuthService.verifyRitual(ritualLog, nonce);
         res.json({ status: 'success', data: result });
     } catch (e) {
-        console.error("Ritual Unlock Failed:", e.message);
+        logger.error("Ritual Unlock Failed", { error: e.message });
         res.status(400).json({ status: 'error', message: e.message });
     }
 });
@@ -59,32 +65,11 @@ app.post('/api/auth/ritual-unlock', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-
-        // --- DEBUG LOGGING ---
-        try {
-            const logEntry = `
-[${new Date().toISOString()}] Login Attempt:
-Headers: ${JSON.stringify(req.headers)}
-Body: ${JSON.stringify(req.body)}
-DIR: ${__dirname}
-------------------------------------------------
-`;
-            fs.appendFileSync(path.join(__dirname, 'server_debug.log'), logEntry);
-            // Backup log to absolute path
-            fs.appendFileSync('/Users/min/SecSys/AI_Media_Studio/server_debug_absolute.log', logEntry);
-        } catch (err) {
-            console.error("Failed to write debug log (Absolute):", err);
-        }
-        // ---------------------
-
+        // Logging is now handled by middleware or inside AuthService via logger
         const result = await AuthService.login(username, password);
         res.json({ status: 'success', data: result });
     } catch (e) {
-        // --- DEBUG ERROR LOGGING ---
-        try {
-            fs.appendFileSync(path.join(__dirname, 'server_debug.log'), `[Error] Login Failed: ${e.message}\n`);
-        } catch (err) { }
-        // ---------------------------
+        logger.warn("Login Failed", { username: req.body.username, error: e.message });
         res.status(401).json({ status: 'error', message: e.message });
     }
 });
@@ -121,6 +106,7 @@ const rateLimiter = (req, res, next) => {
     rateLimit.set(ip, record);
 
     if (record.count > maxRequests) {
+        logger.warn("Rate limit exceeded", { ip });
         return res.status(429).json({ status: 'error', message: 'Too many requests, please try again later.' });
     }
     next();
@@ -146,7 +132,7 @@ app.post('/api/assets', async (req, res) => {
         const asset = await AssetStore.add(req.body);
         res.json({ status: 'success', asset });
     } catch (e) {
-        console.error("Save Asset Error:", e);
+        logger.error("Save Asset Error", { error: e.message });
         res.status(400).json({ status: 'error', message: e.message });
     }
 });
@@ -163,48 +149,48 @@ app.delete('/api/assets/:id', async (req, res) => {
 // --- AI Routes ---
 app.post('/api/ai/image', async (req, res) => {
     try {
-        console.log("Generating Image with options:", req.body);
+        logger.info("Generating Image", { options: req.body });
         const result = await AIService.generateImage(req.body);
         if (result.status === 'error') return res.status(400).json(result);
         res.json(result);
     } catch (error) {
-        console.error("Image Gen Error:", error);
+        logger.error("Image Gen Error", { error: error.message });
         res.status(500).json({ status: 'error', message: error.message });
     }
 });
 
 app.post('/api/ai/edit-image', async (req, res) => {
     try {
-        console.log("Editing Image with options:", req.body);
+        logger.info("Editing Image", { options: req.body });
         const result = await AIService.editImage(req.body);
         if (result.status === 'error') return res.status(400).json(result);
         res.json(result);
     } catch (error) {
-        console.error("Image Edit Error:", error);
+        logger.error("Image Edit Error", { error: error.message });
         res.status(500).json({ status: 'error', message: error.message });
     }
 });
 
 app.post('/api/ai/video', async (req, res) => {
     try {
-        console.log("Generating Video with options:", req.body);
+        logger.info("Generating Video", { options: req.body });
         const result = await AIService.generateVideo(req.body);
         if (result.status === 'error') return res.status(400).json(result);
         res.json(result);
     } catch (error) {
-        console.error("Video Gen Error:", error);
+        logger.error("Video Gen Error", { error: error.message });
         res.status(500).json({ status: 'error', message: error.message });
     }
 });
 
 app.post('/api/ai/voice', async (req, res) => {
     try {
-        console.log("Cloning Voice with options:", req.body);
+        logger.info("Cloning Voice", { options: req.body });
         const result = await AIService.cloneVoice(req.body);
         if (result.status === 'error') return res.status(400).json(result);
         res.json(result);
     } catch (error) {
-        console.error("Voice Clone Error:", error);
+        logger.error("Voice Clone Error", { error: error.message });
         res.status(500).json({ status: 'error', message: error.message });
     }
 });
@@ -215,22 +201,15 @@ app.get('/api/ai/models', async (req, res) => {
         const result = await AIService.listModels(type);
         res.json(result);
     } catch (error) {
-        console.error("List Models API Error:", error);
+        logger.error("List Models API Error", { error: error.message });
         res.status(500).json({ status: 'error', message: error.message });
     }
 });
 
 
 // Start Server
-app.listen(PORT, async () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-    console.log(`Frontend served from: ${rendererPath}`);
-
-    // Auto-register default student user if not exists
-    try {
-        await AuthService.register('student', 'magic-password');
-        console.log("Default student account ensured.");
-    } catch (e) {
-        // Ignore if already exists
-    }
+app.listen(config.port, async () => {
+    logger.info(`Server running`, { url: `http://localhost:${config.port}`, frontend: rendererPath });
+    // REMOVED: Auto-register default student user. This is now handled by scripts/create_user.js
 });
+

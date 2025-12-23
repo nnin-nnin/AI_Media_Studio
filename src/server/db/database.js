@@ -1,46 +1,20 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { PrismaClient } from '@prisma/client';
+import logger from '../utils/logger.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const prisma = new PrismaClient({
+    log: ['query', 'info', 'warn', 'error'],
+});
 
-// Database file path
-const DATA_DIR = path.join(__dirname, '..', '..', '..', 'data');
-if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+async function connect() {
+    try {
+        await prisma.$connect();
+        logger.info("[Database] Prisma Connected");
+    } catch (e) {
+        logger.error("[Database] Connection Failed", e);
+    }
 }
-const DB_PATH = path.join(DATA_DIR, 'ai_course.sqlite');
 
-const db = new Database(DB_PATH);
-// db.pragma('journal_mode = WAL'); // Check if supported/necessary for this scale
+connect();
 
-// Initialize Tables
-db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-`);
+export default prisma;
 
-db.exec(`
-    CREATE TABLE IF NOT EXISTS assets (
-        id TEXT PRIMARY KEY,
-        user_id INTEGER,
-        type TEXT NOT NULL,
-        url TEXT NOT NULL,
-        original_url TEXT,
-        prompt TEXT,
-        metadata TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-`);
-
-console.log('[Database] Initialized at', DB_PATH);
-
-export default db;

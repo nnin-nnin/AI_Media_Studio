@@ -1,81 +1,49 @@
 # Dependencies
 node_modules
+.npm
 
 # Logs
 logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# OS generated files
-.DS_Store
-Thumbs.db
+# Runtime Data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# IDE files
-.vscode
-.idea
-
-# Build outputs
-dist
-build
-
-# Temporary files
-tmp
-temp
-
-# Environment variables
+# Environment
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# Electron build files
-*.asar
-*.app
-*.exe
-*.deb
-*.rpm
-*.zip
-*.dmg
+# Build
+dist
+dist-ssr
+*.local
 
-# Package lock files
-package-lock.json
-yarn.lock
+# Database
+/data/ai_course.sqlite
+/data/uploads/*
+!/data/uploads/.gitkeep
 
-# Runtime data
-*.pid
-*.seed
-*.pid.lock
+# IDE
+.vscode
+.idea
+*.suo
+*.ntvs
+*.njsproj
+*.sln
+*.sw?
 
-# Diagnostic reports
-*.debug.*
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional REPL history
-.node_repl_history
-
-# Temporary folders
-.tmp
-.temp
-
-# macOS specific files
-.AppleDouble
-.LSOverride
-Icon?
-._*
-
-# Windows thumbnail cache files
+# OS
+.DS_Store
 Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
 
-# Windows shortcuts
-*.lnk
+# Optional
+temp/

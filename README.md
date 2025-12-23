@@ -1,175 +1,110 @@
-# AI Course Project - AI变身魔法：真假我是谁？
+# AI Media Studio
 
-面向小学二年级学生的AI教育课程，通过互动式体验帮助儿童理解人工智能的基本概念。
+An interactive AI education platform for elementary students, featuring Face Swap, Video Generation, and Voice Cloning.
 
-## 项目概述
+## Technology Stack
 
-本项目是一个基于Electron的桌面应用程序，旨在通过多媒体和互动体验向小学生介绍AI技术。项目包含教学内容展示和AI功能演示两部分：
+- **Frontend**: Vanilla JavaScript (ES Modules), managed by **Vite**.
+- **Backend**: Node.js (Express).
+- **Database**: **Prisma ORM** (SQLite for Dev, Postgres Compatible for Prod).
+- **Storage**: Abstracted File Storage (Local for Dev, adaptable to S3).
+- **AI Integration**: Volcengine Ark, DashScope, Tencent COS.
 
-1. 教学内容：以幻灯片形式展示AI在人脸识别、语音合成和视频生成方面的应用
-2. AI功能演示：提供图像处理、图像生成和视频生成功能的实际操作体验
-
-## 技术架构
-
-- **前端**: HTML/CSS/JavaScript (无框架)
-- **桌面应用框架**: Electron
-- **AI处理**: Node.js (纯JavaScript实现，无Python依赖)
-- **API服务**: 火山引擎方舟平台
-
-### 项目结构
+## Project Structure
 
 ```
 .
+├── dist/                 # Production build artifacts (created by npm run build)
+├── prisma/              # Database schema and migrations
+├── scripts/             # Admin utilities (e.g., create_user.js)
 ├── src/
-│   ├── main/           # Electron主进程代码
-│   │   ├── ai/         # AI功能模块
-│   │   │   ├── image-gen.js    # 图像生成模块
-│   │   │   ├── video-gen.js    # 视频生成模块
-│   │   │   └── ai-service.js   # AI服务封装
-│   │   ├── main.js     # 主进程入口
-│   │   └── preload.js  # 预加载脚本
-│   └── renderer/       # 渲染进程代码（前端）
-│       ├── components/ # UI组件
-│       ├── pages/      # 功能页面
-│       ├── assets/     # 静态资源
-│       └── utils/      # 工具函数
-├── docs/               # 文档
-└── package.json        # 项目配置
+│   ├── renderer/        # Frontend (Vite Root)
+│   │   ├── components/  # Web Components & UI Logic
+│   │   ├── pages/       # Page-specific Scripts
+│   │   ├── utils/       # Shared Utilities (API, i18n)
+│   │   └── index.html   # Entry Point
+│   └── server/          # Backend (Express)
+│       ├── ai/          # AI Service Integrations
+│       ├── auth/        # Authentication Logic
+│       ├── db/          # Database Clients
+│       ├── storage/     # File Storage Providers
+│       └── server.js    # Entry Point
+└── vite.config.js       # Frontend Build Configuration
 ```
 
-## 安装与运行
+## Setup & Running
 
-### 环境要求
+### 1. Prerequisites
+- Node.js >= 20
+- npm >= 10
+- uv (for Python Environment)
 
-- Node.js >= 18
-- npm >= 6
+### 2. Installation (One-Click)
 
-### 安装步骤
+We provide a script to check environment requirements, install all dependencies (Node + Python), initialize the database, and build the frontend.
 
 ```bash
-# 克隆项目
-git clone <项目地址>
-cd ai-course
+./scripts/deploy.sh
+```
 
-# 安装依赖
+### 3. Manual Installation (Alternative)
+```bash
+# Install Node dependencies
 npm install
+
+# Install Python dependencies (Faster with uv)
+uv sync
+
+# Initialize Database (SQLite)
+npx prisma generate
 ```
 
-### 运行项目
+### 3. Configuration
+Create a `.env` file in the root directory:
+```env
+PORT=3000
+NODE_ENV=development
+DEBUG=true
+JWT_SECRET=your-secure-secret  # Optional in Dev, Required in Prod
+DATABASE_URL="file:../data/ai_course.sqlite"
 
+# AI Service Keys
+ARK_API_KEY=...
+DASHSCOPE_API_KEY=...
+TENCENT_SECRET_ID=...
+TENCENT_SECRET_KEY=...
+TENCENT_COS_BUCKET=...
+TENCENT_COS_REGION=...
+```
+
+### 4. Create User
+Since auto-creation is disabled for security, manually create your first user:
 ```bash
-# 设置API密钥
-export ARK_API_KEY="your_api_key_here"
+node scripts/create_user.js student mypassword123
+```
 
-# 启动应用
+### 5. Run Development Server
+Starts both the Backend (Express:3000) and Frontend (Vite:5173).
+```bash
+npm run dev
+```
+Access the app at: `http://localhost:5173`
+
+### 6. Production Build
+```bash
+# Build Frontend
+npm run build
+
+# Start Production Server (Serves static files from dist/)
 npm start
 ```
 
-### 开发模式
+## Architecture Notes
 
-```bash
-# 设置API密钥
-export ARK_API_KEY="your_api_key_here"
+- **Authentication**: JWT-based. Protected routes require `Authorization: Bearer <token>`.
+- **Database**: Uses Prisma Client. Data is stored in `data/ai_course.sqlite`.
+- **Storage**: Uploads are stored in `data/uploads`. Interface is defined in `src/server/storage/`.
+- **AI**: Heavy AI tasks may spawn Python subprocesses (e.g., `src/server/ai/voice-clone.py`).
 
-# 启动开发模式（带热重载）
-npm run dev
-```
-
-## 功能模块
-
-### 1. 人脸变脸 (Face Swap)
-
-通过AI技术实现图像中人脸的替换和编辑。
-
-### 2. 视频生成 (Video Generation)
-
-根据文本描述生成相关视频内容。
-
-### 3. 语音克隆 (Voice Cloning)
-
-语音合成和克隆功能演示。
-
-## API密钥配置
-
-本项目使用火山引擎方舟平台的API服务，需要配置API密钥：
-
-1. 注册并登录[火山引擎](https://www.volcengine.com/)
-2. 获取API密钥
-3. 设置环境变量:
-   ```bash
-   export ARK_API_KEY="your_api_key_here"
-   ```
-
-## 代码规范
-
-- 使用ES模块语法 (import/export)
-- 遵循JavaScript标准样式
-- 保持代码简洁和可维护性
-- 所有AI功能模块返回JSON格式结果
-
-## 目录说明
-
-### src/main/
-Electron主进程代码，负责窗口管理、应用生命周期和AI功能调用。
-
-### src/main/ai/
-AI功能模块，包含图像和视频处理功能，所有功能都在主进程中直接调用，无需子进程通信。
-
-### src/renderer/
-前端代码，包含用户界面和交互逻辑。
-
-### src/renderer/components/
-可复用的UI组件，如头部、底部等。
-
-### src/renderer/pages/
-各功能页面的实现，包括：
-- face-swap: 人脸变脸功能
-- video-generation: 视频生成功能
-- voice-cloning: 语音克隆功能
-
-## 架构优势
-
-### 纯JavaScript实现
-项目完全使用JavaScript/Node.js实现，无需Python环境，降低了部署和运行的复杂性。
-
-### 高效的进程通信
-通过优化的IPC通信机制，渲染进程可以直接调用主进程中的AI功能，避免了子进程开销。
-
-### 模块化设计
-所有AI功能都封装在独立的模块中，便于维护和扩展。
-
-## 开发指南
-
-### 添加新功能
-
-1. 在`src/main/ai/`中创建新的AI功能模块
-2. 在`AIService`类中添加对应的方法
-3. 在主进程和预加载脚本中注册新的IPC接口
-4. 在前端添加调用逻辑
-
-### 代码组织原则
-
-1. 功能模块化：每个功能独立成模块
-2. 职责分离：主进程负责系统操作和AI调用，渲染进程负责界面展示
-3. 安全通信：通过Electron的IPC机制进行进程间通信
-4. 环境配置：敏感信息通过环境变量配置
-
-## 常见问题
-
-### 启动时报错"请设置 ARK_API_KEY 玎境变量"
-
-需要设置火山引擎API密钥：
-```bash
-export ARK_API_KEY="your_api_key_here"
-```
-
-### 视频生成失败
-
-检查：
-1. API密钥是否正确设置
-2. 网络连接是否正常
-3. 火山引擎账户是否有相关权限
-
-## 许可证
-
+## License
 MIT

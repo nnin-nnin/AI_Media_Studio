@@ -1,125 +1,95 @@
-import fs from 'fs';
-import path from 'path';
 import axios from 'axios';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Constants
-const DATA_DIR = path.join(__dirname, '..', '..', 'data');
-const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
-const DB_FILE = path.join(DATA_DIR, 'assets.json');
-
-// Ensure directories exist
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+import path from 'path';
+import db from './db/database.js'; // Prisma Client
+import storageProvider from './storage/local-storage.js';
 
 class AssetStore {
     constructor() {
-        this.assets = this.loadDB();
-    }
-
-    loadDB() {
-        try {
-            if (fs.existsSync(DB_FILE)) {
-                return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-            }
-        } catch (e) {
-            console.error("Failed to load assets DB:", e);
-        }
-        return [];
-    }
-
-    saveDB() {
-        try {
-            fs.writeFileSync(DB_FILE, JSON.stringify(this.assets, null, 2));
-        } catch (e) {
-            console.error("Failed to save assets DB:", e);
-        }
+        // No caching needed, DB is the source of truth
     }
 
     /**
      * Add an asset. Downloads the URL to local storage.
-     * @param {Object} asset - { type, url, prompt, metadata }
+     * @param {Object} asset - { type, url, prompt, metadata, userId }
      */
     async add(asset) {
         const id = Date.now().toString(36) + Math.random().toString(36).substr(2);
-        const ext = this.getExtension(asset.url) || 'png'; // Default to png
+        const ext = this.getExtension(asset.url) || 'png';
         const filename = `${id}.${ext}`;
-        const localPath = path.join(UPLOADS_DIR, filename);
 
-        // Download file
-        await this.downloadFile(asset.url, localPath);
+        // Download and Save via Provider
+        await this.downloadAndSave(asset.url, filename);
 
-        const newAsset = {
+        const newAssetData = {
             id,
-            timestamp: Date.now(),
             type: asset.type,
-            url: `/uploads/${filename}`, // Public URL
-            originalUrl: asset.url,
-            prompt: asset.prompt,
-            metadata: asset.metadata || {}
+            url: storageProvider.getPublicUrl(filename), // Public URL
+            prompt: asset.prompt || '',
+            created_at: BigInt(Date.now()), // Prisma schema uses BigInt for timestamp compatibility
+            user_id: asset.userId ? parseInt(asset.userId) : null
         };
 
-        this.assets.unshift(newAsset);
-        this.saveDB();
+        // Save to DB
+        await db.asset.create({ data: newAssetData });
+
         console.log(`[AssetStore] Saved asset: ${id} (${asset.type})`);
-        return newAsset;
+
+        // Return object with serializable BigInt
+        return {
+            ...newAssetData,
+            created_at: Number(newAssetData.created_at)
+        };
     }
 
     async delete(id) {
-        const index = this.assets.findIndex(a => a.id === id);
-        if (index === -1) return false;
+        const asset = await db.asset.findUnique({ where: { id } });
+        if (!asset) return false;
 
-        const asset = this.assets[index];
-
-        // Delete local file
-        if (asset.url && asset.url.startsWith('/uploads/')) {
+        // Delete from storage
+        if (asset.url) {
             const filename = path.basename(asset.url);
-            const localPath = path.join(UPLOADS_DIR, filename);
-            if (fs.existsSync(localPath)) {
-                fs.unlinkSync(localPath);
-            }
+            await storageProvider.delete(filename);
         }
 
-        this.assets.splice(index, 1);
-        this.saveDB();
+        await db.asset.delete({ where: { id } });
         return true;
     }
 
-    getAll() {
-        return this.assets;
+    async getAll() {
+        const assets = await db.asset.findMany({
+            orderBy: { created_at: 'desc' }
+        });
+
+        // Serialize BigInt
+        return assets.map(a => ({
+            ...a,
+            created_at: Number(a.created_at)
+        }));
     }
 
     // --- Helpers ---
 
-    async downloadFile(url, dest) {
-        if (!url) throw new Error("URL is required for download");
-        // If it's already a data URL, write directly
+    async downloadAndSave(url, filename) {
+        if (!url) throw new Error("URL is required");
+
+        // Data URL
         if (url.startsWith('data:')) {
             const matches = url.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
             if (matches && matches.length === 3) {
                 const buffer = Buffer.from(matches[2], 'base64');
-                fs.writeFileSync(dest, buffer);
+                await storageProvider.save(filename, buffer);
                 return;
             }
         }
 
-        // If it's a remote URL
+        // Remote URL (Stream)
         const response = await axios({
             url,
             method: 'GET',
             responseType: 'stream'
         });
 
-        return new Promise((resolve, reject) => {
-            const writer = fs.createWriteStream(dest);
-            response.data.pipe(writer);
-            writer.on('finish', resolve);
-            writer.on('error', reject);
-        });
+        await storageProvider.save(filename, response.data);
     }
 
     getExtension(url) {

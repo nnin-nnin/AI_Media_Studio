@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  username      String   @unique
+  password_hash String
+  assets        Asset[]
+
+  @@map("users")
+}
+
+model Asset {
+  id         String   @id @default(uuid())
+  type       String
+  url        String
+  created_at BigInt // SQLite stores dates as integers usually, but better to map to DateTime if possible. 
+  // However, existing DB likely has INTEGER (millis). Prisma Int is 32-bit. BigInt is 64.
+  // Let's use BigInt for now to match 'INTEGER' in SQLite which can be large.
+  // Update: Best practice is DateTime @default(now()) but we are matching existing.
+  
+  prompt     String? // 'TEXT' in sqlite can be null
+  user_id    Int?
+  user       User?    @relation(fields: [user_id], references: [id])
+
+  @@map("assets")
+}

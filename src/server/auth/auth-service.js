@@ -1,16 +1,10 @@
 import db from '../db/database.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import config from '../config.js';
+import logger from '../utils/logger.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ai-course-super-secure-secret-key-2025';
-
-// --- DEBUG LOGGING IMPORTS ---
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-// -----------------------------
+const JWT_SECRET = config.auth.jwtSecret;
 
 class AuthService {
 
@@ -119,13 +113,13 @@ class AuthService {
     }
 
     async issueToken(username) {
-        const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+        const user = await db.user.findUnique({ where: { username } });
         if (!user) throw new Error("User not found");
 
         const token = jwt.sign(
             { id: user.id, username: user.username },
             JWT_SECRET,
-            { expiresIn: '7d' }
+            { expiresIn: config.auth.tokenExpiry }
         );
 
         return {
@@ -135,53 +129,45 @@ class AuthService {
     }
 
     async register(username, password) {
-        const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
+        const existing = await db.user.findUnique({ where: { username } });
         if (existing) throw new Error("Username already taken");
 
         const hash = await bcrypt.hash(password, 10);
-        const info = db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)').run(username, hash);
-        return { id: info.lastInsertRowid, username };
+        const newUser = await db.user.create({
+            data: {
+                username,
+                password_hash: hash
+            }
+        });
+
+        logger.info("New User Registered", { userId: newUser.id, username });
+        return { id: newUser.id, username };
     }
 
     async login(username, password) {
-        console.log(`[AuthDebug] Attempting login for: ${username}`);
-        const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+        logger.debug("Attempting login", { username });
+        const user = await db.user.findUnique({ where: { username } });
 
         if (!user) {
-            console.log(`[AuthDebug] User not found: ${username}`);
-            // --- DEBUG LOGGING ---
-            try {
-                fs.appendFileSync(path.join(__dirname, '../../server_debug.log'), `[AuthService] User not found: ${username}\n`);
-            } catch (err) { }
-            // ---------------------
+            logger.warn("Login Failed: User not found", { username });
             throw new Error("Invalid credentials");
         }
 
-        console.log(`[AuthDebug] User found. ID: ${user.id}, Hash length: ${user.password_hash ? user.password_hash.length : 'NULL'}`);
-
-        // --- DEBUG LOGGING ---
-        try {
-            fs.appendFileSync(path.join(__dirname, '../../server_debug.log'), `[AuthService] User found: ${username}. Hash len: ${user.password_hash ? user.password_hash.length : 0}\n`);
-        } catch (err) { }
-        // ---------------------
-
         const isValid = await bcrypt.compare(password, user.password_hash);
-        console.log(`[AuthDebug] Password valid? ${isValid}`);
 
-        // --- DEBUG LOGGING ---
-        try {
-            fs.appendFileSync(path.join(__dirname, '../../server_debug.log'), `[AuthService] Password valid: ${isValid}\n`);
-        } catch (err) { }
-        // ---------------------
-
-        if (!isValid) throw new Error("Invalid credentials");
+        if (!isValid) {
+            logger.warn("Login Failed: Invalid password", { username });
+            throw new Error("Invalid credentials");
+        }
 
         // Issue Token
         const token = jwt.sign(
             { id: user.id, username: user.username },
             JWT_SECRET,
-            { expiresIn: '7d' } // Long session for MVP
+            { expiresIn: config.auth.tokenExpiry }
         );
+
+        logger.info("User Logged In", { username, userId: user.id });
 
         return {
             user: this._sanitizeUser(user),
