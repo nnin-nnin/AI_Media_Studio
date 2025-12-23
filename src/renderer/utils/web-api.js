@@ -5,7 +5,10 @@ let authToken = localStorage.getItem('ai_auth_token') || null;
 
 // Helper function for API calls
 // Helper function for API calls
+const API_BASE = '';
+
 export async function fetchAPI(endpoint, data = {}, options = {}) {
+    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
     try {
         const headers = {
             'Content-Type': 'application/json'
@@ -24,11 +27,20 @@ export async function fetchAPI(endpoint, data = {}, options = {}) {
             config.body = JSON.stringify(data);
         }
 
-        const response = await fetch(endpoint, config);
+        console.log(`[WebAPI] Fetching ${url}`, config);
+
+        const response = await fetch(url, config);
 
         if (response.status === 401 || response.status === 403) {
             // Token expired or invalid
             console.warn("Auth failed, clearing token");
+            // Try to read the error message
+            try {
+                const errData = await response.clone().json();
+                console.warn("[WebAPI] Auth Error Details:", errData);
+            } catch (e) {
+                console.warn("[WebAPI] Could not read auth error body");
+            }
             localStorage.removeItem('ai_auth_token');
             authToken = null;
             window.dispatchEvent(new Event('auth-failed')); // Trigger re-login UI
@@ -37,6 +49,7 @@ export async function fetchAPI(endpoint, data = {}, options = {}) {
 
         if (!response.ok) {
             const error = await response.json();
+            console.error("[WebAPI] HTTP Error:", error);
             throw new Error(error.message || 'Server Error');
         }
 
@@ -58,8 +71,9 @@ export const login = async (username, password) => {
         if (res.status === 'success') {
             authToken = res.data.token;
             localStorage.setItem('ai_auth_token', authToken);
-            return res.data;
+            return res; // Return full response so UI can check .status
         }
+        return res; // Return error response
     } catch (e) {
         throw e;
     }
@@ -79,8 +93,9 @@ export const unlockWithRitual = async (ritualLog, nonce) => {
         if (res.status === 'success') {
             authToken = res.data.token;
             localStorage.setItem('ai_auth_token', authToken);
-            return res.data;
+            return res; // Return full response
         }
+        return res;
     } catch (e) {
         throw e;
     }

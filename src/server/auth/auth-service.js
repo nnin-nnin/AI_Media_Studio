@@ -4,6 +4,14 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'ai-course-super-secure-secret-key-2025';
 
+// --- DEBUG LOGGING IMPORTS ---
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// -----------------------------
+
 class AuthService {
 
     // Convert DB row to User object (exclude password)
@@ -126,11 +134,46 @@ class AuthService {
         };
     }
 
+    async register(username, password) {
+        const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
+        if (existing) throw new Error("Username already taken");
+
+        const hash = await bcrypt.hash(password, 10);
+        const info = db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)').run(username, hash);
+        return { id: info.lastInsertRowid, username };
+    }
+
     async login(username, password) {
+        console.log(`[AuthDebug] Attempting login for: ${username}`);
         const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-        if (!user) throw new Error("Invalid credentials");
+
+        if (!user) {
+            console.log(`[AuthDebug] User not found: ${username}`);
+            // --- DEBUG LOGGING ---
+            try {
+                fs.appendFileSync(path.join(__dirname, '../../server_debug.log'), `[AuthService] User not found: ${username}\n`);
+            } catch (err) { }
+            // ---------------------
+            throw new Error("Invalid credentials");
+        }
+
+        console.log(`[AuthDebug] User found. ID: ${user.id}, Hash length: ${user.password_hash ? user.password_hash.length : 'NULL'}`);
+
+        // --- DEBUG LOGGING ---
+        try {
+            fs.appendFileSync(path.join(__dirname, '../../server_debug.log'), `[AuthService] User found: ${username}. Hash len: ${user.password_hash ? user.password_hash.length : 0}\n`);
+        } catch (err) { }
+        // ---------------------
 
         const isValid = await bcrypt.compare(password, user.password_hash);
+        console.log(`[AuthDebug] Password valid? ${isValid}`);
+
+        // --- DEBUG LOGGING ---
+        try {
+            fs.appendFileSync(path.join(__dirname, '../../server_debug.log'), `[AuthService] Password valid: ${isValid}\n`);
+        } catch (err) { }
+        // ---------------------
+
         if (!isValid) throw new Error("Invalid credentials");
 
         // Issue Token

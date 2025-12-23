@@ -59,9 +59,32 @@ app.post('/api/auth/ritual-unlock', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
+
+        // --- DEBUG LOGGING ---
+        try {
+            const logEntry = `
+[${new Date().toISOString()}] Login Attempt:
+Headers: ${JSON.stringify(req.headers)}
+Body: ${JSON.stringify(req.body)}
+DIR: ${__dirname}
+------------------------------------------------
+`;
+            fs.appendFileSync(path.join(__dirname, 'server_debug.log'), logEntry);
+            // Backup log to absolute path
+            fs.appendFileSync('/Users/min/SecSys/AI_Media_Studio/server_debug_absolute.log', logEntry);
+        } catch (err) {
+            console.error("Failed to write debug log (Absolute):", err);
+        }
+        // ---------------------
+
         const result = await AuthService.login(username, password);
         res.json({ status: 'success', data: result });
     } catch (e) {
+        // --- DEBUG ERROR LOGGING ---
+        try {
+            fs.appendFileSync(path.join(__dirname, 'server_debug.log'), `[Error] Login Failed: ${e.message}\n`);
+        } catch (err) { }
+        // ---------------------------
         res.status(401).json({ status: 'error', message: e.message });
     }
 });

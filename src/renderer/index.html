@@ -7,6 +7,7 @@
     <title>AI Media Studio</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="components/login/login.css">
+    <link rel="stylesheet" href="components/login/login-form.css">
 
     <!-- Import Map for Three.js -->
     <script type="importmap">
@@ -27,13 +28,32 @@
 </head>
 
 <body>
-    <!-- Login Portal Overlay (Reference Style) -->
+
+
+    <!-- Login Portal Overlay (Username/Password) -->
     <div id="login-portal">
-        <canvas id="magic-canvas"></canvas>
+        <div class="login-container">
+            <h1 class="login-title">AI Media Studio</h1>
+            <p class="login-subtitle">Secure Access Portal</p>
 
-        <!-- Video Input (Top Right) -->
-        <video id="video-input" playsinline></video>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username" class="form-label">Username</label>
+                    <input type="text" id="login-username" class="form-input" placeholder="student"
+                        autocomplete="username">
+                </div>
 
+                <div class="form-group">
+                    <label for="login-password" class="form-label">Password</label>
+                    <input type="password" id="login-password" class="form-input" placeholder="Enter password"
+                        autocomplete="current-password">
+                </div>
+
+                <div class="error-message" id="login-error"></div>
+
+                <button type="submit" id="login-submit" class="login-btn">Login</button>
+            </form>
+        </div>
     </div>
 
     <div id="app" class="app-layout" style="display:none;"> <!-- Hidden initially -->
@@ -145,13 +165,13 @@
             .then(res => res.json())
             .then(config => {
                 if (config.debugMode === true) {
-                    // Strategy A: Mock Auth (Debug Mode)
+                    // Strategy A: Mock Auth (Debug Mode - Auto Login)
                     console.log("[Auth] Debug Environment Detected. Swapping to Mock Authentication.");
                     document.getElementById('login-portal').style.display = 'none';
                     unlockApp();
                 } else {
                     // Strategy B: Real Auth (Production Mode)
-                    console.log("[Auth] Production Environment. enabling Biometric Lock.");
+                    console.log("[Auth] Production Environment. Enabling Login Form.");
                     new LoginManager('login-portal', unlockApp);
                 }
             })
