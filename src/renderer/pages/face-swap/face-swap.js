@@ -683,3 +683,6 @@ async function initModelSelect(selectId, settingsKey, type = null) {
         window.SettingsManager.set(settingsKey, e.target.value);
     });
 }
+
+// Export for global usage
+window.loadFaceSwapPage = loadFaceSwapPage;

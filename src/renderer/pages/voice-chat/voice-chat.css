@@ -1,0 +1,254 @@
+/* Voice Chat Specific Styles */
+
+/* 1. Character List within Studio Controls */
+.character-list-container {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.character-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.character-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+.character-card.active {
+    border-color: var(--primary-color, #3b82f6);
+    background: #f0f9ff;
+}
+
+.character-card img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.character-info h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 2px 0;
+    color: var(--text-primary);
+}
+
+.character-info p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* 2. Voice Controls Section (Bottom of Left Panel) */
+.voice-settings-panel {
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.setting-row {
+    margin-bottom: 12px;
+}
+
+.setting-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+/* 3. Main Chat Viewport */
+.chat-viewport-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    max-width: 600px;
+    padding: 2rem;
+    text-align: center;
+}
+
+/* Active Avatar Display */
+.active-char-display {
+    margin-bottom: 2rem;
+    position: relative;
+    /* Add glow effect for active state */
+}
+
+.active-char-avatar {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 6px solid white;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.active-char-display.speaking .active-char-avatar {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0.2);
+    border-color: #3b82f6;
+}
+
+.active-char-name {
+    font-size: 24px;
+    font-weight: 700;
+    margin-top: 1rem;
+    color: var(--text-primary);
+}
+
+/* Mic Interaction */
+.mic-wrapper {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+}
+
+.mic-btn-large {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: white;
+    border: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    position: relative;
+    z-index: 2;
+    color: var(--text-secondary);
+}
+
+.mic-btn-large:hover {
+    transform: scale(1.05);
+    color: var(--primary-color, #3b82f6);
+}
+
+.mic-btn-large.recording {
+    background: #ef4444;
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Pulse Animation */
+.mic-pulse {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.5);
+    z-index: 1;
+    opacity: 0;
+    transform: scale(1);
+    pointer-events: none;
+}
+
+.mic-btn-large.recording+.mic-pulse {
+    animation: pulse-ring 1.5s infinite;
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
+}
+
+/* Chat Transcript */
+.transcript-box {
+    min-height: 60px;
+    margin-bottom: 2rem;
+    font-size: 18px;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Input Area */
+.input-area {
+    width: 100%;
+    display: flex;
+    gap: 12px;
+    background: white;
+    padding: 8px;
+    border-radius: 50px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.input-area textarea {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 10px 15px;
+    resize: none;
+    height: 48px;
+    line-height: 1.4;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    color: #1a1a1a;
+}
+
+.action-btn-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #f1f5f9;
+    color: var(--text-secondary);
+}
+
+.action-btn-circle:hover {
+    background: #e2e8f0;
+    color: #333;
+}
+
+.action-btn-circle.primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.action-btn-circle.primary:hover {
+    background: #2563eb;
+}

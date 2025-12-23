@@ -143,6 +143,9 @@ function showPage(page) {
         case 'realtime-vision':
             if (window.loadRealtimeVisionPage) window.loadRealtimeVisionPage(mainContent);
             break;
+        case 'voice-chat':
+            if (window.loadVoiceChatPage) window.loadVoiceChatPage(mainContent);
+            break;
         case 'assets':
             if (window.loadAssetsPage) window.loadAssetsPage(mainContent);
             break;

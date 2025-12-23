@@ -14,16 +14,25 @@ class AssetStore {
      */
     async add(asset) {
         const id = Date.now().toString(36) + Math.random().toString(36).substr(2);
-        const ext = this.getExtension(asset.url) || 'png';
-        const filename = `${id}.${ext}`;
+        let finalUrl;
 
-        // Download and Save via Provider
-        await this.downloadAndSave(asset.url, filename);
+        // If URL is already local (starts with /uploads/), use it directly
+        // to avoid re-downloading or broken links (since downloadAndSave skips /uploads/)
+        if (asset.url && asset.url.startsWith('/uploads/')) {
+            finalUrl = asset.url;
+        } else {
+            const ext = this.getExtension(asset.url) || 'png';
+            const filename = `${id}.${ext}`;
+
+            // Download and Save via Provider
+            await this.downloadAndSave(asset.url, filename);
+            finalUrl = storageProvider.getPublicUrl(filename);
+        }
 
         const newAssetData = {
             id,
             type: asset.type,
-            url: storageProvider.getPublicUrl(filename), // Public URL
+            url: finalUrl, // Public URL
             prompt: asset.prompt || '',
             created_at: BigInt(Date.now()), // Prisma schema uses BigInt for timestamp compatibility
             user_id: asset.userId ? parseInt(asset.userId) : null
@@ -82,6 +91,11 @@ class AssetStore {
             }
         }
 
+        // Local path check - if it's already in our /uploads/ dir, we don't need to download it
+        if (url.startsWith('/uploads/')) {
+            return;
+        }
+
         // Remote URL (Stream)
         const response = await axios({
             url,
@@ -101,6 +115,10 @@ class AssetStore {
 
         // Try from URL
         try {
+            // Handle relative URLs like /uploads/file.mp3
+            if (url.startsWith('/')) {
+                return path.extname(url).substring(1);
+            }
             const pathname = new URL(url).pathname;
             return path.extname(pathname).substring(1);
         } catch (e) {

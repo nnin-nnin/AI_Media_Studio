@@ -1,0 +1,353 @@
+/**
+ * voice-chat.js
+ * AI角色互动页面逻辑
+ */
+import { fetchAPI } from '../../utils/web-api.js';
+
+class VoiceChatPage {
+    constructor() {
+        this.selectedCharacter = null;
+        this.isRecording = false;
+        this.recognition = null;
+        this.characters = [];
+    }
+
+    async render(container) {
+        // Inject styles
+        if (!document.getElementById('vc-css')) {
+            const link = document.createElement('link');
+            link.id = 'vc-css';
+            link.rel = 'stylesheet';
+            link.href = 'pages/voice-chat/voice-chat.css';
+            document.head.appendChild(link);
+        }
+
+        container.innerHTML = `
+            <div class="studio-layout fade-in">
+                <!-- Col 2: Controls (Left Panel) -->
+                <div class="studio-controls">
+                    <div class="studio-header">
+                        <div style="font-weight:600; font-size:14px;">Voice Studio</div>
+                    </div>
+
+                    <!-- Character List -->
+                    <div class="character-list-container" id="character-list">
+                        <div class="loading-overlay">${window.i18n.t('COMMON_LOADING')}</div>
+                    </div>
+
+                    <!-- Voice Settings (Bottom) -->
+                    <div class="voice-settings-panel">
+                        <div class="setting-row">
+                            <div class="setting-label">
+                                <span>Speed</span>
+                                <span id="speed-val">1.0x</span>
+                            </div>
+                            <input type="range" class="studio-slider" id="voice-speed" min="0.5" max="2.0" step="0.1" value="1.0">
+                        </div>
+                        <div class="setting-row">
+                            <div class="setting-label">Sample Rate</div>
+                            <select id="voice-sr" class="studio-select-glass" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--glass-border);">
+                                <option value="22050" selected>22050 Hz</option>
+                                <option value="44100">44100 Hz (Hi-Fi)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Col 3: Viewport (Chat Canvas) -->
+                <div class="studio-viewport" id="chat-viewport">
+                    <!-- Default State (No Character Selected) -->
+                    <div id="vc-empty-state" style="text-align:center; opacity:0.6;">
+                        <div style="font-size:48px; margin-bottom:1rem;">🎙️</div>
+                        <p>Select a character to start chatting</p>
+                    </div>
+
+                    <!-- Active Chat Interface -->
+                    <div class="chat-viewport-inner" id="chat-interface" style="display:none;">
+                        
+                        <!-- Active Character Display -->
+                        <div class="active-char-display" id="active-char-container">
+                            <img id="char-avatar" class="active-char-avatar" src="" alt="Avatar">
+                            <div class="active-char-name" id="char-name"></div>
+                        </div>
+
+                        <!-- Recognition Text -->
+                         <div class="transcript-box" id="recognition-result"></div>
+                         <p id="mic-status" style="font-size:12px; color:var(--text-secondary); margin-bottom:20px;">${window.i18n.t('CHAT_MIC_START')}</p>
+
+                        <!-- Mic Button with Pulse -->
+                        <div class="mic-wrapper">
+                            <button id="mic-btn" class="mic-btn-large">
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="23"></line><line x1="8" x2="16" y1="23" y2="23"></line></svg>
+                            </button>
+                            <div class="mic-pulse"></div>
+                        </div>
+
+                        <!-- Bottom Input Area -->
+                        <div class="input-area">
+                             <button class="action-btn-circle" id="upload-btn" title="Upload Audio">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
+                             </button>
+                             <input type="file" id="audio-input" accept="audio/*" style="display: none;">
+                             
+                             <textarea id="manual-text-input" placeholder="${window.i18n.t('AUDIO_PROMPT_PLACEHOLDER')}" rows="1"></textarea>
+                             
+                             <button class="action-btn-circle primary" id="send-text-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                             </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.init();
+    }
+
+    async init() {
+        this.micBtn = document.getElementById('mic-btn');
+        this.micStatus = document.getElementById('mic-status');
+        this.recognitionResult = document.getElementById('recognition-result');
+        this.characterList = document.getElementById('character-list');
+        this.chatInterface = document.getElementById('chat-interface');
+
+        await this.loadCharacters();
+        this.setupRecognition();
+
+        if (this.micBtn) {
+            this.micBtn.onclick = () => this.toggleRecording();
+        }
+
+        this.uploadBtn = document.getElementById('upload-btn');
+        this.audioInput = document.getElementById('audio-input');
+
+        if (this.uploadBtn && this.audioInput) {
+            this.uploadBtn.onclick = () => this.audioInput.click();
+            this.audioInput.onchange = (e) => this.handleFileUpload(e);
+        }
+
+        this.sendTextBtn = document.getElementById('send-text-btn');
+        this.manualTextInput = document.getElementById('manual-text-input');
+
+        if (this.sendTextBtn) {
+            this.sendTextBtn.onclick = () => {
+                const text = this.manualTextInput.value.trim();
+                if (text) {
+                    this.handleFinalTranscript(text);
+                    this.manualTextInput.value = '';
+                }
+            };
+        }
+
+        // Voice Control Listeners
+        const speedInput = document.getElementById('voice-speed');
+        const speedVal = document.getElementById('speed-val');
+        if (speedInput && speedVal) {
+            speedInput.oninput = (e) => {
+                speedVal.innerText = e.target.value + 'x';
+            };
+        }
+    }
+
+    async loadCharacters() {
+        try {
+            const res = await fetchAPI('/api/ai/characters', {}, { method: 'GET' });
+            if (res.status === 'success') {
+                this.characters = res.data;
+                this.renderCharacterList();
+            }
+        } catch (e) {
+            console.error("Load characters failed", e);
+        }
+    }
+
+    renderCharacterList() {
+        if (!this.characterList) return;
+        this.characterList.innerHTML = this.characters.map(char => `
+            <div class="character-card" data-id="${char.id}">
+                <img src="${char.avatar}" alt="${char.name}">
+                <div class="character-info">
+                    <h3>${char.name}</h3>
+                    <p>${char.description || ''}</p>
+                </div>
+            </div>
+        `).join('');
+
+        this.characterList.querySelectorAll('.character-card').forEach(card => {
+            card.onclick = () => this.selectCharacter(card.dataset.id);
+        });
+    }
+
+    selectCharacter(id) {
+        const char = this.characters.find(c => c.id == id);
+        if (!char) return;
+        this.selectedCharacter = char;
+
+        // UI Update: Highlight active card
+        this.characterList.querySelectorAll('.character-card').forEach(card => {
+            card.classList.toggle('active', card.dataset.id == id);
+        });
+
+        // Update Chat Viewport
+        const emptyState = document.getElementById('vc-empty-state');
+        const chatInterface = document.getElementById('chat-interface');
+
+        if (emptyState) emptyState.style.display = 'none';
+        if (chatInterface) {
+            chatInterface.style.display = 'flex';
+            chatInterface.classList.add('fade-in');
+        }
+
+        document.getElementById('char-avatar').src = char.avatar;
+        document.getElementById('char-name').innerText = char.name;
+        // document.getElementById('char-desc').innerText = char.description; // We don't show desc in active view
+    }
+
+    setupRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            this.micStatus.innerText = "Speech Recognition not supported in this browser.";
+            this.micBtn.disabled = true;
+            return;
+        }
+
+        this.recognition = new SpeechRecognition();
+        this.recognition.continuous = false;
+        this.recognition.interimResults = true;
+        this.recognition.lang = window.i18n.lang === 'zh' ? 'zh-CN' : 'en-US';
+
+        this.recognition.onresult = (event) => {
+            const transcript = Array.from(event.results)
+                .map(result => result[0])
+                .map(result => result.transcript)
+                .join('');
+            this.recognitionResult.innerText = transcript;
+
+            if (event.results[0].isFinal) {
+                this.handleFinalTranscript(transcript);
+            }
+        };
+
+        this.recognition.onerror = (e) => {
+            console.error("Recognition Error", e);
+            this.stopRecording();
+        };
+
+        this.recognition.onend = () => {
+            this.stopRecording();
+        };
+    }
+
+    toggleRecording() {
+        if (this.isRecording) {
+            this.stopRecording();
+        } else {
+            this.startRecording();
+        }
+    }
+
+    startRecording() {
+        if (!this.recognition) return;
+        this.isRecording = true;
+        this.micBtn.classList.add('recording');
+        this.micStatus.innerText = window.i18n.t('CHAT_MIC_STOP');
+        this.recognitionResult.innerText = "";
+        this.recognition.start();
+    }
+
+    stopRecording() {
+        this.isRecording = false;
+        if (this.micBtn) this.micBtn.classList.remove('recording');
+        if (this.micStatus) this.micStatus.innerText = window.i18n.t('CHAT_MIC_START');
+        if (this.recognition) this.recognition.stop();
+    }
+
+    async handleFinalTranscript(text) {
+        if (!text || !this.selectedCharacter) return;
+
+        this.micStatus.innerText = window.i18n.t('CHAT_PROCESSING');
+
+        try {
+            const speed = parseFloat(document.getElementById('voice-speed').value);
+            const sr = parseInt(document.getElementById('voice-sr').value);
+
+            const res = await fetchAPI('/api/ai/character-voice', {
+                characterId: this.selectedCharacter.id,
+                text: text,
+                speed: speed,
+                sampleRate: sr
+            });
+
+            if (res.status === 'success') {
+                // Show the text being read back
+                this.recognitionResult.innerText = res.text || "Recognition complete.";
+
+                // Refresh Sidebar Recent Work
+                if (window.AssetManager) {
+                    window.AssetManager.refresh();
+                }
+
+                const audio = new Audio(res.audio_url);
+                const avatarContainer = document.getElementById('active-char-container');
+
+                audio.onplay = () => {
+                    if (avatarContainer) avatarContainer.classList.add('speaking');
+                    this.micStatus.innerText = "Speaking...";
+                };
+
+                audio.onended = () => {
+                    if (avatarContainer) avatarContainer.classList.remove('speaking');
+                    this.micStatus.innerText = window.i18n.t('CHAT_MIC_START');
+                };
+
+                audio.play();
+            }
+        } catch (e) {
+            console.error("TTS Failed", e);
+            this.micStatus.innerText = "Generation failed. Try again.";
+        }
+    }
+
+    async handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file || !this.selectedCharacter) return;
+
+        this.micStatus.innerText = window.i18n.t('CHAT_PROCESSING');
+        this.recognitionResult.innerText = "Uploading audio file...";
+
+        try {
+            // Use FormData for file upload
+            const formData = new FormData();
+            formData.append('audio', file);
+
+            const token = localStorage.getItem('ai_auth_token');
+            const res = await window.fetch('/api/ai/stt', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            const sttResult = await res.json();
+
+            if (sttResult.status === 'success') {
+                this.recognitionResult.innerText = sttResult.text;
+                await this.handleFinalTranscript(sttResult.text);
+            } else {
+                throw new Error(sttResult.message || "STT failed");
+            }
+        } catch (e) {
+            console.error("Upload/STT Failed", e);
+            this.micStatus.innerText = "Process failed. Try again.";
+            this.recognitionResult.innerText = "";
+        } finally {
+            this.audioInput.value = ''; // Reset input
+        }
+    }
+}
+
+window.loadVoiceChatPage = (container) => {
+    const page = new VoiceChatPage();
+    page.render(container);
+};

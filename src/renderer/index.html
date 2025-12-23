@@ -96,6 +96,7 @@
     <script type="module" src="pages/video-generation/video-generation.js"></script>
     <script type="module" src="pages/voice-cloning/voice-cloning.js"></script>
     <script type="module" src="pages/assets/assets.js"></script>
+    <script type="module" src="pages/voice-chat/voice-chat.js"></script>
     <script type="module" src="pages/realtime-vision/realtime-vision.js"></script>
     <script type="module" src="components/media-preview/media-preview.js"></script>
 
@@ -164,9 +165,9 @@
         fetch('/api/config')
             .then(res => res.json())
             .then(config => {
-                if (config.debugMode === true) {
-                    // Strategy A: Mock Auth (Debug Mode - Auto Login)
-                    console.log("[Auth] Debug Environment Detected. Swapping to Mock Authentication.");
+                if (config.skipAuth === true) {
+                    // Strategy A: Mock Auth (Skip Auth Enabled)
+                    console.log("[Auth] SKIP_AUTH enabled. Bypassing login portal.");
                     document.getElementById('login-portal').style.display = 'none';
                     unlockApp();
                 } else {

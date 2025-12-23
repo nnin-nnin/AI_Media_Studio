@@ -15,10 +15,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // 从环境变量中获取API密钥，如果未设置则抛出错误
+console.log("[AIService] Checking ARK_API_KEY...");
 const apiKey = process.env.ARK_API_KEY;
 if (!apiKey) {
+  console.error("[AIService] CRITICAL ERROR: ARK_API_KEY is missing!");
   throw new Error("请设置 ARK_API_KEY 环境变量");
 }
+console.log("[AIService] ARK_API_KEY found.");
 
 const client = new OpenAI({
   baseURL: "https://ark.cn-beijing.volces.com/api/v3",
@@ -277,11 +280,14 @@ class AIService {
    */
   static async executePythonScript(command, args) {
     return new Promise((resolve, reject) => {
-      // Use the provided command (pythonPath) instead of hardcoding
-      const pythonPath = command || 'python3';
-      console.log(`[AIService] Spawning Python: ${pythonPath} ${args.join(' ')}`);
+      // In development, we use 'uv run' to ensure the correct environment
+      // In production, we might use a specific python path
+      let pythonPath = 'uv';
+      let combinedArgs = ['run', '--project', path.join(__dirname, '..', '..', '..'), command || 'python3', ...args];
 
-      const pyProcess = spawn(pythonPath, args, {
+      console.log(`[AIService] Spawning via UV: ${pythonPath} ${combinedArgs.join(' ')}`);
+
+      const pyProcess = spawn(pythonPath, combinedArgs, {
         env: { ...process.env } // Explicitly pass environment
       });
 
@@ -311,6 +317,7 @@ class AIService {
             });
           }
         } else {
+          console.error(`[AIService] Python script failed with code ${code}. Stderr: ${stderrData}`);
           resolve({
             status: 'error',
             message: `Python脚本执行失败: ${stderrData || '未知错误'}`
@@ -325,6 +332,85 @@ class AIService {
         });
       });
     });
+  }
+
+  /**
+   * Character Speech Generation (TTS)
+   * Calls DashScope (or similar) using a specific voice_id
+   */
+  static async generateCharacterSpeech(voiceId, text, options = {}) {
+    try {
+      const fileName = `chat_${Date.now()}.mp3`;
+      const outPath = path.join(__dirname, '..', '..', '..', 'data', 'uploads', fileName);
+      fs.mkdirSync(path.dirname(outPath), { recursive: true });
+
+      const scriptPath = path.join(__dirname, 'tts_helper.py');
+      const args = [scriptPath, voiceId, text, outPath];
+
+      if (options.speed) {
+        args.push('--speed', options.speed.toString());
+      }
+      if (options.sampleRate) {
+        args.push('--sample_rate', options.sampleRate.toString());
+      }
+
+      const result = await this.executePythonScript('python3', args);
+
+      if (result.status === 'success') {
+        return {
+          status: 'success',
+          audio_url: `/uploads/${fileName}`
+        };
+      } else {
+        throw new Error(result.message || 'TTS generation failed');
+      }
+    } catch (error) {
+      console.error("Character TTS Error:", error.message);
+      throw error;
+    }
+  }
+
+  static async speechToText(audioFilePath) {
+    try {
+      const scriptPath = path.join(__dirname, 'asr_helper.py');
+      // Use python3 or a configured path
+      const result = await this.executePythonScript('python3', [scriptPath, audioFilePath]);
+
+      if (result.status === 'success') {
+        return {
+          status: 'success',
+          text: result.text
+        };
+      } else {
+        throw new Error(result.message || 'Speech recognition failed');
+      }
+    } catch (error) {
+      console.error("ASR Error:", error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * AI Chat Completion
+   * @param {string} prompt - User message
+   * @param {string} systemPrompt - System personality
+   * @returns {Promise<string>} AI response
+   */
+  static async chat(prompt, systemPrompt = "You are a helpful AI assistant.") {
+    try {
+      const response = await client.chat.completions.create({
+        model: "doubao-1-5-pro-32k-250115", // A common Ark endpoint ID pattern or model name
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt },
+        ],
+      });
+      return response.choices[0].message.content;
+    } catch (error) {
+      console.error("AI Chat Error:", error.message);
+      // Fallback for demo: just return original text if LLM fails
+      return `AI: ${prompt}`;
+    }
   }
 
   /**

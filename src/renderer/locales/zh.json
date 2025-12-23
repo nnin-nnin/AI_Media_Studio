@@ -8,6 +8,8 @@
     "STUDIO_VIDEO": "视频创作坊",
     "STUDIO_AUDIO": "音频克隆坊",
     "STUDIO_VISION": "实时视觉坊",
+    "STUDIO_CHAT": "角色互动",
+    "NAV_VOICE_CHAT": "语音对话",
     "DASHBOARD_TITLE": "控制台",
     "DASHBOARD_SUBTITLE": "选择一个工具开启你的 AI 创意之旅",
     "DASHBOARD_IMAGE_DESC_1": "专业级人脸替换技术",
@@ -85,5 +87,11 @@
     "COMMON_EXPORT": "导出",
     "COMMON_LOADING": "加载中...",
     "COMMON_NO_HISTORY": "暂无历史记录",
-    "COMMON_RECENT_EMPTY": "最近没有创作过作品"
+    "COMMON_RECENT_EMPTY": "最近没有创作过作品",
+    "CHAT_TITLE": "AI 角色对话",
+    "CHAT_SELECT_CHARACTER": "选择一个角色",
+    "CHAT_MIC_START": "点击开始说话",
+    "CHAT_MIC_STOP": "正在聆听...",
+    "CHAT_PROCESSING": "正在思考并配音...",
+    "CHAT_WELCOME": "请选择一个角色开始交流吧！"
 }

@@ -8,6 +8,8 @@
     "STUDIO_VIDEO": "Video Studio",
     "STUDIO_AUDIO": "Audio Studio",
     "STUDIO_VISION": "Vision Studio",
+    "STUDIO_CHAT": "Character Chat",
+    "NAV_VOICE_CHAT": "Voice Chat",
     "DASHBOARD_TITLE": "Dashboard",
     "DASHBOARD_SUBTITLE": "Select a tool to start creating",
     "DASHBOARD_IMAGE_DESC_1": "Professional grade face replacement",
@@ -85,5 +87,11 @@
     "COMMON_EXPORT": "Export",
     "COMMON_LOADING": "Loading...",
     "COMMON_NO_HISTORY": "No history found",
-    "COMMON_RECENT_EMPTY": "No recent work"
+    "COMMON_RECENT_EMPTY": "No recent work",
+    "CHAT_TITLE": "Character Interaction",
+    "CHAT_SELECT_CHARACTER": "Choose a Character",
+    "CHAT_MIC_START": "Click to Speak",
+    "CHAT_MIC_STOP": "Listening...",
+    "CHAT_PROCESSING": "Processing response...",
+    "CHAT_WELCOME": "Select a character to start chatting!"
 }

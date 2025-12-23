@@ -20,7 +20,8 @@ const config = {
         jwtSecret: process.env.NODE_ENV === 'production'
             ? getEnv('JWT_SECRET', true)
             : (getEnv('JWT_SECRET', false) || 'dev-unsafe-secret'),
-        tokenExpiry: '7d'
+        tokenExpiry: '7d',
+        skipAuth: getEnv('SKIP_AUTH', false, 'false') === 'true'
     },
     db: {
         path: getEnv('DB_PATH', false, 'data/ai_course.sqlite')

@@ -1,12 +1,8 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 import os
 import sys
 import time
 import uuid
 import mimetypes
-import subprocess
 import json
 
 # 尝试导入腾讯云COS和DashScope SDK

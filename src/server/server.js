@@ -6,16 +6,27 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import bodyParser from 'body-parser';
+import multer from 'multer';
+import fs from 'fs';
 
 // Import AI Service (reusing existing logic)
 import AIService from './ai/ai-service.js';
 import AssetStore from './asset-store.js';
 import AuthService from './auth/auth-service.js';
+import VoiceChatService from './voice-chat-service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+
+const upload = multer({ dest: 'data/uploads/temp/' }); // Temporary storage for ASR
+if (!fs.existsSync('data/uploads/temp/')) {
+    fs.mkdirSync('data/uploads/temp/', { recursive: true });
+}
+if (!fs.existsSync('data/uploads/')) {
+    fs.mkdirSync('data/uploads/', { recursive: true });
+}
 
 logger.info("Starting server...", { env: config.env, port: config.port });
 
@@ -41,7 +52,8 @@ app.use('/uploads', express.static(uploadsPath));
 app.get('/api/config', (req, res) => {
     res.json({
         debugMode: config.debug,
-        decartApiKey: config.ai.arkApiKey // Maintain backward compat with frontend usage
+        decartApiKey: config.ai.arkApiKey,
+        skipAuth: config.auth.skipAuth && config.env === 'development'
     });
 });
 
@@ -119,12 +131,19 @@ app.use('/api', rateLimiter);
 app.use('/api', (req, res, next) => {
     const path = req.path || '';
     if (path.startsWith('/auth') || path === '/config') return next();
+
+    // Dev Bypass
+    if (config.auth.skipAuth && config.env === 'development') {
+        req.user = { id: 1, username: 'dev-user' };
+        return next();
+    }
+
     AuthService.authenticateToken(req, res, next);
 });
 
 // --- Asset Routes ---
-app.get('/api/assets', (req, res) => {
-    res.json(AssetStore.getAll());
+app.get('/api/assets', async (req, res) => {
+    res.json(await AssetStore.getAll());
 });
 
 app.post('/api/assets', async (req, res) => {
@@ -205,6 +224,55 @@ app.get('/api/ai/models', async (req, res) => {
         res.status(500).json({ status: 'error', message: error.message });
     }
 });
+
+// --- Voice Chat Character Routes ---
+app.get('/api/ai/characters', async (req, res) => {
+    try {
+        const characters = await VoiceChatService.listCharacters();
+        res.json({ status: 'success', data: characters });
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: error.message });
+    }
+});
+
+app.post('/api/ai/character-voice', async (req, res) => {
+    try {
+        const { characterId, text, speed, sampleRate } = req.body;
+        const result = await VoiceChatService.generateCharacterVoice(characterId, text, { speed, sampleRate });
+
+        await AssetStore.add({
+            userId: req.user.id,
+            type: 'audio',
+            url: result.audio_url,
+            prompt: `[${result.characterName}] ${result.text}`,
+            metadata: JSON.stringify({ characterId, source: 'voice-chat' })
+        });
+
+        res.json(result);
+    } catch (error) {
+        logger.error("Character Voice Error", { error: error.message });
+        res.status(500).json({ status: 'error', message: error.message });
+    }
+});
+
+app.post('/api/ai/stt', upload.single('audio'), async (req, res) => {
+    logger.info("STT Route Hit", { hasFile: !!req.file });
+    try {
+        if (!req.file) throw new Error("No file uploaded");
+
+        logger.info("Processing STT upload", { filename: req.file.filename });
+        const result = await AIService.speechToText(req.file.path);
+
+        // Cleanup temp file
+        fs.unlinkSync(req.file.path);
+
+        res.json(result);
+    } catch (error) {
+        logger.error("STT API Error", { error: error.message });
+        res.status(500).json({ status: 'error', message: error.message });
+    }
+});
+
 
 
 // Start Server

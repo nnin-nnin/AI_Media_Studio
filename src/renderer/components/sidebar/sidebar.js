@@ -90,6 +90,7 @@ class GlobalSidebar {
                 ${this.renderNavItem('face-swap', window.i18n.t('STUDIO_IMAGE'), activeItem === 'face-swap', 'image')}
                 ${this.renderNavItem('video-generation', window.i18n.t('STUDIO_VIDEO'), activeItem === 'video-generation', 'video')}
                 ${this.renderNavItem('voice-cloning', window.i18n.t('STUDIO_AUDIO'), activeItem === 'voice-cloning', 'mic')}
+                ${this.renderNavItem('voice-chat', window.i18n.t('STUDIO_CHAT'), activeItem === 'voice-chat', 'message')}
                 ${this.renderNavItem('realtime-vision', window.i18n.t('STUDIO_VISION'), activeItem === 'realtime-vision', 'zap')}
 
                 <div class="nav-divider"></div>
@@ -150,6 +151,7 @@ class GlobalSidebar {
             'image': `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>`,
             'video': `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"></path><rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect></svg>`,
             'mic': `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="23"></line><line x1="8" x2="16" y1="23" y2="23"></line></svg>`,
+            'message': `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"></path></svg>`,
             'zap': `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`
         };
         return icons[type] || icons['home'];
