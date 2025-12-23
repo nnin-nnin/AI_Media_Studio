@@ -3,7 +3,6 @@ import sys
 import json
 import dashscope
 from dashscope.audio.tts import SpeechSynthesizer as SambertSynthesizer
-# Import directly as requested by user pattern
 from dashscope.audio.tts_v2 import SpeechSynthesizer
 
 TARGET_MODEL = "cosyvoice-v3-plus"
@@ -30,7 +29,8 @@ def main():
     try:
         # Check if it's a CosyVoice ID (starts with cosyvoice-)
         if args.voice_id.startswith("cosyvoice-"):
-            # Force V3 as requested by user ("Don't rollback, default to v3")
+            # Pass the voice_id exactly as requested. 
+            # Note: For custom voices, the full ID (including model prefix) is expected.
             synthesizer = SpeechSynthesizer(model=TARGET_MODEL, voice=args.voice_id, speech_rate=args.speed)
             audio_data = synthesizer.call(args.text)
             
