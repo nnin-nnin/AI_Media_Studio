@@ -14,7 +14,7 @@ function loadDashboardPage(container) {
         const link = document.createElement('link');
         link.id = 'dashboard-css';
         link.rel = 'stylesheet';
-        link.href = 'pages/dashboard/dashboard.css?v=2';
+        link.href = 'pages/dashboard/dashboard.css?v=3';
         document.head.appendChild(link);
     }
 
