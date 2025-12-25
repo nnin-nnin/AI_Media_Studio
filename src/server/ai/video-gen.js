@@ -66,7 +66,7 @@ async function axiosWithRetry(config, maxRetries = 3) {
  */
 export async function generateVideo({
   prompt,
-  model = "doubao-seedance-1-0-pro-fast-251015",
+  model = "doubao-seedance-1-0-pro-251015",
   image_url = null,
   duration = 10,
   resolution = "720p", // 修改默认分辨率为720p，该模型支持
@@ -188,7 +188,8 @@ export async function generateVideo({
           console.error("Video Generation Task Succeeded but NO URL found in result:", JSON.stringify(result, null, 2));
           return null;
         }
-        return video_url;
+        // Return the local file path if we saved it, otherwise the remote URL
+        return output_path || video_url;
 
       } else if (status === "failed") {
         console.error("❌ 视频生成失败", JSON.stringify(result, null, 2));

@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import path from 'path';
 const prisma = new PrismaClient();
 
 async function main() {
@@ -7,8 +8,9 @@ async function main() {
     const characters = await prisma.character.findMany();
 
     for (const char of characters) {
-        if (char.avatar && char.avatar.startsWith('http://localhost:3000')) {
-            const newAvatar = char.avatar.replace('http://localhost:3000', '');
+        if (char.avatar && char.avatar.includes('/uploads/avatar_')) {
+            const filename = path.basename(char.avatar);
+            const newAvatar = `/assets/system/avatars/${filename}`;
             await prisma.character.update({
                 where: { id: char.id },
                 data: { avatar: newAvatar }

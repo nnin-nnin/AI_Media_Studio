@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "src/server/server.js",
   "type": "module",
-  "author": "Damian Yu",
+  "author": "Zhengmin Yu",
   "scripts": {
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
     "server:dev": "export DEBUG=true && node --watch src/server/server.js",
@@ -30,6 +30,8 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "openai": "^4.0.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
     "three": "^0.182.0"
   },
   "devDependencies": {

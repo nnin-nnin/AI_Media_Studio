@@ -53,18 +53,26 @@ function loadFaceSwapPage(container) {
                         <div class="studio-slot" style="opacity:0.5; cursor:default; border-style:dashed;"></div>
                     </div>
 
+                    <!-- Sample Faces -->
+                    <div class="studio-sample-label">${window.i18n.t('STUDIO_SAMPLE_LABEL')}</div>
+                    <div class="studio-samples-row">
+                        <img src="/assets/system/samples/sample_face_1.png" class="studio-sample-img" data-index="1">
+                        <img src="/assets/system/samples/sample_face_2.png" class="studio-sample-img" data-index="2">
+                        <img src="/assets/system/samples/sample_face_3.png" class="studio-sample-img" data-index="3">
+                        <img src="/assets/system/samples/sample_face_4.png" class="studio-sample-img" data-index="4">
+                    </div>
+
                     <!-- Quick Selection Tags -->
                     <div class="studio-tags-row">
-                        <div class="studio-tag" data-prompt="A powerful superhero flying in the sky, wearing a blue suit with a red cape, muscular physique, heroic pose, cinematic lighting, 8k resolution.">${window.i18n.t('IMAGE_TAG_SUPERMAN')}</div>
-                        <div class="studio-tag" data-prompt="Batman standing on a Gotham rooftop at night, dark rain, bats flying in background, tactical suit, moody atmosphere, cinematic, hyper-realistic.">${window.i18n.t('IMAGE_TAG_BATMAN')}</div>
-                        <div class="studio-tag" data-prompt="Cyberpunk city street at night, neon lights, futuristic vehicles, rain on pavement, cyborg character, vibrant colors, cinematic, highly detailed.">${window.i18n.t('IMAGE_TAG_CYBERPUNK')}</div>
-                        <div class="studio-tag" data-prompt="A teenage geek student in a modern lab, wearing glasses and a hoodie, surrounded by high-tech holograms and computers, anime style, vibrant colors.">${window.i18n.t('IMAGE_TAG_ANIME')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('IMAGE_PROMPT_SUPERMAN')}">${window.i18n.t('IMAGE_TAG_SUPERMAN')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('IMAGE_PROMPT_BATMAN')}">${window.i18n.t('IMAGE_TAG_BATMAN')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('IMAGE_PROMPT_CYBERPUNK')}">${window.i18n.t('IMAGE_TAG_CYBERPUNK')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('IMAGE_PROMPT_ANIME')}">${window.i18n.t('IMAGE_TAG_ANIME')}</div>
                     </div>
 
                     <!-- Text Editor -->
                     <div class="studio-text-editor">
-                        <textarea class="studio-textarea" id="fs-prompt-input" placeholder="Describe your image...
-Mention colors, lighting, and style."></textarea>
+                        <textarea class="studio-textarea" id="fs-prompt-input" placeholder="${window.i18n.t('FS_PROMPT_PLACEHOLDER')}"></textarea>
                         
                         <div class="studio-toolbar">
                              <button class="tool-icon-btn" id="btn-gen-prompt" title="Generate Prompt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg></button>
@@ -145,7 +153,7 @@ Mention colors, lighting, and style."></textarea>
                 <!-- 4. Action Area -->
                 <div class="studio-action-area fs-action-area">
                      <button class="primary-btn" id="generate-btn" style="width:100%;">
-                        Generate
+                        ${window.i18n.t('FS_BTN_GENERATE')}
                      </button>
                 </div>
 
@@ -162,7 +170,7 @@ Mention colors, lighting, and style."></textarea>
                 <div class="preview-box result-preview empty" style="width:100%; height:100%; border:none; background:transparent;">
                     <div class="preview-placeholder">
                         <span style="font-size:32px; margin-bottom:1rem; opacity:0.5;">✨</span>
-                        <p style="color:var(--text-secondary);">Your generated image will appear here</p>
+                        <p style="color:var(--text-secondary);">${window.i18n.t('FS_RESULT_PLACEHOLDER')}</p>
                     </div>
                 </div>
             </div>
@@ -204,11 +212,22 @@ Mention colors, lighting, and style."></textarea>
                 font-size: 24px; cursor: pointer;
             }
             .fs-camera-container {
-                width: 100%; aspect-ratio: 4/3; background: #000;
+                width: 100%; aspect-ratio: 16/9; background: #000;
                 display: flex; align-items: center; justify-content: center;
+                position: relative; overflow: hidden;
             }
-            #fs-video-preview { width: 100%; height: 100%; object-fit: cover; }
+            #fs-video-preview { width: 100%; height: 100%; object-fit: contain; }
             .fs-modal-footer { padding: 20px; text-align: center; }
+
+            .studio-samples-row {
+                display: flex; gap: 10px; margin-top: 10px; overflow-x: auto; padding-bottom: 5px;
+            }
+            .studio-sample-img {
+                width: 60px; height: 60px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.1);
+                cursor: pointer; transition: all 0.2s; object-fit: cover; flex-shrink: 0;
+            }
+            .studio-sample-img:hover { border-color: var(--accent-color); transform: scale(1.05); }
+            .studio-sample-label { font-size: 11px; opacity: 0.6; margin-top: 15px; }
         </style>
     `;
 
@@ -243,6 +262,28 @@ function setupFaceSwapEventListeners() {
     const slot1 = document.getElementById('slot-ref-1');
     const defaultIconHTML = slot1?.innerHTML;
 
+    function setSlotImage(slotElement, imageSrc, defaultHTML) {
+        slotElement.innerHTML = `
+            <img src="${imageSrc}">
+            <div class="remove-btn" title="Remove">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </div>
+        `;
+        slotElement.classList.add('has-image');
+        slotElement.dataset.hasImage = "true";
+
+        slotElement.querySelector('.remove-btn').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            slotElement.innerHTML = defaultHTML;
+            slotElement.classList.remove('has-image');
+            delete slotElement.dataset.hasImage;
+            const newInput = slotElement.querySelector('input');
+            if (newInput) {
+                newInput.addEventListener('change', (ev2) => handleFileSelect(ev2, slotElement, defaultHTML));
+            }
+        });
+    }
+
     function handleFileSelect(e, slotElement, defaultHTML) {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
@@ -256,27 +297,7 @@ function setupFaceSwapEventListeners() {
                         e.target.value = ""; // Clear input
                         return;
                     }
-
-                    slotElement.innerHTML = `
-                        <img src="${evt.target.result}">
-                        <div class="remove-btn" title="Remove">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </div>
-                    `;
-                    slotElement.classList.add('has-image');
-                    slotElement.dataset.hasImage = "true";
-
-                    slotElement.querySelector('.remove-btn').addEventListener('click', (ev) => {
-                        ev.stopPropagation();
-                        slotElement.innerHTML = defaultHTML;
-                        slotElement.classList.remove('has-image');
-                        delete slotElement.dataset.hasImage;
-                        // Re-attach listener
-                        const newInput = slotElement.querySelector('input');
-                        if (newInput) {
-                            newInput.addEventListener('change', (ev2) => handleFileSelect(ev2, slotElement, defaultHTML));
-                        }
-                    });
+                    setSlotImage(slotElement, evt.target.result, defaultHTML);
                 };
                 img.src = evt.target.result;
             };
@@ -295,6 +316,28 @@ function setupFaceSwapEventListeners() {
             initialInput.addEventListener('change', (e) => handleFileSelect(e, slot1, defaultIconHTML));
         }
     }
+
+    // 2.2 Sample Faces Logic
+    document.querySelectorAll('.studio-sample-img').forEach(img => {
+        img.addEventListener('click', async () => {
+            if (slot1) {
+                try {
+                    // Fetch and convert to data URL so the backend/AI can read it
+                    const resp = await fetch(img.src);
+                    const blob = await resp.blob();
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setSlotImage(slot1, reader.result, defaultIconHTML);
+                    };
+                    reader.readAsDataURL(blob);
+                } catch (e) {
+                    console.error("Failed to load sample image", e);
+                    // Fallback to direct URL if fetch fails
+                    setSlotImage(slot1, img.src, defaultIconHTML);
+                }
+            }
+        });
+    });
 
     // 2.3 Text Editor Tools
     const btnClearPrompt = document.getElementById('btn-clear-prompt');
@@ -361,18 +404,7 @@ function setupFaceSwapEventListeners() {
     btnCapture?.addEventListener('click', () => {
         if (!videoPreview.videoWidth) return;
 
-        const ctx = captureCanvas.getContext('2d');
-        captureCanvas.width = videoPreview.videoWidth;
-        captureCanvas.height = videoPreview.videoHeight;
-
-        // Quality check
-        const minDim = 300;
-        if (captureCanvas.width < minDim || captureCanvas.height < minDim) {
-            alert(`Camera resolution too low (${captureCanvas.width}x${captureCanvas.height}px).`);
-            stopCamera();
-            return;
-        }
-
+        // Match the canvas perfectly to the video stream dimensions
         ctx.drawImage(videoPreview, 0, 0, captureCanvas.width, captureCanvas.height);
         const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.9);
 
@@ -464,8 +496,12 @@ function setupFaceSwapEventListeners() {
         }
 
         const oldText = generateBtn.innerHTML;
-        generateBtn.innerHTML = "Generating...";
+        generateBtn.innerHTML = window.i18n.t('FS_BTN_GENERATING');
         generateBtn.disabled = true;
+
+        if (window.GlobalSidebar) {
+            window.GlobalSidebar.setJobStatus('face-swap', 'processing');
+        }
 
         try {
             // Get Parameters
@@ -486,7 +522,7 @@ function setupFaceSwapEventListeners() {
                     <div class="energy-bar-container">
                         <div class="energy-fill" id="energy-progress" style="width: 10%;"></div>
                     </div>
-                    <div class="energy-label">Gathering Energy... ⚡</div>
+                    <div class="energy-label">${window.i18n.t('FS_STATUS_GATHERING')}</div>
                 </div>
             `;
 
@@ -498,8 +534,8 @@ function setupFaceSwapEventListeners() {
                 const label = document.querySelector('.energy-label');
                 if (fill) fill.style.width = `${progress}%`;
                 if (label) {
-                    if (progress > 30) label.innerText = "Processing Pixels... 🪄";
-                    if (progress > 70) label.innerText = "Finishing Touches... ✨";
+                    if (progress > 30) label.innerText = window.i18n.t('FS_STATUS_PROCESSING');
+                    if (progress > 70) label.innerText = window.i18n.t('FS_STATUS_FINISHING');
                 }
             }, 800);
 
@@ -596,6 +632,10 @@ function setupFaceSwapEventListeners() {
             if (typeof progressInterval !== 'undefined') clearInterval(progressInterval);
             generateBtn.innerHTML = oldText;
             generateBtn.disabled = false;
+
+            if (window.GlobalSidebar) {
+                window.GlobalSidebar.setJobStatus('face-swap', 'idle');
+            }
         }
     });
 
@@ -612,11 +652,11 @@ function setupFaceSwapEventListeners() {
         const el = document.getElementById('fs-prompt-input');
         if (el) {
             const prompts = [
-                "A futuristic cyberpunk city with neon lights and flying cars, cinematic lighting.",
-                "Ethereal landscape with floating islands and purple waterfalls, studio ghibli style.",
-                "Detailed portrait of a cosmic explorer in a gold spacesuit, nebula background.",
-                "Vintage oil painting of a Victorian robot drinking tea in a garden.",
-                "3D isometric room design for a cozy gaming setup, soft pastel lighting."
+                window.i18n.t('IMAGE_PROMPT_RANDOM_1'),
+                window.i18n.t('IMAGE_PROMPT_RANDOM_2'),
+                window.i18n.t('IMAGE_PROMPT_RANDOM_3'),
+                window.i18n.t('IMAGE_PROMPT_RANDOM_4'),
+                window.i18n.t('IMAGE_PROMPT_RANDOM_5')
             ];
             el.value = prompts[Math.floor(Math.random() * prompts.length)];
             el.focus();

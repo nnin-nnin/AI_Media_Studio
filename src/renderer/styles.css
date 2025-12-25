@@ -818,35 +818,50 @@ textarea:focus {
 /* --- Styled Select Glass --- */
 .studio-select-glass {
     width: 100%;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--glass-border);
-    border-radius: 6px;
-    padding: 8px 12px;
-    color: white;
-    font-size: 13px;
+    background: var(--bg-card);
+    border: var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 10px 16px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
     outline: none;
     cursor: pointer;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 14px;
-    transition: all 0.2s;
+    background-position: right 12px center;
+    background-size: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 2px 2px 0px var(--primary); /* Comic style shadow for cartoon theme */
+}
+
+[data-theme="dark"] .studio-select-glass {
+    background: rgba(30, 41, 59, 0.5);
+    backdrop-filter: blur(8px);
+    box-shadow: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='white'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
 }
 
 .studio-select-glass:hover {
-    background-color: rgba(30, 41, 59, 0.6);
-    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    background-color: var(--bg-deep);
+    border-color: var(--accent);
 }
 
 .studio-select-glass:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    border-color: var(--accent);
+    box-shadow: 4px 4px 0px var(--primary);
+}
+
+[data-theme="dark"] .studio-select-glass:focus {
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
 }
 
 .studio-select-glass option {
-    background-color: #0f172a;
-    color: white;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    padding: 10px;
 }
 
 /* --- Mobile / Tablet Responsive --- */

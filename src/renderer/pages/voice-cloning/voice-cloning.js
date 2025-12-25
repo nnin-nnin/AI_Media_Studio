@@ -272,6 +272,10 @@ function setupVoiceCloningEventListeners() {
         generateBtn.innerHTML = "Generating...";
         generateBtn.disabled = true;
 
+        if (window.GlobalSidebar) {
+            window.GlobalSidebar.setJobStatus('voice-cloning', 'processing');
+        }
+
         try {
             const resBox = document.querySelector('.result-preview');
             // Fake Visualizer
@@ -357,6 +361,10 @@ function setupVoiceCloningEventListeners() {
         } finally {
             generateBtn.innerHTML = oldText;
             generateBtn.disabled = false;
+
+            if (window.GlobalSidebar) {
+                window.GlobalSidebar.setJobStatus('voice-cloning', 'idle');
+            }
         }
     });
 

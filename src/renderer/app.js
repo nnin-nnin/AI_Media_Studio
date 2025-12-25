@@ -43,14 +43,7 @@ function initializeApp() {
         navigate: (page) => {
             showPage(page);
             history.pushState({ page: page }, '', `#${page}`);
-            // Update sidebar active state (simple re-render for now or class toggle)
-            if (window.GlobalSidebar) {
-                const sidebarContainer = document.getElementById('app-sidebar');
-                if (sidebarContainer) {
-                    // Ideally we just update classes, but full render is safer for prototype
-                    sidebarContainer.innerHTML = window.GlobalSidebar.render(page);
-                }
-            }
+            // Sidebar active state is updated in showPage -> GlobalSidebar.setActive
         }
     };
 
@@ -58,7 +51,7 @@ function initializeApp() {
     if (window.GlobalSidebar) {
         const sidebarContainer = document.getElementById('app-sidebar');
         if (sidebarContainer) {
-            sidebarContainer.innerHTML = window.GlobalSidebar.render('dashboard');
+            window.GlobalSidebar.init(sidebarContainer);
         }
     }
 
@@ -155,6 +148,9 @@ function showPage(page) {
 
     // 更新激活状态
     updateActivePage(page);
+    if (window.GlobalSidebar) {
+        window.GlobalSidebar.setActive(page);
+    }
 }
 
 /**

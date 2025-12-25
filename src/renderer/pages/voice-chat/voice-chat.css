@@ -62,9 +62,14 @@
 
 /* 2. Voice Controls Section (Bottom of Left Panel) */
 .voice-settings-panel {
-    padding: 1.5rem;
-    background: rgba(255, 255, 255, 0.5);
-    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 2rem;
+    background: var(--bg-glass);
+    border-top: var(--glass-border);
+    border-bottom-left-radius: var(--radius-xl);
+    border-bottom-right-radius: var(--radius-xl);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
 .setting-row {

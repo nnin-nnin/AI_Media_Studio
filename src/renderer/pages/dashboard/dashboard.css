@@ -62,10 +62,13 @@
 .card-media {
     height: 45%;
     width: 100%;
-    background: #FFD93D;
+    background: #f0f0f0;
     position: relative;
     overflow: hidden;
     border-bottom: 4px solid #333333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .card-media img,

@@ -3,12 +3,13 @@
  * AI角色互动页面逻辑
  */
 import { fetchAPI } from '../../utils/web-api.js';
+import { AudioRecorder } from '../../utils/audio-recorder.js';
 
 class VoiceChatPage {
     constructor() {
         this.selectedCharacter = null;
         this.isRecording = false;
-        this.recognition = null;
+        this.recorder = new AudioRecorder();
         this.characters = [];
     }
 
@@ -112,7 +113,6 @@ class VoiceChatPage {
         this.chatInterface = document.getElementById('chat-interface');
 
         await this.loadCharacters();
-        this.setupRecognition();
 
         if (this.micBtn) {
             this.micBtn.onclick = () => this.toggleRecording();
@@ -200,42 +200,6 @@ class VoiceChatPage {
 
         document.getElementById('char-avatar').src = char.avatar;
         document.getElementById('char-name').innerText = char.name;
-        // document.getElementById('char-desc').innerText = char.description; // We don't show desc in active view
-    }
-
-    setupRecognition() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            this.micStatus.innerText = "Speech Recognition not supported in this browser.";
-            this.micBtn.disabled = true;
-            return;
-        }
-
-        this.recognition = new SpeechRecognition();
-        this.recognition.continuous = false;
-        this.recognition.interimResults = true;
-        this.recognition.lang = window.i18n.lang === 'zh' ? 'zh-CN' : 'en-US';
-
-        this.recognition.onresult = (event) => {
-            const transcript = Array.from(event.results)
-                .map(result => result[0])
-                .map(result => result.transcript)
-                .join('');
-            this.recognitionResult.innerText = transcript;
-
-            if (event.results[0].isFinal) {
-                this.handleFinalTranscript(transcript);
-            }
-        };
-
-        this.recognition.onerror = (e) => {
-            console.error("Recognition Error", e);
-            this.stopRecording();
-        };
-
-        this.recognition.onend = () => {
-            this.stopRecording();
-        };
     }
 
     toggleRecording() {
@@ -246,20 +210,83 @@ class VoiceChatPage {
         }
     }
 
-    startRecording() {
-        if (!this.recognition) return;
-        this.isRecording = true;
-        this.micBtn.classList.add('recording');
-        this.micStatus.innerText = window.i18n.t('CHAT_MIC_STOP');
-        this.recognitionResult.innerText = "";
-        this.recognition.start();
+    async startRecording() {
+        try {
+            await this.recorder.start();
+            this.isRecording = true;
+            this.micBtn.classList.add('recording');
+            this.micStatus.innerText = window.i18n.t('CHAT_MIC_STOP');
+            this.recognitionResult.innerText = "Listening...";
+        } catch (e) {
+            console.error("Start recording failed", e);
+            this.micStatus.innerText = "Microphone access denied.";
+        }
     }
 
-    stopRecording() {
+    async stopRecording() {
+        console.log("[VoiceChat] Stopping recording...");
         this.isRecording = false;
         if (this.micBtn) this.micBtn.classList.remove('recording');
-        if (this.micStatus) this.micStatus.innerText = window.i18n.t('CHAT_MIC_START');
-        if (this.recognition) this.recognition.stop();
+        if (this.micStatus) this.micStatus.innerText = window.i18n.t('CHAT_PROCESSING');
+
+        const audioBlob = await this.recorder.stop();
+        console.log("[VoiceChat] Recorder returned blob:", audioBlob);
+        if (audioBlob && audioBlob.size > 0) {
+            await this.processRecordedAudio(audioBlob);
+        } else {
+            console.warn("[VoiceChat] Recording produced no audio data.");
+            this.micStatus.innerText = "No audio recorded.";
+        }
+    }
+
+    async processRecordedAudio(blob) {
+        console.log("[VoiceChat] Processing recorded audio, size:", blob.size);
+        this.recognitionResult.innerText = "Transcribing...";
+        if (window.GlobalSidebar) {
+            window.GlobalSidebar.setJobStatus('voice-chat', 'processing');
+        }
+        try {
+            const formData = new FormData();
+            formData.append('audio', blob, 'recording.webm');
+
+            const token = localStorage.getItem('ai_auth_token');
+            console.log("[VoiceChat] Sending STT request...");
+            const res = await window.fetch('/api/ai/stt', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            console.log("[VoiceChat] STT response status:", res.status);
+            const result = await res.json();
+            console.log("[VoiceChat] STT result:", result);
+            if (result.status === 'success') {
+                if (result.text && result.text.trim()) {
+                    this.recognitionResult.innerText = result.text;
+                    await this.handleFinalTranscript(result.text);
+                } else {
+                    console.warn("[VoiceChat] STT returned empty text.");
+                    this.micStatus.innerText = "Couldn't hear anything. Please try again.";
+                    this.recognitionResult.innerText = "";
+
+                    // Reset character avatar if it was stuck
+                    const avatarContainer = document.getElementById('active-char-container');
+                    if (avatarContainer) avatarContainer.classList.remove('speaking');
+                }
+            } else {
+                throw new Error(result.message || "STT failed");
+            }
+        } catch (e) {
+            console.error("[VoiceChat] STT Error:", e);
+            this.micStatus.innerText = "Speech recognition failed.";
+            this.recognitionResult.innerText = "";
+        } finally {
+            if (window.GlobalSidebar) {
+                window.GlobalSidebar.setJobStatus('voice-chat', 'idle');
+            }
+        }
     }
 
     async handleFinalTranscript(text) {
@@ -315,6 +342,10 @@ class VoiceChatPage {
         this.micStatus.innerText = window.i18n.t('CHAT_PROCESSING');
         this.recognitionResult.innerText = "Uploading audio file...";
 
+        if (window.GlobalSidebar) {
+            window.GlobalSidebar.setJobStatus('voice-chat', 'processing');
+        }
+
         try {
             // Use FormData for file upload
             const formData = new FormData();
@@ -342,6 +373,9 @@ class VoiceChatPage {
             this.micStatus.innerText = "Process failed. Try again.";
             this.recognitionResult.innerText = "";
         } finally {
+            if (window.GlobalSidebar) {
+                window.GlobalSidebar.setJobStatus('voice-chat', 'idle');
+            }
             this.audioInput.value = ''; // Reset input
         }
     }

@@ -2,65 +2,56 @@
  * Global Sidebar Component (Studio Core Layout)
  * Zones: A (Hub), B (Engines), C (Sessions)
  */
-/**
- * Global Sidebar Component (Studio Core Layout)
- * Zones: A (Hub), B (Engines), C (Sessions)
- */
 class GlobalSidebar {
     constructor() {
         this.activeItem = 'dashboard';
         this.isCollapsed = false;
+        this.jobStatuses = {}; // studioId -> 'idle'|'processing'
 
         // Listen for asset updates to refresh "Recent Work"
         window.addEventListener('assets-updated', () => {
-            this.redraw();
+            this.updateRecentWork();
         });
     }
 
-    toggle() {
-        this.isCollapsed = !this.isCollapsed;
-        const sidebar = document.getElementById('app-sidebar');
-        if (sidebar) {
-            sidebar.classList.toggle('collapsed', this.isCollapsed);
+    /**
+     * Initial render of the sidebar skeleton. 
+     * This should only be called once or when language changes.
+     */
+    init(container) {
+        if (container) this.container = container;
+        if (!this.container) return;
+
+        this.container.innerHTML = this.getTemplate();
+        this.updateRecentWork();
+
+        // Initial sync with backend for persistent tasks
+        this.syncWithBackend();
+    }
+
+    async syncWithBackend() {
+        try {
+            // Check if user is logged in before syncing
+            const token = localStorage.getItem('ai_auth_token');
+            if (!token) return;
+
+            const res = await window.fetch('/api/ai/tasks/active', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+
+            if (data.status === 'success' && data.activeTasks) {
+                console.log("[GlobalSidebar] Syncing active tasks:", data.activeTasks);
+                data.activeTasks.forEach(studioId => {
+                    this.setJobStatus(studioId, 'processing');
+                });
+            }
+        } catch (e) {
+            console.error("[GlobalSidebar] Failed to sync tasks with backend", e);
         }
     }
 
-    redraw() {
-        const sidebarContainer = document.getElementById('app-sidebar');
-        if (sidebarContainer) {
-            sidebarContainer.innerHTML = this.render(this.activeItem);
-        }
-    }
-
-    render(activeItem = 'dashboard') {
-        this.activeItem = activeItem;
-
-        // Fetch Recent Assets (Top 5)
-        const recentAssets = window.AssetManager ? window.AssetManager.getRecent('all', 5) : [];
-
-        let recentWorkHTML = '';
-        if (recentAssets.length > 0) {
-            recentWorkHTML = recentAssets.map(asset => {
-                let targetPage = 'assets';
-                let icon = 'folder';
-
-                // Map type to studio page
-                if (asset.type === 'image') { targetPage = 'face-swap'; icon = 'image'; }
-                else if (asset.type === 'video') { targetPage = 'video-generation'; icon = 'video'; }
-                else if (asset.type === 'audio') { targetPage = 'voice-cloning'; icon = 'mic'; }
-                else if (asset.type === 'vision') { targetPage = 'realtime-vision'; icon = 'zap'; }
-
-                // Use prompt or ID as label
-                const label = asset.prompt || `${window.i18n.t('NAV_ASSETS')} ${asset.id.substring(0, 4)}`;
-                return this.renderSessionItem(label, icon, asset.id);
-            }).join('');
-        } else {
-            recentWorkHTML = `<div class="session-item" style="cursor:default; opacity:0.5; padding-left:14px;">${window.i18n.t('COMMON_RECENT_EMPTY')}</div>`;
-        }
-
-        const currentLang = window.i18n.lang;
-
-        // Define navigation structure
+    getTemplate() {
         return `
             <div class="sidebar-header">
                 <button class="icon-btn" title="Toggle sidebar" onclick="window.GlobalSidebar.toggle()">
@@ -80,25 +71,29 @@ class GlobalSidebar {
 
             <div class="sidebar-nav-list">
                 <!-- Zone A: HUB -->
-                ${this.renderNavItem('dashboard', window.i18n.t('NAV_HOME'), activeItem === 'dashboard', 'home')}
-                ${this.renderNavItem('assets', window.i18n.t('NAV_ASSETS'), activeItem === 'assets', 'folder')}
+                <div class="nav-group">
+                    ${this.renderNavItem('dashboard', window.i18n.t('NAV_HOME'), 'home')}
+                    ${this.renderNavItem('assets', window.i18n.t('NAV_ASSETS'), 'folder')}
+                </div>
                 
                 <div class="nav-divider"></div>
                 
                 <!-- Zone B: CREATE ENGINES -->
                 <div class="sidebar-group-label">${window.i18n.t('NAV_STUDIOS')}</div>
-                ${this.renderNavItem('face-swap', window.i18n.t('STUDIO_IMAGE'), activeItem === 'face-swap', 'image')}
-                ${this.renderNavItem('video-generation', window.i18n.t('STUDIO_VIDEO'), activeItem === 'video-generation', 'video')}
-                ${this.renderNavItem('voice-cloning', window.i18n.t('STUDIO_AUDIO'), activeItem === 'voice-cloning', 'mic')}
-                ${this.renderNavItem('voice-chat', window.i18n.t('STUDIO_CHAT'), activeItem === 'voice-chat', 'message')}
-                ${this.renderNavItem('realtime-vision', window.i18n.t('STUDIO_VISION'), activeItem === 'realtime-vision', 'zap')}
+                <div class="nav-group">
+                    ${this.renderNavItem('face-swap', window.i18n.t('STUDIO_IMAGE'), 'image')}
+                    ${this.renderNavItem('video-generation', window.i18n.t('STUDIO_VIDEO'), 'video')}
+                    ${this.renderNavItem('voice-cloning', window.i18n.t('STUDIO_AUDIO'), 'mic')}
+                    ${this.renderNavItem('voice-chat', window.i18n.t('STUDIO_CHAT'), 'message')}
+                    ${this.renderNavItem('realtime-vision', window.i18n.t('STUDIO_VISION'), 'zap')}
+                </div>
 
                 <div class="nav-divider"></div>
 
                 <!-- Zone C: RECENT WORK (Dynamic) -->
                 <div class="sidebar-group-label">${window.i18n.t('NAV_RECENT')}</div>
-                <div class="session-list">
-                     ${recentWorkHTML}
+                <div class="session-list" id="sidebar-recent-work">
+                     <!-- Dynamic Content -->
                 </div>
             </div>
 
@@ -110,7 +105,6 @@ class GlobalSidebar {
                         <span class="user-plan">Pro Plan</span>
                     </div>
                 </div>
-                <!-- Theme Toggle (Settings) -->
                 <button class="icon-btn theme-sidebar-btn" onclick="window.ThemeManager.toggle()" title="Switch Theme">
                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="5"></circle>
@@ -121,26 +115,102 @@ class GlobalSidebar {
         `;
     }
 
-    renderNavItem(id, label, isActive, iconType) {
-        const activeClass = isActive ? 'active' : '';
+    renderNavItem(id, label, iconType) {
         const icon = this.getIcon(iconType);
-
         return `
-            <button class="nav-list-item ${activeClass}" onclick="window.app.navigate('${id}')">
-                ${icon}
-                ${label}
+            <button class="nav-list-item" id="nav-item-${id}" onclick="window.app.navigate('${id}')">
+                <div class="nav-icon-wrapper">
+                    ${icon}
+                    <div class="status-indicator" id="status-${id}"></div>
+                </div>
+                <span class="nav-label">${label}</span>
             </button>
         `;
     }
 
     renderSessionItem(label, iconType, assetId) {
-        const icon = this.getIcon(iconType, 14); // Smaller icon for sessions
+        const icon = this.getIcon(iconType, 14);
         return `
             <div class="session-item" onclick="window.MediaPreview.open('${assetId}')">
                 ${icon}
-                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${label}">${label}</span>
+                <span class="session-label" title="${label}">${label}</span>
             </div>
         `;
+    }
+
+    setActive(id) {
+        this.activeItem = id;
+        // Update DOM directly instead of re-rendering everything
+        const items = document.querySelectorAll('.nav-list-item');
+        items.forEach(item => item.classList.remove('active'));
+
+        const activeItem = document.getElementById(`nav-item-${id}`);
+        if (activeItem) {
+            activeItem.classList.add('active');
+        }
+    }
+
+    /**
+     * Set the status of a studio (e.g. 'processing' or 'idle')
+     */
+    setJobStatus(studioId, status) {
+        this.jobStatuses[studioId] = status;
+        const item = document.getElementById(`nav-item-${studioId}`);
+        const indicator = document.getElementById(`status-${studioId}`);
+
+        if (item && indicator) {
+            if (status === 'processing') {
+                item.classList.add('processing');
+                indicator.style.display = 'block';
+            } else {
+                item.classList.remove('processing');
+                indicator.style.display = 'none';
+            }
+        }
+    }
+
+    updateRecentWork() {
+        const recentWorkContainer = document.getElementById('sidebar-recent-work');
+        if (!recentWorkContainer) return;
+
+        const recentAssets = window.AssetManager ? window.AssetManager.getRecent('all', 5) : [];
+
+        if (recentAssets.length > 0) {
+            recentWorkContainer.innerHTML = recentAssets.map(asset => {
+                let icon = 'folder';
+                if (asset.type === 'image') icon = 'image';
+                else if (asset.type === 'video') icon = 'video';
+                else if (asset.type === 'audio') icon = 'mic';
+                else if (asset.type === 'vision') icon = 'zap';
+
+                const label = asset.prompt || `${window.i18n.t('NAV_ASSETS')} ${asset.id.substring(0, 4)}`;
+                return this.renderSessionItem(label, icon, asset.id);
+            }).join('');
+        } else {
+            recentWorkContainer.innerHTML = `<div class="session-item-empty">${window.i18n.t('COMMON_RECENT_EMPTY')}</div>`;
+        }
+    }
+
+    toggle() {
+        this.isCollapsed = !this.isCollapsed;
+        const sidebar = document.getElementById('app-sidebar');
+        if (sidebar) {
+            sidebar.classList.toggle('collapsed', this.isCollapsed);
+        }
+    }
+
+    redraw() {
+        if (this.container) {
+            this.init(this.container);
+        }
+    }
+
+    // This is for compatibility with existing calls in app.js
+    render(activeItem = 'dashboard') {
+        this.activeItem = activeItem;
+        // Since app.js calls sidebar.render() which returns a string, 
+        // we keep this but it's better to use init() once.
+        return this.getTemplate();
     }
 
     getIcon(type, size = 16) {

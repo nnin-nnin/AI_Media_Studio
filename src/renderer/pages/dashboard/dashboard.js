@@ -29,7 +29,7 @@ function loadDashboardPage(container) {
                 <!-- 1. Face Swap Card (Image Studio) -->
                 <div class="feature-card" onclick="window.app.navigate('face-swap')">
                     <div class="card-media media-placeholder face">
-                        <!-- Placeholder for Face Swap Preview -->
+                        <img src="/assets/system/covers/face_swap.png" alt="Face Swap">
                     </div>
                     <div class="card-content">
                         <div class="card-title">${window.i18n.t('STUDIO_IMAGE')}</div>
@@ -53,7 +53,7 @@ function loadDashboardPage(container) {
                 <!-- 2. Video Generation Card (Video Studio) -->
                 <div class="feature-card" onclick="window.app.navigate('video-generation')">
                     <div class="card-media media-placeholder video">
-                        <!-- Placeholder for Video Preview -->
+                        <img src="/assets/system/covers/video_gen.png" alt="Video Generation">
                     </div>
                     <div class="card-content">
                         <div class="card-title">${window.i18n.t('STUDIO_VIDEO')}</div>
@@ -76,7 +76,7 @@ function loadDashboardPage(container) {
                 <!-- 3. Voice Cloning Card (Audio Studio) -->
                 <div class="feature-card" onclick="window.app.navigate('voice-cloning')">
                     <div class="card-media media-placeholder voice">
-                        <!-- Placeholder for Voice Preview -->
+                        <img src="/assets/system/covers/voice_clone.png" alt="Voice Cloning">
                     </div>
                     <div class="card-content">
                         <div class="card-title">${window.i18n.t('STUDIO_AUDIO')}</div>
@@ -101,8 +101,8 @@ function loadDashboardPage(container) {
 
                 <!-- 4. Real-time Vision Card (Vision Studio) -->
                 <div class="feature-card" onclick="window.app.navigate('realtime-vision')">
-                    <div class="card-media media-placeholder vision" style="display:flex; align-items:center; justify-content:center;">
-
+                    <div class="card-media media-placeholder vision">
+                        <img src="/assets/system/covers/vision_ai.png" alt="Real-time Vision">
                     </div>
                     <div class="card-content">
                         <div class="card-title">${window.i18n.t('STUDIO_VISION')}</div>

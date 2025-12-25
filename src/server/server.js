@@ -14,6 +14,9 @@ import AIService from './ai/ai-service.js';
 import AssetStore from './asset-store.js';
 import AuthService from './auth/auth-service.js';
 import VoiceChatService from './voice-chat-service.js';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './utils/swagger.js';
+import taskManager from './utils/task-manager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -55,7 +58,20 @@ app.use(express.static(rendererPath));
 const uploadsPath = path.join(__dirname, '..', '..', 'data', 'uploads');
 app.use('/uploads', express.static(uploadsPath));
 
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 // --- System Config ---
+/**
+ * @openapi
+ * /api/config:
+ *   get:
+ *     summary: Get server configuration
+ *     tags: [System]
+ *     responses:
+ *       200:
+ *         description: Server configuration loaded
+ */
 app.get('/api/config', (req, res) => {
     res.json({
         debugMode: config.debug,
@@ -93,6 +109,25 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username: { type: string }
+ *               password: { type: string }
+ *     responses:
+ *       200:
+ *         description: User registered successfully
+ */
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -173,8 +208,13 @@ app.delete('/api/assets/:id', async (req, res) => {
 });
 
 // --- AI Routes ---
+app.get('/api/ai/tasks/active', (req, res) => {
+    res.json({ status: 'success', activeTasks: taskManager.getActive() });
+});
+
 app.post('/api/ai/image', async (req, res) => {
     try {
+        taskManager.begin('face-swap');
         logger.info("Generating Image", { options: req.body });
         const result = await AIService.generateImage(req.body);
         if (result.status === 'error') return res.status(400).json(result);
@@ -182,35 +222,59 @@ app.post('/api/ai/image', async (req, res) => {
     } catch (error) {
         logger.error("Image Gen Error", { error: error.message });
         res.status(500).json({ status: 'error', message: error.message });
+    } finally {
+        taskManager.end('face-swap');
     }
 });
 
 app.post('/api/ai/edit-image', async (req, res) => {
     try {
+        taskManager.begin('face-swap');
         logger.info("Editing Image", { options: req.body });
         const result = await AIService.editImage(req.body);
         if (result.status === 'error') return res.status(400).json(result);
         res.json(result);
     } catch (error) {
-        logger.error("Image Edit Error", { error: error.message });
+        logger.error("Edit Image Error", { error: error.message });
         res.status(500).json({ status: 'error', message: error.message });
+    } finally {
+        taskManager.end('face-swap');
     }
 });
 
 app.post('/api/ai/video', async (req, res) => {
     try {
-        logger.info("Generating Video", { options: req.body });
-        const result = await AIService.generateVideo(req.body);
+        taskManager.begin('video-generation');
+
+        // Generate a unique local path in the uploads directory
+        const fileName = `video_${Date.now()}.mp4`;
+        const localPath = path.join(uploadsPath, fileName);
+
+        // Merge output_path into options
+        const options = { ...req.body, output_path: localPath };
+
+        logger.info("Generating Video", { options });
+        const result = await AIService.generateVideo(options);
+
         if (result.status === 'error') return res.status(400).json(result);
+
+        // Convert local path back to web URL if it was saved locally
+        if (result.video_url && result.video_url === localPath) {
+            result.video_url = `/uploads/${fileName}`;
+        }
+
         res.json(result);
     } catch (error) {
         logger.error("Video Gen Error", { error: error.message });
         res.status(500).json({ status: 'error', message: error.message });
+    } finally {
+        taskManager.end('video-generation');
     }
 });
 
 app.post('/api/ai/voice', async (req, res) => {
     try {
+        taskManager.begin('voice-cloning');
         logger.info("Cloning Voice", { options: req.body });
         const result = await AIService.cloneVoice(req.body);
         if (result.status === 'error') return res.status(400).json(result);
@@ -218,6 +282,8 @@ app.post('/api/ai/voice', async (req, res) => {
     } catch (error) {
         logger.error("Voice Clone Error", { error: error.message });
         res.status(500).json({ status: 'error', message: error.message });
+    } finally {
+        taskManager.end('voice-cloning');
     }
 });
 
@@ -265,25 +331,30 @@ app.post('/api/ai/character-voice', async (req, res) => {
 app.post('/api/ai/stt', upload.single('audio'), async (req, res) => {
     logger.info("STT Route Hit", { hasFile: !!req.file });
     try {
+        taskManager.begin('voice-chat');
         if (!req.file) throw new Error("No file uploaded");
 
         logger.info("Processing STT upload", { filename: req.file.filename });
         const result = await AIService.speechToText(req.file.path);
 
         // Cleanup temp file
-        fs.unlinkSync(req.file.path);
+        if (fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
 
         res.json(result);
     } catch (error) {
         logger.error("STT API Error", { error: error.message });
         res.status(500).json({ status: 'error', message: error.message });
+    } finally {
+        taskManager.end('voice-chat');
     }
 });
 
 
 
 // Start Server
-app.listen(config.port, async () => {
+app.listen(config.port, '0.0.0.0', async () => {
     logger.info(`Server running`, { url: `http://localhost:${config.port}`, frontend: rendererPath });
     // REMOVED: Auto-register default student user. This is now handled by scripts/create_user.js
 });

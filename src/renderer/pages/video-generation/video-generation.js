@@ -23,7 +23,7 @@ function loadVideoGenerationPage(container) {
                 
                 <!-- 1. Header & Mode -->
                 <div class="studio-header">
-                    <div style="font-weight:600; font-size:14px;">Video Studio</div>
+                    <div style="font-weight:600; font-size:14px;">${window.i18n.t('STUDIO_VIDEO')}</div>
                     <div class="studio-mode-switch">
                         <button class="mode-btn" data-mode="text">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -52,17 +52,26 @@ function loadVideoGenerationPage(container) {
                         <div class="studio-slot" style="opacity:0.5; cursor:default; border-style:dashed;"></div>
                     </div>
 
+                    <!-- Sample Faces -->
+                    <div class="studio-sample-label">${window.i18n.t('STUDIO_SAMPLE_LABEL')}</div>
+                    <div class="studio-samples-row">
+                        <img class="studio-sample-img" src="/assets/system/samples/sample_face_1.png" data-index="1">
+                        <img class="studio-sample-img" src="/assets/system/samples/sample_face_2.png" data-index="2">
+                        <img class="studio-sample-img" src="/assets/system/samples/sample_face_3.png" data-index="3">
+                        <img class="studio-sample-img" src="/assets/system/samples/sample_face_4.png" data-index="4">
+                    </div>
+
                     <!-- Quick Selection Tags -->
                     <div class="studio-tags-row">
-                        <div class="studio-tag" data-prompt="A cinematic drone shot flying over a majestic mountain range at sunrise, high quality, realistic motion.">${window.i18n.t('VIDEO_TAG_CINEMATIC')}</div>
-                        <div class="studio-tag" data-prompt="Slow motion close-up of a blooming flower, morning dew, soft sunlight, artistic, macro video style.">${window.i18n.t('VIDEO_TAG_SLOW_MOTION')}</div>
-                        <div class="studio-tag" data-prompt="Futuristic city street at night, neon lights reflecting on wet pavement, flying cars passing by, sci-fi movement.">${window.i18n.t('VIDEO_TAG_CYBERPUNK')}</div>
-                        <div class="studio-tag" data-prompt="An epic space battle with laser beams and explosions, massive starships, cosmic nebula background, dynamic action.">${window.i18n.t('VIDEO_TAG_SPACE_BATTLE')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_CHARACTER_WAVE')}">${window.i18n.t('VIDEO_TAG_CHARACTER_WAVE')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_CHARACTER_SMILE')}">${window.i18n.t('VIDEO_TAG_CHARACTER_SMILE')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_CHARACTER_WALK')}">${window.i18n.t('VIDEO_TAG_CHARACTER_WALK')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_CHARACTER_ACTION')}">${window.i18n.t('VIDEO_TAG_CHARACTER_ACTION')}</div>
                     </div>
 
                     <!-- Text Editor -->
                     <div class="studio-text-editor">
-                        <textarea class="studio-textarea" id="vg-prompt-input" placeholder="Describe the scene, movement, and style..."></textarea>
+                        <textarea class="studio-textarea" id="vg-prompt-input" placeholder="${window.i18n.t('VG_PROMPT_PLACEHOLDER')}"></textarea>
                         
                         <div class="studio-toolbar">
                              <button class="tool-icon-btn" id="btn-gen-prompt" title="Generate Prompt"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg></button>
@@ -112,9 +121,11 @@ function loadVideoGenerationPage(container) {
 
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
                                 <span class="bg-label">Duration</span>
-                                <span id="duration-display" style="font-size: 11px; color: var(--primary); font-weight: 600;">5s</span>
                             </div>
-                            <input type="range" class="studio-slider" id="duration-slider" min="5" max="10" step="5" value="5" style="margin-top:8px;">
+                            <div class="duration-chips" style="display: flex; gap: 8px; margin-top: 8px;">
+                                <div class="duration-chip active" data-value="5">5s</div>
+                                <div class="duration-chip" data-value="10">10s</div>
+                            </div>
                             <p style="font-size:10px; color:var(--text-secondary); margin-top:4px;">Currently limited to 5s or 10s by model.</p>
 
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
@@ -150,7 +161,7 @@ function loadVideoGenerationPage(container) {
                 <!-- 4. Action Area -->
                 <div class="studio-action-area vg-action-area">
                      <button class="primary-btn" id="generate-video-btn" style="width:100%;">
-                        Generate Video
+                        ${window.i18n.t('VG_BTN_GENERATE')}
                      </button>
                 </div>
             </div>
@@ -162,11 +173,11 @@ function loadVideoGenerationPage(container) {
                    <div class="status-badge" style="background:rgba(255,255,255,0.1); padding:4px 8px; border-radius:4px; font-size:12px;">Ready</div>
                 </div>
 
-                <!-- Result Container -->
+                <!-- Empty State / Result -->
                 <div class="preview-box result-preview empty" style="width:100%; height:100%; border:none; background:transparent; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                      <div class="preview-placeholder">
                         <span style="font-size:32px; margin-bottom:1rem; opacity:0.5;">🎬</span>
-                        <p style="color:var(--text-secondary);">Your generated video will play here</p>
+                        <p style="color:var(--text-secondary);">${window.i18n.t('VG_RESULT_PLACEHOLDER')}</p>
                      </div>
                 </div>
             </div>
@@ -215,6 +226,26 @@ function loadVideoGenerationPage(container) {
             }
             #vg-video-preview { width: 100%; height: 100%; object-fit: cover; }
             .vg-modal-footer { padding: 20px; text-align: center; }
+
+            .studio-samples-row {
+                display: flex; gap: 10px; margin-top: 10px; overflow-x: auto; padding-bottom: 5px;
+            }
+            .studio-sample-img {
+                width: 60px; height: 60px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.1);
+                cursor: pointer; transition: all 0.2s; object-fit: cover; flex-shrink: 0;
+            }
+            .studio-sample-img:hover { border-color: var(--accent-color); transform: scale(1.05); }
+            .studio-sample-label { font-size: 11px; opacity: 0.6; margin-top: 15px; }
+
+            .duration-chip {
+                padding: 6px 16px; border: 1px solid var(--glass-border); border-radius: 8px;
+                font-size: 12px; cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.05);
+                color: var(--text-secondary);
+            }
+            .duration-chip.active {
+                background: var(--accent-color); color: #333; border-color: var(--accent-color);
+                font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
         </style>
     `;
 
@@ -248,6 +279,28 @@ function setupVideoGenerationEventListeners() {
     const slot = document.getElementById('vg-slot-ref');
     const defaultIconHTML = slot?.innerHTML;
 
+    function setSlotImage(slotElement, imageSrc, defaultHTML) {
+        slotElement.innerHTML = `
+            <img src="${imageSrc}">
+            <div class="remove-btn" title="Remove">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </div>
+        `;
+        slotElement.classList.add('has-image');
+        slotElement.dataset.hasImage = "true";
+
+        slotElement.querySelector('.remove-btn').addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            slotElement.innerHTML = defaultHTML;
+            slotElement.classList.remove('has-image');
+            delete slotElement.dataset.hasImage;
+            const newInput = slotElement.querySelector('input');
+            if (newInput) {
+                newInput.addEventListener('change', (ev2) => handleFileSelect(ev2, slotElement, defaultHTML));
+            }
+        });
+    }
+
     function handleFileSelect(e, slotElement, defaultHTML) {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
@@ -262,26 +315,8 @@ function setupVideoGenerationEventListeners() {
                         return;
                     }
 
-                    slotElement.innerHTML = `
-                        <img src="${evt.target.result}">
-                        <div class="remove-btn" title="Remove">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        </div>
-                    `;
-                    slotElement.classList.add('has-image');
                     slotElement.dataset.hasImage = "true"; // Mark for logic
-
-                    slotElement.querySelector('.remove-btn').addEventListener('click', (ev) => {
-                        ev.stopPropagation();
-                        slotElement.innerHTML = defaultHTML;
-                        slotElement.classList.remove('has-image');
-                        delete slotElement.dataset.hasImage;
-                        // Re-attach listener
-                        const newInput = slotElement.querySelector('input');
-                        if (newInput) {
-                            newInput.addEventListener('change', (ev2) => handleFileSelect(ev2, slotElement, defaultHTML));
-                        }
-                    });
+                    setSlotImage(slotElement, evt.target.result, defaultHTML);
                 };
                 img.src = evt.target.result;
             };
@@ -300,6 +335,26 @@ function setupVideoGenerationEventListeners() {
             initialInput.addEventListener('change', (e) => handleFileSelect(e, slot, defaultIconHTML));
         }
     }
+
+    // 2.2 Sample Faces Logic
+    document.querySelectorAll('.studio-sample-img').forEach(img => {
+        img.addEventListener('click', async () => {
+            if (slot) {
+                try {
+                    const resp = await fetch(img.src);
+                    const blob = await resp.blob();
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setSlotImage(slot, reader.result, defaultIconHTML);
+                    };
+                    reader.readAsDataURL(blob);
+                } catch (e) {
+                    console.error("Failed to load sample image", e);
+                    setSlotImage(slot, img.src, defaultIconHTML);
+                }
+            }
+        });
+    });
 
     // Camera Logic
     const btnCamera = document.getElementById('vg-btn-camera');
@@ -392,14 +447,20 @@ function setupVideoGenerationEventListeners() {
         });
     }
 
-    // 4. Sliders
-    const durSlider = document.getElementById('duration-slider');
-    const durDisplay = document.getElementById('duration-display');
-    if (durSlider) {
-        durSlider.addEventListener('input', (e) => {
-            durDisplay.textContent = e.target.value + 's';
+    // 4. Sliders & Duration Chips
+    const durChips = document.querySelectorAll('.duration-chip');
+    let selectedDuration = 5;
+
+    durChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            durChips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            selectedDuration = parseInt(chip.dataset.value);
         });
-    }
+    });
+
+    // Make it accessible for generator
+    window.vgSelectedDuration = () => selectedDuration;
     const motSlider = document.getElementById('motion-slider');
     const motDisplay = document.getElementById('motion-display');
     if (motSlider) {
@@ -446,8 +507,12 @@ function setupVideoGenerationEventListeners() {
         }
 
         const oldText = generateBtn.innerHTML;
-        generateBtn.innerHTML = "Generating...";
+        generateBtn.innerHTML = window.i18n.t('VG_BTN_GENERATING');
         generateBtn.disabled = true;
+
+        if (window.GlobalSidebar) {
+            window.GlobalSidebar.setJobStatus('video-generation', 'processing');
+        }
 
         try {
             // Get Parameters
@@ -466,7 +531,7 @@ function setupVideoGenerationEventListeners() {
             // Let's stick to what worked before: passing a resolution string and maybe relying on model defaults?
             // The previous code had "Orientation" buttons which mapped to 720p.
 
-            const duration = durSlider ? parseInt(durSlider.value) : 5;
+            const duration = (typeof window.vgSelectedDuration === 'function') ? window.vgSelectedDuration() : 5;
 
             // Prepare Opts
             const opts = {
@@ -484,7 +549,7 @@ function setupVideoGenerationEventListeners() {
                     <div class="energy-bar-container">
                         <div class="energy-fill" id="energy-progress" style="width: 5%;"></div>
                     </div>
-                    <div class="energy-label">Igniting Engine... 🔥</div>
+                    <div class="energy-label">${window.i18n.t('FS_STATUS_GATHERING')}</div>
                 </div>
             `;
 
@@ -496,9 +561,9 @@ function setupVideoGenerationEventListeners() {
                 const label = document.querySelector('.energy-label');
                 if (fill) fill.style.width = `${progress}%`;
                 if (label) {
-                    if (progress > 20) label.innerText = "Rendering Frames... 🍿";
-                    if (progress > 50) label.innerText = "Applying Motion... 🎬";
-                    if (progress > 80) label.innerText = "Polishing... ✨";
+                    if (progress > 20) label.innerText = window.i18n.t('FS_STATUS_PROCESSING');
+                    if (progress > 50) label.innerText = window.i18n.t('FS_STATUS_FINISHING');
+                    if (progress > 80) label.innerText = window.i18n.t('COMMON_LOADING');
                 }
             }, 1200);
 
@@ -582,6 +647,10 @@ function setupVideoGenerationEventListeners() {
             if (typeof progressInterval !== 'undefined') clearInterval(progressInterval);
             generateBtn.innerHTML = oldText;
             generateBtn.disabled = false;
+
+            if (window.GlobalSidebar) {
+                window.GlobalSidebar.setJobStatus('video-generation', 'idle');
+            }
         }
     });
 
@@ -643,11 +712,11 @@ function setupVideoGenerationEventListeners() {
         const el = document.getElementById('vg-prompt-input');
         if (el) {
             const prompts = [
-                "A cinematic drone shot flying over a majestic mountain range at sunrise, high quality.",
-                "Slow motion close-up of a blooming flower, morning dew, soft sunlight, artistic.",
-                "Futuristic city street at night, neon lights reflecting on wet pavement, flying cars.",
-                "An epic space battle with laser beams and explosions, massive starships, cosmic nebula.",
-                "A peaceful underwater coral reef with colorful fish swimming through sunbeams, 4k."
+                window.i18n.t('VIDEO_PROMPT_CHARACTER_WAVE'),
+                window.i18n.t('VIDEO_PROMPT_CHARACTER_SMILE'),
+                window.i18n.t('VIDEO_PROMPT_CHARACTER_WALK'),
+                window.i18n.t('VIDEO_PROMPT_CHARACTER_ACTION'),
+                window.i18n.t('VIDEO_PROMPT_RANDOM_5')
             ];
             el.value = prompts[Math.floor(Math.random() * prompts.length)];
             el.focus();

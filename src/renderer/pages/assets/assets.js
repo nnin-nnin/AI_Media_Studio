@@ -100,7 +100,7 @@ function renderAssetGrid(filter) {
                 </div>
                 <div class="asset-info">
                     <div class="asset-title">${asset.prompt || 'Untitled'}</div>
-                    <div class="asset-meta">${new Date(asset.timestamp).toLocaleDateString()}</div>
+                    <div class="asset-meta">${new Date(asset.created_at).toLocaleDateString()}</div>
                 </div>
             </div>
         `;
