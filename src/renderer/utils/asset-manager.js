@@ -3,6 +3,7 @@
  * Communicates with the Backend API to store/retrieve assets.
  */
 import { fetchAPI } from './web-api.js';
+import './local-cache.js'; // Ensure it's loaded
 
 class AssetManager {
     constructor() {
@@ -42,8 +43,17 @@ class AssetManager {
         try {
             const result = await fetchAPI('/api/assets', asset, { method: 'POST' });
             if (result && result.status === 'success') {
+                const savedAsset = result.asset;
+
+                // Background Sync: Cache to IndexedDB for performance
+                if (window.LocalCacheManager && savedAsset.url) {
+                    // We don't await this to avoid blocking the UI
+                    window.LocalCacheManager.fetchAndCache(savedAsset.url, String(savedAsset.id))
+                        .then(() => console.log(`[AssetManager] Asset ${savedAsset.id} cached locally`));
+                }
+
                 await this.refresh();
-                return result.asset;
+                return savedAsset;
             }
         } catch (e) {
             console.error("Failed to save asset", e);

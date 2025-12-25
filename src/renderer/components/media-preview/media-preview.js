@@ -85,7 +85,7 @@ class MediaPreview {
         });
     }
 
-    open(assetId) {
+    async open(assetId) {
         if (!window.AssetManager) return;
         const asset = window.AssetManager.get(assetId);
         if (!asset) return;
@@ -93,16 +93,31 @@ class MediaPreview {
         this.title.innerText = asset.prompt || 'Untitled Asset';
         this.meta.innerText = `${asset.type.toUpperCase()} • ${new Date(asset.timestamp).toLocaleString()}`;
 
+        // Try to get from local cache first
+        let mediaUrl = asset.url;
+        if (window.LocalCacheManager) {
+            try {
+                const cachedBlob = await window.LocalCacheManager.get(assetId);
+                if (cachedBlob) {
+                    console.log("[MediaPreview] Playing from local cache:", assetId);
+                    mediaUrl = URL.createObjectURL(cachedBlob);
+                    this._currentLocalUrl = mediaUrl; // Store to revoke later
+                }
+            } catch (e) {
+                console.warn("[MediaPreview] Cache lookup failed, falling back to URL", e);
+            }
+        }
+
         let html = '';
         if (asset.type === 'image') {
-            html = `<img src="${asset.url}" />`;
+            html = `<img src="${mediaUrl}" />`;
         } else if (asset.type === 'video') {
-            html = `<video src="${asset.url}" controls autoplay loop></video>`;
+            html = `<video src="${mediaUrl}" controls autoplay loop></video>`;
         } else if (asset.type === 'audio') {
             html = `
                 <div style="padding: 40px; background: var(--bg-deep); border-radius: 12px; width: 100%; text-align: center;">
                     <div style="font-size: 64px; margin-bottom: 20px;">🎵</div>
-                    <audio src="${asset.url}" controls autoplay style="width: 100%;"></audio>
+                    <audio src="${mediaUrl}" controls autoplay style="width: 100%;"></audio>
                 </div>
             `;
         }
@@ -117,6 +132,12 @@ class MediaPreview {
         this.modal.style.display = 'none';
         this.content.innerHTML = ''; // Stop video/audio
         document.body.style.overflow = '';
+
+        // Clean up local blob URL
+        if (this._currentLocalUrl) {
+            URL.revokeObjectURL(this._currentLocalUrl);
+            this._currentLocalUrl = null;
+        }
     }
 }
 
