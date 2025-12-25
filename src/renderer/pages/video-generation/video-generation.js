@@ -65,6 +65,9 @@ function loadVideoGenerationPage(container) {
                     <div class="studio-tags-row">
                         <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_CLOSEUP_SMILE')}">${window.i18n.t('VIDEO_TAG_CLOSEUP_SMILE')}</div>
                         <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_SLOW_TURN')}">${window.i18n.t('VIDEO_TAG_SLOW_TURN')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_SINGING')}">${window.i18n.t('VIDEO_TAG_SINGING')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_DANCING')}">${window.i18n.t('VIDEO_TAG_DANCING')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_BASKETBALL')}">${window.i18n.t('VIDEO_TAG_BASKETBALL')}</div>
                         <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_CINEMATIC_FIXED')}">${window.i18n.t('VIDEO_TAG_CINEMATIC_FIXED')}</div>
                         <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_DISNEY_PORTRAIT')}">${window.i18n.t('VIDEO_TAG_DISNEY_PORTRAIT')}</div>
                         <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_ANIME_ID')}">${window.i18n.t('VIDEO_TAG_ANIME_ID')}</div>
