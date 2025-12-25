@@ -5,6 +5,11 @@
 
 /* 1. Design Tokens: Cartoon Edition */
 /* 1. Design Tokens: Theme Aware */
+html {
+    font-size: 62.5%;
+    /* 1rem = 10px precisely */
+}
+
 :root,
 [data-theme="light"] {
     /* Backgrounds: Vibrant & Playful (Pop Art) */
@@ -111,12 +116,41 @@
     box-sizing: border-box;
 }
 
+/* --- Custom Premium Scrollbar --- */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
 body {
     background-color: var(--bg-core);
     color: var(--text-primary);
     font-family: "Quicksand", "Comfortaa", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
     height: 100vh;
     overflow: hidden;
+    font-size: 1.6rem;
+    /* Standard 16px */
 }
 
 /* Anime Energy Progress Bar */
@@ -189,22 +223,30 @@ body {
 }
 
 #app-sidebar {
-    width: 260px;
+    width: 26rem;
     /* Fixed width sidebar */
-    min-width: 260px;
+    min-width: 26rem;
     height: 100%;
     border-right: var(--glass-border);
     background: white;
     /* or var(--bg-glass) */
     z-index: 50;
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
 }
 
 #app-sidebar.collapsed {
-    width: 68px;
-    min-width: 68px;
+    width: 6.8rem;
+    min-width: 6.8rem;
+}
+
+/* Auto-Collapse Sidebar on narrow screens */
+@media (max-width: 1200px) {
+    #app-sidebar:not(.hovered) {
+        width: 6.8rem;
+        min-width: 6.8rem;
+    }
 }
 
 #content-wrapper {
@@ -526,14 +568,12 @@ textarea:focus {
 /* Home Page */
 .mission-control {
     display: flex;
-    gap: 2.5rem;
-    /* Gap 10 approx */
+    gap: clamp(1.5rem, 3vw, 2.5rem);
     align-items: center;
     justify-content: center;
     height: 100%;
     padding: 2rem;
-    max-width: 1280px;
-    /* max-w-7xl */
+    max-width: 160rem;
     margin: 0 auto;
 }
 
@@ -639,9 +679,8 @@ textarea:focus {
 }
 
 .hero-title {
-    font-size: 6rem;
-    /* Massive */
-    line-height: 1;
+    font-size: clamp(4rem, 8vw, 6rem);
+    line-height: 1.1;
     font-weight: 800;
     margin-bottom: 1.5rem;
 
@@ -657,45 +696,16 @@ textarea:focus {
 }
 
 .hero-subtitle {
-    font-size: 2rem;
+    font-size: clamp(1.4rem, 2vw, 2rem);
     color: var(--text-secondary);
-    line-height: 1.3;
+    line-height: 1.4;
     font-weight: 400;
     margin-bottom: 3rem;
-}
-
-.hero-cta {
-    padding: 1.25rem 3rem;
-    font-size: 1.25rem;
-    font-weight: 600;
-    border-radius: 50px;
-    background: var(--text-primary);
-    color: var(--bg-core);
-    border: none;
-    cursor: pointer;
-    transition: transform 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.hero-cta:hover {
-    transform: scale(1.05);
-}
-
-.hero-cta .arrow {
-    transition: transform 0.3s ease;
-    display: inline-block;
-}
-
-.hero-cta:hover .arrow {
-    transform: translateX(6px);
 }
 
 /* Right: Cards Grid */
 .cards-section {
     flex: 1.2;
-    /* 60% ish */
     height: 100%;
     display: flex;
     align-items: center;
@@ -705,16 +715,37 @@ textarea:focus {
 .cards-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
+    gap: clamp(1rem, 2vw, 2rem);
     perspective: 1000px;
 }
 
 /* Adjust card size for grid */
 .cards-grid .tech-pod {
-    width: 280px;
-    /* Slightly smaller to fit 2 cols if needed, or keep 320 */
-    height: 380px;
+    width: 100%;
+    max-width: 32rem;
+    height: clamp(30rem, 40vh, 42rem);
     margin: 0;
+}
+
+/* Break Stack for Tablet */
+@media (max-width: 1024px) {
+    .home-split-container {
+        flex-direction: column;
+        padding: 4rem 2rem;
+        gap: 2rem;
+        overflow-y: auto;
+    }
+
+    .hero-section {
+        flex: none;
+        align-items: center;
+        text-align: center;
+    }
+
+    .cards-section {
+        flex: none;
+        width: 100%;
+    }
 }
 
 /* Stagger effect (Desktop Only) */
@@ -833,7 +864,8 @@ textarea:focus {
     background-position: right 12px center;
     background-size: 16px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 2px 2px 0px var(--primary); /* Comic style shadow for cartoon theme */
+    box-shadow: 2px 2px 0px var(--primary);
+    /* Comic style shadow for cartoon theme */
 }
 
 [data-theme="dark"] .studio-select-glass {
