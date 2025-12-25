@@ -50,11 +50,13 @@ app.use((req, res, next) => {
 });
 
 // Static files (Frontend)
-const rendererPath = path.join(__dirname, '..', 'renderer');
+const rendererPath = path.join(process.cwd(), 'src', 'renderer');
+console.log(`[Static] Serving renderer from: ${rendererPath}`);
 app.use(express.static(rendererPath));
 
 // Static files (Uploads)
-const uploadsPath = path.join(__dirname, '..', '..', 'data', 'uploads');
+const uploadsPath = path.join(process.cwd(), 'data', 'uploads');
+console.log(`[Static] Serving uploads from: ${uploadsPath}`);
 app.use('/uploads', express.static(uploadsPath));
 
 // Swagger UI
