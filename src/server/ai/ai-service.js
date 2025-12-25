@@ -347,8 +347,17 @@ class AIService {
 
       console.log(`[AIService] Spawning via UV: ${pythonPath} ${combinedArgs.join(' ')}`);
 
+      // CREATE CLEAN ENV: Remove proxies that might break WebSocket/SSL in Python
+      const CleanEnv = { ...process.env };
+      delete CleanEnv.HTTP_PROXY;
+      delete CleanEnv.HTTPS_PROXY;
+      delete CleanEnv.ALL_PROXY;
+      delete CleanEnv.http_proxy;
+      delete CleanEnv.https_proxy;
+      delete CleanEnv.all_proxy;
+
       const pyProcess = spawn(pythonPath, combinedArgs, {
-        env: { ...process.env } // Explicitly pass environment
+        env: CleanEnv, // Explicitly pass CLEAN environment
       });
 
       let stdoutData = '';

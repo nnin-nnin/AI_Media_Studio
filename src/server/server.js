@@ -22,13 +22,18 @@ const __dirname = dirname(__filename);
 
 const app = express();
 
-const upload = multer({ dest: 'data/uploads/temp/' }); // Temporary storage for ASR
-if (!fs.existsSync('data/uploads/temp/')) {
-    fs.mkdirSync('data/uploads/temp/', { recursive: true });
+const PROJECT_ROOT = path.join(__dirname, '..', '..');
+const DATA_DIR = path.join(PROJECT_ROOT, 'data');
+const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
+
+if (!fs.existsSync(path.join(UPLOADS_DIR, 'temp'))) {
+    fs.mkdirSync(path.join(UPLOADS_DIR, 'temp'), { recursive: true });
 }
-if (!fs.existsSync('data/uploads/')) {
-    fs.mkdirSync('data/uploads/', { recursive: true });
+if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
+
+const upload = multer({ dest: path.join(UPLOADS_DIR, 'temp') }); // Temporary storage for ASR
 
 logger.info("Starting server...", { env: config.env, port: config.port });
 console.log("[Config Debug] Loaded config:", JSON.stringify({
@@ -50,19 +55,28 @@ app.use((req, res, next) => {
 });
 
 // Static files (Frontend)
-const rendererPath = path.join(process.cwd(), 'src', 'renderer');
-console.log(`[Static] Serving renderer from: ${rendererPath}`);
-app.use(express.static(rendererPath));
+const rendererPath = path.join(PROJECT_ROOT, 'src', 'renderer');
+const assetsPath = path.join(rendererPath, 'assets');
+console.log(`[Static] Resolving paths:
+  - PROJECT_ROOT: ${PROJECT_ROOT}
+  - rendererPath: ${rendererPath}
+  - assetsPath: ${assetsPath}
+  - UPLOADS_DIR: ${UPLOADS_DIR}
+`);
 
-// Static files (Uploads)
-const uploadsPath = path.join(process.cwd(), 'data', 'uploads');
-console.log(`[Static] Serving uploads from: ${uploadsPath}`);
-app.use('/uploads', express.static(uploadsPath));
+// Priority 1: Uploads
+app.use('/uploads', express.static(UPLOADS_DIR));
+
+// Priority 2: System Assets (maps /assets/xxx to root /xxx as per Vite's publicDir)
+app.use(express.static(assetsPath));
+
+// Priority 3: Frontend Source (index.html, etc.)
+app.use(express.static(rendererPath));
 
 // Debug route for uploads (only if express.static falls through)
 app.get('/uploads/:filename', (req, res) => {
     const filename = req.params.filename;
-    const fullPath = path.join(uploadsPath, filename);
+    const fullPath = path.join(UPLOADS_DIR, filename);
     const exists = fs.existsSync(fullPath);
     logger.error("Upload 404 Debug", {
         filename,
@@ -70,7 +84,28 @@ app.get('/uploads/:filename', (req, res) => {
         exists,
         cwd: process.cwd()
     });
-    res.status(404).send(`File NOT found. Checked at: ${fullPath}`);
+    res.status(404).json({
+        error: "File not found in uploads",
+        checkedPath: fullPath,
+        exists
+    });
+});
+
+// Debug route for system assets
+app.get(/^\/system\/(.*)/, (req, res) => {
+    const relativePath = req.params[0];
+    const fullPath = path.join(assetsPath, 'system', relativePath);
+    const exists = fs.existsSync(fullPath);
+    logger.error("System Asset 404 Debug", {
+        relativePath,
+        fullPath,
+        exists
+    });
+    res.status(404).json({
+        error: "System asset not found",
+        checkedPath: fullPath,
+        exists
+    });
 });
 
 // Swagger UI
@@ -199,7 +234,7 @@ app.post('/api/ai/video', async (req, res) => {
 
         // Generate a unique local path in the uploads directory
         const fileName = `video_${Date.now()}.mp4`;
-        const localPath = path.join(uploadsPath, fileName);
+        const localPath = path.join(UPLOADS_DIR, fileName);
 
         // Merge output_path into options
         const options = { ...req.body, output_path: localPath };

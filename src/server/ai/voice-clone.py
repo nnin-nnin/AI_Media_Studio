@@ -2,8 +2,29 @@ import os
 import sys
 import time
 import uuid
+
+# ===================== SSL PATCH (MUST BE FIRST) =====================
+import ssl
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+    print("[VoiceClone] SSL Patch Applied: Unverified Context set as Default", file=sys.stderr)
+# =====================================================================
+
+# ===================== ENVIRONMENT DEBUG =====================
+print(f"[VoiceClone] Python Executable: {sys.executable}", file=sys.stderr)
+print(f"[VoiceClone] SSL Default Verify Paths: {ssl.get_default_verify_paths()}", file=sys.stderr)
+print(f"[VoiceClone] DASHSCOPE_API_KEY Present: {'DASHSCOPE_API_KEY' in os.environ}", file=sys.stderr)
+print(f"[VoiceClone] HTTP_PROXY: {os.environ.get('HTTP_PROXY', 'Not Set')}", file=sys.stderr)
+print(f"[VoiceClone] HTTPS_PROXY: {os.environ.get('HTTPS_PROXY', 'Not Set')}", file=sys.stderr)
+# =============================================================
+
 import mimetypes
 import json
+import traceback
 
 # 尝试导入腾讯云COS和DashScope SDK
 try:
@@ -109,13 +130,32 @@ def create_voice_and_wait(audio_url: str) -> str:
     raise RuntimeError("Polling timed out: voice not ready")
 
 def synthesize_to_file(voice_id: str, text: str, out_file: str = "my_custom_voice_output.mp3"):
-    synthesizer = SpeechSynthesizer(model=TARGET_MODEL, voice=voice_id)
-    audio_bytes = synthesizer.call(text)
-    print(f"[Synthesize] Request ID: {synthesizer.get_last_request_id()}", file=sys.stderr)
-    with open(out_file, "wb") as f:
-        f.write(audio_bytes)
-    print(f"[Synthesize] Saved: {out_file}", file=sys.stderr)
-    return out_file
+    """
+    Standard SDK implementation with retry logic and SSL workaround.
+    """
+    last_error = None
+    
+    for attempt in range(3):
+        try:
+            print(f"[Synthesize] Attempt {attempt + 1}/3 (SDK)...", file=sys.stderr)
+            
+            # Re-instantiate locally to ensure fresh connection/state
+            synthesizer = SpeechSynthesizer(model=TARGET_MODEL, voice=voice_id)
+            audio_bytes = synthesizer.call(text)
+            
+            print(f"[Synthesize] Request ID: {synthesizer.get_last_request_id()}", file=sys.stderr)
+            with open(out_file, "wb") as f:
+                f.write(audio_bytes)
+            print(f"[Synthesize] Saved: {out_file}", file=sys.stderr)
+            return out_file
+
+        except Exception as e:
+            last_error = e
+            print(f"[Synthesize] Error on attempt {attempt + 1}: {e}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+            time.sleep(5) 
+
+    raise RuntimeError(f"Synthesize failed after 3 attempts. Last error: {last_error}")
 
 def main():
     if len(sys.argv) < 3:
@@ -138,8 +178,14 @@ def main():
         audio_url = ensure_url(audio_input)
         print(f"[Upload/URL] Using audio URL: {audio_url}", file=sys.stderr)
         
+        import traceback
+        
         # 2) 创建音色并等待就绪
         voice_id = create_voice_and_wait(audio_url)
+        
+        # HACK: Give it a moment to propagate on DashScope's backend
+        print(f"[CoolDown] Voice ready, waiting 5s for backend sync...", file=sys.stderr)
+        time.sleep(5)
         
         # 3) 合成并保存
         output_path = synthesize_to_file(voice_id, text, output_file)

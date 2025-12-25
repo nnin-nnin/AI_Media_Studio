@@ -27,7 +27,7 @@ async function axiosWithRetry(config, maxRetries = 3) {
     try {
       return await axios({
         ...config,
-        timeout: 60000, // 60s timeout for safety
+        timeout: 300000, // 300s (5min) timeout for safety
         headers: {
           ...config.headers,
           'Connection': 'close' // Disable keep-alive to avoid ECONNRESET on stale sockets

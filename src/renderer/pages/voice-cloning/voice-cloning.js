@@ -375,15 +375,20 @@ function setupVoiceCloningEventListeners() {
             console.error(error);
             alert("Error: " + error.message);
             const resBox = document.querySelector('.result-preview');
-            resBox.innerHTML = `
-                 <div class="preview-placeholder">
-                    <span style="font-size:48px; margin-bottom:1rem; opacity:0.5;">⚠️</span>
-                    <p style="color:var(--text-secondary);">Generation failed.</p>
-                 </div>
-            `;
+            if (resBox) {
+                resBox.innerHTML = `
+                     <div class="preview-placeholder">
+                        <span style="font-size:48px; margin-bottom:1rem; opacity:0.5;">⚠️</span>
+                        <p style="color:var(--text-secondary);">Generation failed.</p>
+                     </div>
+                `;
+            }
         } finally {
-            generateBtn.innerHTML = oldText;
-            generateBtn.disabled = false;
+            const generateBtn = document.getElementById('generate-voice-btn');
+            if (generateBtn) {
+                generateBtn.innerHTML = oldText;
+                generateBtn.disabled = false;
+            }
 
             if (window.GlobalSidebar) {
                 window.GlobalSidebar.setJobStatus('voice-cloning', 'idle');

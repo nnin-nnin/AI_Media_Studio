@@ -629,7 +629,8 @@ function setupVideoGenerationEventListeners() {
             console.error(error);
             alert("Error: " + error.message);
             const resBox = document.querySelector('.result-preview');
-            resBox.innerHTML = `
+            if (resBox) {
+                resBox.innerHTML = `
                 <div class="energy-overlay" style="background:#000;">
                      <div style="text-align:center; color:white;">
                         <span style="font-size:32px; margin-bottom:1rem; display:block;">⚠️</span>
@@ -638,6 +639,7 @@ function setupVideoGenerationEventListeners() {
                      </div>
                 </div>
             `;
+            }
         } finally {
             if (typeof progressInterval !== 'undefined') clearInterval(progressInterval);
             generateBtn.innerHTML = oldText;
