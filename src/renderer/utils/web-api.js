@@ -9,57 +9,72 @@ const API_BASE = '';
 
 export async function fetchAPI(endpoint, data = {}, options = {}) {
     const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
-    try {
-        const headers = {
-            'Content-Type': 'application/json'
-        };
+    const maxRetries = options.maxRetries || 3;
+    const initialDelay = options.initialDelay || 1000;
 
-        if (authToken) {
-            headers['Authorization'] = `Bearer ${authToken}`;
-        }
+    async function attemptFetch(retryCount) {
+        try {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
 
-        const config = {
-            method: options.method || 'POST', // Default to POST for backward compatibility
-            headers: headers
-        };
-
-        if (config.method !== 'GET' && config.method !== 'HEAD') {
-            config.body = JSON.stringify(data);
-        }
-
-        console.log(`[WebAPI] Fetching ${url}`, config);
-
-        const response = await fetch(url, config);
-
-        if (response.status === 401 || response.status === 403) {
-            // Token expired or invalid
-            console.warn("Auth failed, clearing token");
-            // Try to read the error message
-            try {
-                const errData = await response.clone().json();
-                console.warn("[WebAPI] Auth Error Details:", errData);
-            } catch (e) {
-                console.warn("[WebAPI] Could not read auth error body");
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
             }
-            localStorage.removeItem('ai_auth_token');
-            authToken = null;
-            window.dispatchEvent(new Event('auth-failed')); // Trigger re-login UI
-            throw new Error('Authentication required');
-        }
 
-        if (!response.ok) {
-            const error = await response.json();
-            console.error("[WebAPI] HTTP Error:", error);
-            throw new Error(error.message || 'Server Error');
-        }
+            const config = {
+                method: options.method || 'POST',
+                headers: headers
+            };
 
-        return await response.json();
+            if (config.method !== 'GET' && config.method !== 'HEAD') {
+                config.body = JSON.stringify(data);
+            }
+
+            console.log(`[WebAPI] Fetching ${url} (Attempt ${retryCount + 1})`, config);
+
+            const response = await fetch(url, config);
+
+            if (response.status === 429 && retryCount < maxRetries) {
+                const delay = initialDelay * Math.pow(2, retryCount); // Exponential backoff
+                console.warn(`[WebAPI] Rate limited (429). Retrying in ${delay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return attemptFetch(retryCount + 1);
+            }
+
+            if (response.status === 401 || response.status === 403) {
+                console.warn("Auth failed, clearing token");
+                localStorage.removeItem('ai_auth_token');
+                authToken = null;
+                window.dispatchEvent(new Event('auth-failed'));
+                throw new Error('Authentication required');
+            }
+
+            if (!response.ok) {
+                const error = await response.json();
+                console.error("[WebAPI] HTTP Error:", error);
+                throw new Error(error.message || 'Server Error');
+            }
+
+            return await response.json();
+        } catch (e) {
+            if (e.message.includes('429') && retryCount < maxRetries) {
+                // Should not happen if handled above, but for safety
+                const delay = initialDelay * Math.pow(2, retryCount);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return attemptFetch(retryCount + 1);
+            }
+            throw e;
+        }
+    }
+
+    try {
+        return await attemptFetch(0);
     } catch (e) {
         console.error('API Error:', e);
         if (window.Toast) {
             window.Toast.show(e.message || 'API Connection Failed', 'error');
         }
-        // return { status: 'error', message: e.message }; // Let caller handle error better
         throw e;
     }
 }

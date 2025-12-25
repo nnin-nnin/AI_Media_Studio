@@ -379,16 +379,11 @@ function setupVoiceCloningEventListeners() {
                 if (mode === 'clone' && result.voice_id) {
                     try {
                         const name = `Cloned_${Date.now()}`;
-                        const regRes = await fetch('/api/ai/characters', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                name: name,
-                                voice_id: result.voice_id,
-                                description: `Cloned on ${new Date().toLocaleString()}`
-                            })
+                        const regData = await window.fetchAPI('/api/ai/characters', {
+                            name: name,
+                            voice_id: result.voice_id,
+                            description: `Cloned on ${new Date().toLocaleString()}`
                         });
-                        const regData = await regRes.json();
                         if (regData.status === 'success') {
                             console.log("Cloned voice automatically added to presets:", name);
                             await loadAndRenderVCPresets(); // Refresh the row
@@ -429,8 +424,7 @@ function setupVoiceCloningEventListeners() {
         if (!row) return;
 
         try {
-            const resp = await fetch('/api/ai/characters');
-            const data = await resp.json();
+            const data = await window.fetchAPI('/api/ai/characters', {}, { method: 'GET' });
             if (data.status === 'success') {
                 row.innerHTML = data.data.map((char, index) => `
                     <div class="vc-preset-item ${index === 0 ? 'active' : ''}" data-voice-id="${char.voice_id}" title="${char.name}">

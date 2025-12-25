@@ -556,12 +556,7 @@ function setupFaceSwapEventListeners() {
                 if (window.electronAPI && window.electronAPI.editImage) {
                     result = await window.electronAPI.editImage(opts);
                 } else {
-                    const resp = await fetch('/api/ai/edit-image', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(opts)
-                    });
-                    result = await resp.json();
+                    result = await window.fetchAPI('/api/ai/edit-image', opts);
                 }
             } else {
                 // GENERATE IMAGE MODE
@@ -573,12 +568,7 @@ function setupFaceSwapEventListeners() {
                 if (window.electronAPI && window.electronAPI.generateImage) {
                     result = await window.electronAPI.generateImage(opts);
                 } else {
-                    const resp = await fetch('/api/ai/image', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(opts)
-                    });
-                    result = await resp.json();
+                    result = await window.fetchAPI('/api/ai/image', opts);
                 }
             }
 
@@ -627,17 +617,15 @@ function setupFaceSwapEventListeners() {
             console.error(error);
             alert("Error: " + error.message);
             const resBox = document.querySelector('.result-preview');
-            resBox.innerHTML = `
-                <div class="preview-placeholder">
-                    <span style="font-size:32px; margin-bottom:1rem; opacity:0.5;">⚠️</span>
-                    <p style="color:var(--text-secondary);">Generation failed.</p>
-                </div>
+            <div class="preview-placeholder">
+                <span style="font-size:32px; margin-bottom:1rem; opacity:0.5;">⚠️</span>
+                <p style="color:var(--text-secondary);">Generation failed.</p>
+                <small>${error.message}</small>
+            </div>
             `;
         } finally {
-            if (typeof progressInterval !== 'undefined') clearInterval(progressInterval);
-            generateBtn.innerHTML = oldText;
             generateBtn.disabled = false;
-
+            generateBtn.innerText = originalText;
             if (window.GlobalSidebar) {
                 window.GlobalSidebar.setJobStatus('face-swap', 'idle');
             }
@@ -685,10 +673,10 @@ function setupFaceSwapEventListeners() {
 
         empty.style.display = 'none';
         list.innerHTML = assets.map(asset => `
-            <div class="asset-item" onclick="window.MediaPreview.open('${asset.id}')" style="aspect-ratio:1; border-radius:8px; overflow:hidden; position:relative; cursor:pointer; border:1px solid var(--glass-border);">
-                <img src="${asset.url}" style="width:100%; height:100%; object-fit:cover;">
-            </div>
-        `).join('');
+                < div class="asset-item" onclick = "window.MediaPreview.open('${asset.id}')" style = "aspect-ratio:1; border-radius:8px; overflow:hidden; position:relative; cursor:pointer; border:1px solid var(--glass-border);" >
+                    <img src="${asset.url}" style="width:100%; height:100%; object-fit:cover;">
+                    </div>
+            `).join('');
     }
 
     // Initial render
@@ -711,14 +699,14 @@ async function initModelSelect(selectId, settingsKey, type = null) {
     if (!select) return;
 
     try {
-        const url = type ? `/api/ai/models?type=${type}` : '/api/ai/models';
+        const url = type ? `/ api / ai / models ? type = ${ type } ` : '/api/ai/models';
         const resp = await fetch(url);
         const data = await resp.json();
         if (data.status === 'success') {
             const current = window.SettingsManager.get(settingsKey);
             select.innerHTML = data.models.map(m => `
-                <option value="${m.id}" ${m.id === current ? 'selected' : ''}>${m.name}</option>
-            `).join('');
+                < option value = "${m.id}" ${ m.id === current ? 'selected' : '' }> ${ m.name }</option >
+                    `).join('');
         }
     } catch (err) {
         console.error("Failed to fetch models:", err);

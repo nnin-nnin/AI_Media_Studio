@@ -578,13 +578,8 @@ function setupVideoGenerationEventListeners() {
             if (window.electronAPI && window.electronAPI.generateVideo) {
                 result = await window.electronAPI.generateVideo(opts);
             } else {
-                // Fallback
-                const resp = await fetch('/api/ai/video', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(opts)
-                });
-                result = await resp.json();
+                // Fallback to global fetchAPI which includes 429 retry support
+                result = await window.fetchAPI('/api/ai/video', opts);
             }
 
             if (result && result.status === 'success') {
@@ -645,9 +640,12 @@ function setupVideoGenerationEventListeners() {
             alert("Error: " + error.message);
             const resBox = document.querySelector('.result-preview');
             resBox.innerHTML = `
-                <div class="preview-placeholder">
-                    <span style="font-size:32px; margin-bottom:1rem; opacity:0.5;">⚠️</span>
-                    <p style="color:var(--text-secondary);">Generation failed.</p>
+                <div class="energy-overlay" style="background:#000;">
+                     <div style="text-align:center; color:white;">
+                        <span style="font-size:32px; margin-bottom:1rem; display:block;">⚠️</span>
+                        <p>${window.i18n.t('COMMON_ERROR')}</p>
+                        <small style="opacity:0.6;">${error.message}</small>
+                     </div>
                 </div>
             `;
         } finally {
