@@ -31,13 +31,7 @@ class GlobalSidebar {
 
     async syncWithBackend() {
         try {
-            // Check if user is logged in before syncing
-            const token = localStorage.getItem('ai_auth_token');
-            if (!token) return;
-
-            const res = await window.fetch('/api/ai/tasks/active', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await window.fetch('/api/ai/tasks/active');
             const data = await res.json();
 
             if (data.status === 'success' && data.activeTasks) {

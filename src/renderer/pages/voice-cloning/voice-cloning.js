@@ -97,23 +97,13 @@ function loadVoiceCloningPage(container) {
                             <span class="bg-label" style="margin-top:20px;">${window.i18n.t('AUDIO_SIMILARITY_LABEL')}</span>
                             <input type="range" class="studio-slider" id="similarity-slider" min="0" max="100" value="75">
 
-                            <div class="studio-setting-group" style="margin-top:24px; padding-top:20px; border-top:1px solid var(--glass-border);">
-                                <span class="bg-label">Model Configuration</span>
-                                <div style="margin-top:12px;">
-                                    <label style="display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px;">Endpoint ID</label>
-                                    <select id="vc-model-select" class="studio-select-glass">
-                                        <option value="${window.SettingsManager.get('audioModel')}">${window.SettingsManager.get('audioModel')}</option>
-                                        <option disabled>Loading models...</option>
-                                    </select>
-                                </div>
-                                <div style="margin-top:12px;">
+                            <div style="margin-top:12px;">
                                     <label style="display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px;">Microphone Input</label>
                                     <select id="vc-mic-select" class="studio-select-glass">
                                         <option value="default">Default System Audio</option>
                                     </select>
                                 </div>
                             </div>
-                         </div>
 
                          <!-- Tab: Assets -->
                          <div id="tab-assets" class="tab-pane" style="display:none;">
@@ -125,7 +115,7 @@ function loadVoiceCloningPage(container) {
                 </div>
 
                 <!-- 4. Action Area -->
-                <div class="vc-action-area">
+                <div class="studio-action-area vc-action-area">
                      <button class="primary-btn" id="generate-voice-btn" style="width:100%;">
                         ${window.i18n.t('AUDIO_GENERATE_BTN')}
                      </button>
@@ -257,7 +247,7 @@ function setupVoiceCloningEventListeners() {
 
     // 4.5 Model Settings Logic
     // 4.5 Model Settings Logic
-    initModelSelect('vc-model-select', 'audioModel', 'audio');
+    // initModelSelect removed per user request
     initMicSelect();
 
     // 5. Generate Logic
@@ -375,23 +365,7 @@ function setupVoiceCloningEventListeners() {
                     document.body.removeChild(a);
                 });
 
-                // --- NEW: Automatically Add to TTS Presets ---
-                if (mode === 'clone' && result.voice_id) {
-                    try {
-                        const name = `Cloned_${Date.now()}`;
-                        const regData = await window.fetchAPI('/api/ai/characters', {
-                            name: name,
-                            voice_id: result.voice_id,
-                            description: `Cloned on ${new Date().toLocaleString()}`
-                        });
-                        if (regData.status === 'success') {
-                            console.log("Cloned voice automatically added to presets:", name);
-                            await loadAndRenderVCPresets(); // Refresh the row
-                        }
-                    } catch (regErr) {
-                        console.error("Auto-registration of cloned voice failed:", regErr);
-                    }
-                }
+                // Auto-registration to character presets removed per user request (too messy/ugly)
 
             } else {
                 throw new Error(result?.message || "Generation failed");
@@ -424,7 +398,7 @@ function setupVoiceCloningEventListeners() {
         if (!row) return;
 
         try {
-            const data = await window.fetchAPI('/api/ai/characters', {}, { method: 'GET' });
+            const data = await window.fetchAPI('/api/ai/characters?category=cloned', {}, { method: 'GET' });
             if (data.status === 'success') {
                 row.innerHTML = data.data.map((char, index) => `
                     <div class="vc-preset-item ${index === 0 ? 'active' : ''}" data-voice-id="${char.voice_id}" title="${char.name}">

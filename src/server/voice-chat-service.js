@@ -3,7 +3,12 @@ import AIService from './ai/ai-service.js';
 import logger from './utils/logger.js';
 
 class VoiceChatService {
-    async listCharacters() {
+    async listCharacters(category = null) {
+        if (category) {
+            return prisma.character.findMany({
+                where: { category }
+            });
+        }
         return prisma.character.findMany();
     }
 
@@ -33,13 +38,14 @@ class VoiceChatService {
     }
 
     async createCharacter(data) {
-        const { name, voice_id, avatar, description } = data;
+        const { name, voice_id, avatar, description, category } = data;
         return prisma.character.create({
             data: {
                 name,
                 voice_id,
                 avatar: avatar || '/assets/system/avatars/avatar_default.png',
-                description: description || 'User cloned voice'
+                description: description || 'User cloned voice',
+                category: category || 'system'
             }
         });
     }

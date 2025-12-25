@@ -522,7 +522,7 @@ class AIService {
       const allFallbacks = [
         { id: "doubao-seedream-4-0-250828", name: "Doubao Image (Seedream 4.0)", type: 'image' },
         { id: "doubao-seedance-1-0-pro-fast-251015", name: "Doubao Video (Seedance 1.0 Fast)", type: 'video' },
-        { id: "cosyvoice-v2", name: "CosyVoice V2 (Standard)", type: 'audio' }
+        { id: "cosyvoice-v3", name: "CosyVoice V3 (Standard)", type: 'audio' }
       ];
 
       const filteredFallbacks = type

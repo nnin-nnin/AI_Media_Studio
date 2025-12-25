@@ -15,12 +15,7 @@ class AssetManager {
     }
 
     init() {
-        if (localStorage.getItem('ai_auth_token')) {
-            this.refresh();
-        }
-
-        // Listen for auth success to refresh
-        window.addEventListener('auth-success', () => this.refresh());
+        this.refresh();
     }
 
     async refresh() {

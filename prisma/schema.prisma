@@ -38,6 +38,7 @@ model Character {
   avatar      String?
   voice_id    String   // Dashscope CosyVoice ID
   description String?
+  category    String   @default("system")
   created_at  DateTime @default(now())
 
   @@map("characters")

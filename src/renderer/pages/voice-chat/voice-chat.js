@@ -151,9 +151,9 @@ class VoiceChatPage {
 
     async loadCharacters() {
         try {
-            const res = await fetchAPI('/api/ai/characters', {}, { method: 'GET' });
-            if (res.status === 'success') {
-                this.characters = res.data;
+            const data = await window.fetchAPI('/api/ai/characters?category=system', {}, { method: 'GET' });
+            if (data.status === 'success') {
+                this.characters = data.data;
                 this.renderCharacterList();
             }
         } catch (e) {

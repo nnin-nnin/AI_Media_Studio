@@ -7,8 +7,6 @@
     <title>AI Media Studio</title>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="components/login/login.css">
-    <link rel="stylesheet" href="components/login/login-form.css">
 
     <!-- Import Map for Three.js -->
     <script type="importmap">
@@ -31,33 +29,8 @@
 <body>
 
 
-    <!-- Login Portal Overlay (Username/Password) -->
-    <div id="login-portal">
-        <div class="login-container">
-            <h1 class="login-title">AI Media Studio</h1>
-            <p class="login-subtitle">Secure Access Portal</p>
 
-            <form id="login-form">
-                <div class="form-group">
-                    <label for="login-username" class="form-label">Username</label>
-                    <input type="text" id="login-username" class="form-input" placeholder="student"
-                        autocomplete="username">
-                </div>
-
-                <div class="form-group">
-                    <label for="login-password" class="form-label">Password</label>
-                    <input type="password" id="login-password" class="form-input" placeholder="Enter password"
-                        autocomplete="current-password">
-                </div>
-
-                <div class="error-message" id="login-error"></div>
-
-                <button type="submit" id="login-submit" class="login-btn">Login</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="app" class="app-layout" style="display:none;"> <!-- Hidden initially -->
+    <div id="app" class="app-layout"> <!-- Always visible -->
         <!-- 全局侧边栏容器 -->
         <aside id="app-sidebar"></aside>
 
@@ -115,23 +88,11 @@
 
     <!-- Login Initialization -->
     <script type="module">
-        import { LoginManager } from './components/login/login-manager.js';
         import i18n from './utils/i18n.js';
         import ThemeManager from './utils/theme-manager.js';
 
         // Initialize Theme
         ThemeManager.init();
-
-        // Initialize App Function
-        const unlockApp = () => {
-            const app = document.getElementById('app');
-            console.log("System Unlocked");
-            app.style.display = 'flex'; // Reveal App
-            app.classList.add('fade-in');
-
-            // Trigger any app init if needed
-            if (window.AssetManager) window.AssetManager.refresh();
-        };
 
         // Initialize i18n and then start app logic
         await i18n.init();
@@ -140,6 +101,13 @@
 
         // Start High-level UI logic
         if (window.initializeApp) window.initializeApp();
+
+        // Reveal App with fade-in
+        const app = document.getElementById('app');
+        if (app) app.classList.add('fade-in');
+
+        // Trigger any app init if needed
+        if (window.AssetManager) window.AssetManager.refresh();
 
         // Update Language Switcher UI
         const langLabel = document.getElementById('lang-label');
@@ -161,28 +129,6 @@
         window.addEventListener('language-changed', (e) => {
             updateLangUI(e.detail.lang);
         });
-
-        // Authentication "Middleware" Selection
-        // Scheme 1: Check Server Configuration to decide Auth Strategy
-        fetch('/api/config')
-            .then(res => res.json())
-            .then(config => {
-                if (config.skipAuth === true) {
-                    // Strategy A: Mock Auth (Skip Auth Enabled)
-                    console.log("[Auth] SKIP_AUTH enabled. Bypassing login portal.");
-                    document.getElementById('login-portal').style.display = 'none';
-                    unlockApp();
-                } else {
-                    // Strategy B: Real Auth (Production Mode)
-                    console.log("[Auth] Production Environment. Enabling Login Form.");
-                    new LoginManager('login-portal', unlockApp);
-                }
-            })
-            .catch(err => {
-                // Default to Secure if config fails
-                console.error("[Auth] Config check failed. Defaulting to Secure Mode.", err);
-                new LoginManager('login-portal', unlockApp);
-            });
     </script>
 </body>
 

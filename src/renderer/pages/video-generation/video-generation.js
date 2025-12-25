@@ -141,16 +141,6 @@ function loadVideoGenerationPage(container) {
                             </div>
                             <input type="range" class="studio-slider" id="motion-slider" min="1" max="10" value="5" style="margin-top:8px;">
 
-                            <div class="studio-setting-group" style="margin-top:24px; padding-top:20px; border-top:1px solid var(--glass-border);">
-                                <span class="bg-label">Model Configuration</span>
-                                <div style="margin-top:12px;">
-                                    <label style="display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px;">Endpoint ID</label>
-                                    <select id="vg-model-select" class="studio-select-glass">
-                                        <option value="${window.SettingsManager.get('videoModel')}">${window.SettingsManager.get('videoModel')}</option>
-                                        <option disabled>Loading models...</option>
-                                    </select>
-                                </div>
-                            </div>
                          </div>
 
                          <!-- Tab: Assets -->
@@ -497,7 +487,7 @@ function setupVideoGenerationEventListeners() {
     });
 
     // 5.5 Model Settings Logic
-    initModelSelect('vg-model-select', 'videoModel', 'video');
+    // initModelSelect removed per user request
 
     // 6. Generate Logic
     const generateBtn = document.getElementById('generate-video-btn');

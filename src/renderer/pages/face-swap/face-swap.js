@@ -130,16 +130,6 @@ function loadFaceSwapPage(container) {
                              </div>
                              <input type="range" class="studio-slider" id="fs-strength-slider" min="0" max="100" value="75" style="margin-top:8px;">
 
-                            <div class="studio-setting-group" style="margin-top:24px; padding-top:20px; border-top:1px solid var(--glass-border);">
-                                <span class="bg-label">Model Configuration</span>
-                                <div style="margin-top:12px;">
-                                    <label style="display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px;">Endpoint ID</label>
-                                    <select id="fs-model-select" class="studio-select-glass">
-                                        <option value="${window.SettingsManager.get('imageModel')}">${window.SettingsManager.get('imageModel')}</option>
-                                        <option disabled>Loading models...</option>
-                                    </select>
-                                </div>
-                            </div>
                          </div>
 
                          <!-- Tab: Assets -->
@@ -484,7 +474,7 @@ function setupFaceSwapEventListeners() {
 
     // 4.5 Model Settings Logic (Searchable Dropdown)
     // 7. Model Settings Logic
-    initModelSelect('fs-model-select', 'imageModel', 'image');
+    // initModelSelect removed per user request (auto-selection enabled)
 
     // 5. Generate Logic
     const generateBtn = document.getElementById('generate-btn');

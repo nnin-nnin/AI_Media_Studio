@@ -12,7 +12,6 @@ import fs from 'fs';
 // Import AI Service (reusing existing logic)
 import AIService from './ai/ai-service.js';
 import AssetStore from './asset-store.js';
-import AuthService from './auth/auth-service.js';
 import VoiceChatService from './voice-chat-service.js';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './utils/swagger.js';
@@ -80,63 +79,7 @@ app.get('/api/config', (req, res) => {
     });
 });
 
-// --- Auth Routes ---
-app.get('/api/auth/ritual-session', (req, res) => {
-    const nonce = AuthService.createRitualSession();
-    res.json({ status: 'success', nonce });
-});
-
-app.post('/api/auth/ritual-unlock', async (req, res) => {
-    try {
-        const { ritualLog, nonce } = req.body;
-        const result = await AuthService.verifyRitual(ritualLog, nonce);
-        res.json({ status: 'success', data: result });
-    } catch (e) {
-        logger.error("Ritual Unlock Failed", { error: e.message });
-        res.status(400).json({ status: 'error', message: e.message });
-    }
-});
-
-app.post('/api/auth/login', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        // Logging is now handled by middleware or inside AuthService via logger
-        const result = await AuthService.login(username, password);
-        res.json({ status: 'success', data: result });
-    } catch (e) {
-        logger.warn("Login Failed", { username: req.body.username, error: e.message });
-        res.status(401).json({ status: 'error', message: e.message });
-    }
-});
-
-/**
- * @openapi
- * /api/auth/register:
- *   post:
- *     summary: Register a new user
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username: { type: string }
- *               password: { type: string }
- *     responses:
- *       200:
- *         description: User registered successfully
- */
-app.post('/api/auth/register', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        const result = await AuthService.register(username, password);
-        res.json({ status: 'success', data: result });
-    } catch (e) {
-        res.status(400).json({ status: 'error', message: e.message });
-    }
-});
+// --- System Config ---
 
 
 // 2. Simple In-Memory Rate Limiter
@@ -168,19 +111,11 @@ const rateLimiter = (req, res, next) => {
 
 app.use('/api', rateLimiter);
 
-// --- Protected Routes ---
-// Apply verify token to all /api routes EXCEPT auth and config
+// --- Protected Routes (Disabled / Single User Mode) ---
 app.use('/api', (req, res, next) => {
-    const path = req.path || '';
-    if (path.startsWith('/auth') || path === '/config') return next();
-
-    // Dev Bypass
-    if (config.auth.skipAuth && config.env === 'development') {
-        req.user = { id: 1, username: 'dev-user' };
-        return next();
-    }
-
-    AuthService.authenticateToken(req, res, next);
+    // Default user for all actions
+    req.user = { id: 1, username: 'default-user' };
+    next();
 });
 
 // --- Asset Routes ---
@@ -301,7 +236,8 @@ app.get('/api/ai/models', async (req, res) => {
 // --- Voice Chat Character Routes ---
 app.get('/api/ai/characters', async (req, res) => {
     try {
-        const characters = await VoiceChatService.listCharacters();
+        const { category } = req.query;
+        const characters = await VoiceChatService.listCharacters(category);
         res.json({ status: 'success', data: characters });
     } catch (error) {
         res.status(500).json({ status: 'error', message: error.message });
