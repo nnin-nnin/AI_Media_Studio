@@ -38,10 +38,22 @@ async function cleanupAssets() {
     }
 }
 
+import { execSync } from 'child_process';
+
 async function main() {
-    console.log("🚀 Starting database seeding & cleanup...");
+    console.log("🚀 Starting database initialization & seeding...");
 
     try {
+        // 1. Auto-init DB structure (Create file if missing, update schema)
+        console.log("📦 Syncing Database Schema...");
+        execSync('npx prisma db push', { stdio: 'inherit' });
+    } catch (e) {
+        console.error("❌ DB Init failed:", e.message);
+        process.exit(1);
+    }
+
+    try {
+        console.log("🌱 Seeding data...");
         await seedUser();
         await seedCharacters();
         await cleanupAssets();
