@@ -25,7 +25,9 @@ class I18nManager {
      */
     async load(lang) {
         try {
-            const resp = await fetch(`./locales/${lang}.json`);
+            // Add a cache buster timestamp to ensure we get the latest file
+            const cacheBuster = `?t=${Date.now()}`;
+            const resp = await fetch(`./locales/${lang}.json${cacheBuster}`);
             if (!resp.ok) throw new Error(`Could not load locale: ${lang}`);
             this.locales[lang] = await resp.json();
             this.currentLang = lang;
@@ -61,13 +63,13 @@ class I18nManager {
      */
     async switchLanguage(lang) {
         if (lang === this.currentLang && this.locales[lang]) return;
-        
+
         await this.load(lang);
         this.notify();
-        
+
         // Dispatch global event for components that don't use the listener pattern
         window.dispatchEvent(new CustomEvent('language-changed', { detail: { lang } }));
-        
+
         // Optional: Some apps prefer a full reload for clean state
         // window.location.reload(); 
     }
