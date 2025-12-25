@@ -212,7 +212,9 @@ class VoiceChatPage {
 
     async startRecording() {
         try {
-            await this.recorder.start();
+            const savedMicId = window.SettingsManager.get('audioInputDeviceId');
+            const micId = (savedMicId && savedMicId !== 'default') ? savedMicId : null;
+            await this.recorder.start(micId);
             this.isRecording = true;
             this.micBtn.classList.add('recording');
             this.micStatus.innerText = window.i18n.t('CHAT_MIC_STOP');

@@ -409,6 +409,7 @@ function setupFaceSwapEventListeners() {
         if (!videoPreview.videoWidth) return;
 
         // Match the canvas perfectly to the video stream dimensions
+        const ctx = captureCanvas.getContext('2d');
         ctx.drawImage(videoPreview, 0, 0, captureCanvas.width, captureCanvas.height);
         const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.9);
 

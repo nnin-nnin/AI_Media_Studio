@@ -81,9 +81,10 @@ function renderAssetGrid(filter) {
     grid.innerHTML = assets.map(asset => {
         let content = '';
         if (asset.type === 'image') {
-            content = `<img src="${asset.url}" loading="lazy">`;
+            content = `<img src="${asset.url}" loading="lazy" onerror="this.onerror=null; this.parentElement.classList.add('is-missing'); this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'%3E%3Cpath d=\'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\'/%3E%3Cpolyline points=\'17 8 12 3 7 8\'/%3E%3Cline x1=\'12\' y1=\'3\' x2=\'12\' y2=\'15\'/%3E%3C/svg%3E';">`;
         } else if (asset.type === 'video') {
-            content = `<video src="${asset.url}" muted onmouseover="this.play()" onmouseout="this.pause()"></video>`;
+            content = `<video src="${asset.url}" muted onmouseover="this.play()" onmouseout="this.pause()" onerror="this.parentElement.classList.add('is-missing'); this.style.display='none';"></video>
+                       <div class="video-missing-icon">🎬</div>`;
         } else if (asset.type === 'audio') { // 'audio' or 'mic' mapped to audio type
             content = `<div class="audio-card">🎵</div>`;
         }

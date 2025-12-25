@@ -10,11 +10,23 @@ export class AudioRecorder {
         this.stream = null;
     }
 
-    async start() {
+    async start(deviceId = null) {
         try {
-            console.log("[AudioRecorder] Requesting microphone access...");
-            this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            console.log("[AudioRecorder] Microphope access granted.");
+            console.log(`[AudioRecorder] Requesting microphone access (DeviceID: ${deviceId || 'System Default'})...`);
+
+            const constraints = {
+                audio: deviceId ? { deviceId: { exact: deviceId } } : true
+            };
+
+            this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+            console.log("[AudioRecorder] Microphope access granted for stream:", this.stream.id);
+
+            // Diagnostics: Check track status
+            this.stream.getAudioTracks().forEach(track => {
+                console.log(`[AudioRecorder] Track: ${track.label}, Enabled: ${track.enabled}, Muted: ${track.muted}, State: ${track.readyState}`);
+                track.onended = () => console.warn("[AudioRecorder] Track ended unexpectedly");
+                track.onmute = () => console.warn("[AudioRecorder] Track muted unexpectedly");
+            });
 
             // Check for supported mime types
             const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')

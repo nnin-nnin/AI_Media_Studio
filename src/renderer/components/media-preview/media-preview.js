@@ -110,9 +110,9 @@ class MediaPreview {
 
         let html = '';
         if (asset.type === 'image') {
-            html = `<img src="${mediaUrl}" />`;
+            html = `<img src="${mediaUrl}" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'white\' stroke-width=\'2\'%3E%3Cpath d=\'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\'/%3E%3Cpolyline points=\'17 8 12 3 7 8\'/%3E%3Cline x1=\'12\' y1=\'3\' x2=\'12\' y2=\'15\'/%3E%3C/svg%3E'; this.style.opacity=0.5; this.style.width='64px';" />`;
         } else if (asset.type === 'video') {
-            html = `<video src="${mediaUrl}" controls autoplay loop></video>`;
+            html = `<video src="${mediaUrl}" controls autoplay loop onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'color:white; padding: 40px;\'>🎬 Missing video file</div>'"></video>`;
         } else if (asset.type === 'audio') {
             html = `
                 <div style="padding: 40px; background: var(--bg-deep); border-radius: 12px; width: 100%; text-align: center;">

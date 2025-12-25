@@ -8,6 +8,7 @@ class SettingsManager {
             imageModel: "doubao-seedream-4-0-250828",
             videoModel: "doubao-seedance-1-0-pro-251015",
             audioModel: "cosyvoice-v2", // Default for voice-clone.py
+            audioInputDeviceId: "default",
             theme: "dark"
         };
         this.settings = this.load();

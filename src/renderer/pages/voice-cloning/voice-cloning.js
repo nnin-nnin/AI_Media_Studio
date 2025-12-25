@@ -106,6 +106,12 @@ function loadVoiceCloningPage(container) {
                                         <option disabled>Loading models...</option>
                                     </select>
                                 </div>
+                                <div style="margin-top:12px;">
+                                    <label style="display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px;">Microphone Input</label>
+                                    <select id="vc-mic-select" class="studio-select-glass">
+                                        <option value="default">Default System Audio</option>
+                                    </select>
+                                </div>
                             </div>
                          </div>
 
@@ -250,7 +256,9 @@ function setupVoiceCloningEventListeners() {
     });
 
     // 4.5 Model Settings Logic
+    // 4.5 Model Settings Logic
     initModelSelect('vc-model-select', 'audioModel', 'audio');
+    initMicSelect();
 
     // 5. Generate Logic
     const generateBtn = document.getElementById('generate-voice-btn');
@@ -370,7 +378,7 @@ function setupVoiceCloningEventListeners() {
                 // --- NEW: Automatically Add to TTS Presets ---
                 if (mode === 'clone' && result.voice_id) {
                     try {
-                        const name = `Cloned_${Date.now().toString().slice(-4)}`;
+                        const name = `Cloned_${Date.now()}`;
                         const regRes = await fetch('/api/ai/characters', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -496,7 +504,9 @@ function setupVoiceCloningEventListeners() {
 
             // START Recording
             try {
-                const started = await recorder.start();
+                const savedMicId = window.SettingsManager.get('audioInputDeviceId');
+                const micId = (savedMicId && savedMicId !== 'default') ? savedMicId : null;
+                const started = await recorder.start(micId);
                 if (started) {
                     recordingStartTime = Date.now();
                     micSlot.classList.add('recording');
@@ -545,5 +555,61 @@ async function initModelSelect(selectId, settingsKey, type = null) {
 
     select.addEventListener('change', (e) => {
         window.SettingsManager.set(settingsKey, e.target.value);
+    });
+}
+
+/**
+ * Initialize Microphone Selection
+ */
+async function initMicSelect() {
+    const select = document.getElementById('vc-mic-select');
+    if (!select) return;
+
+    // Load saved device
+    let savedId = window.SettingsManager.get('audioInputDeviceId');
+
+    const updateDevices = async () => {
+        try {
+            await navigator.mediaDevices.getUserMedia({ audio: true }); // Request permission first to get labels
+            const devices = await navigator.mediaDevices.enumerateDevices();
+
+            // Filter audio inputs
+            const audioInputs = devices.filter(d => d.kind === 'audioinput');
+
+            // --- Auto-Select Logic ---
+            // If current setting is default/missing, try to find a better one
+            if (!savedId || savedId === 'default') {
+                const bestCandidate = audioInputs.find(d =>
+                    (d.label.toLowerCase().includes('built-in') || d.label.toLowerCase().includes('macbook') || d.label.toLowerCase().includes('default')) &&
+                    !d.label.toLowerCase().includes('virtual') &&
+                    !d.label.toLowerCase().includes('blackhole')
+                );
+
+                if (bestCandidate) {
+                    console.log("[AutoSelect] Switching from default to:", bestCandidate.label);
+                    savedId = bestCandidate.deviceId;
+                    window.SettingsManager.set('audioInputDeviceId', savedId);
+                }
+            }
+            // -------------------------
+
+            select.innerHTML = `
+                <option value="default">Default System Audio</option>
+                ${audioInputs.map(d => `<option value="${d.deviceId}" ${d.deviceId === savedId ? 'selected' : ''}>${d.label || `Microphone ${d.deviceId.slice(0, 5)}...`}</option>`).join('')}
+            `;
+
+            // Ensure select reflects auto-selection
+            select.value = savedId || 'default';
+
+        } catch (e) {
+            console.error("Failed to list audio devices", e);
+        }
+    };
+
+    updateDevices();
+    navigator.mediaDevices.ondevicechange = updateDevices;
+
+    select.addEventListener('change', (e) => {
+        window.SettingsManager.set('audioInputDeviceId', e.target.value);
     });
 }

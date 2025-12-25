@@ -206,9 +206,20 @@ class AIService {
 
       // --- Normalize Audio if ffmpeg is available ---
       try {
+        const inputStats = fs.statSync(audioFilePath);
+        console.log(`[AIService] Input audio size: ${inputStats.size} bytes`);
+
         const normalizedPath = path.join(tempDir, `norm_audio_${Date.now()}.wav`);
         await this.convertToStandardWav(audioFilePath, normalizedPath);
+
         if (fs.existsSync(normalizedPath)) {
+          const normStats = fs.statSync(normalizedPath);
+          console.log(`[AIService] Normalized WAV size: ${normStats.size} bytes`);
+
+          if (normStats.size < 1000) {
+            console.warn("[AIService] WARNING: Normalized audio is suspiciously small!");
+          }
+
           fs.unlinkSync(audioFilePath); // Remove original dirty format
           audioFilePath = normalizedPath;
           console.log("[AIService] Audio normalized to WAV via ffmpeg");
@@ -292,7 +303,10 @@ class AIService {
     if (dataUrl.startsWith('data:audio/mp3')) return 'mp3';
     if (dataUrl.startsWith('data:audio/mpeg')) return 'mp3';
     if (dataUrl.startsWith('data:audio/webm')) return 'webm';
-    return 'wav'; // 默认
+    if (dataUrl.startsWith('data:audio/ogg')) return 'ogg';
+    // Fallback for generic audio type
+    if (dataUrl.includes('audio/webm')) return 'webm';
+    return 'wav'; // Default fallback
   }
 
   /**
