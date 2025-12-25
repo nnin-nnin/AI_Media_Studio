@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: ai-media-studio-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    # 商业化最佳实践：设置资源限制，防止占用过多宿主机内存
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    restart: unless-stopped
+
+volumes:
+  redis_data:

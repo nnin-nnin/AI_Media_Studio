@@ -228,48 +228,44 @@ app.post('/api/ai/edit-image', async (req, res) => {
     }
 });
 
+// --- Async AI Generation (Queue) ---
+import { addVideoJob, addVoiceJob } from './queue/index.js';
+
 app.post('/api/ai/video', async (req, res) => {
     try {
-        taskManager.begin('video-generation');
+        // Enforce UserId
+        const jobData = { ...req.body, userId: req.user.id };
 
-        // Generate a unique local path in the uploads directory
-        const fileName = `video_${Date.now()}.mp4`;
-        const localPath = path.join(UPLOADS_DIR, fileName);
+        logger.info("[Queue] Submitting Video Job", { user: req.user.id });
+        const job = await addVideoJob(jobData);
 
-        // Merge output_path into options
-        const options = { ...req.body, output_path: localPath };
-
-        logger.info("Generating Video", { options });
-        const result = await AIService.generateVideo(options);
-
-        if (result.status === 'error') return res.status(400).json(result);
-
-        // Convert local path back to web URL if it was saved locally
-        if (result.video_url && result.video_url === localPath) {
-            result.video_url = `/uploads/${fileName}`;
-        }
-
-        res.json(result);
+        // Return 202 Accepted immediately
+        res.status(202).json({
+            status: 'pending',
+            jobId: job.id,
+            message: 'Video generation started successfully. Check "My Assets" later.'
+        });
     } catch (error) {
-        logger.error("Video Gen Error", { error: error.message });
-        res.status(500).json({ status: 'error', message: error.message });
-    } finally {
-        taskManager.end('video-generation');
+        logger.error("Video Queue Error", { error: error.message });
+        res.status(500).json({ status: 'error', message: "Failed to queue video task. Ensure Redis is running." });
     }
 });
 
 app.post('/api/ai/voice', async (req, res) => {
     try {
-        taskManager.begin('voice-cloning');
-        logger.info("Cloning Voice", { options: req.body });
-        const result = await AIService.cloneVoice(req.body);
-        if (result.status === 'error') return res.status(400).json(result);
-        res.json(result);
+        const jobData = { ...req.body, userId: req.user.id };
+
+        logger.info("[Queue] Submitting Voice Clone Job", { user: req.user.id });
+        const job = await addVoiceJob(jobData);
+
+        res.status(202).json({
+            status: 'pending',
+            jobId: job.id,
+            message: 'Voice cloning started successfully. Check "My Assets" later.'
+        });
     } catch (error) {
-        logger.error("Voice Clone Error", { error: error.message });
-        res.status(500).json({ status: 'error', message: error.message });
-    } finally {
-        taskManager.end('voice-cloning');
+        logger.error("Voice Queue Error", { error: error.message });
+        res.status(500).json({ status: 'error', message: "Failed to queue voice task. Ensure Redis is running." });
     }
 });
 
@@ -351,8 +347,11 @@ app.post('/api/ai/stt', upload.single('audio'), async (req, res) => {
 
 
 // Start Server
-app.listen(config.port, '0.0.0.0', async () => {
-    logger.info(`Server running`, { url: `http://localhost:${config.port}`, frontend: rendererPath });
-    // REMOVED: Auto-register default student user. This is now handled by scripts/create_user.js
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    app.listen(config.port, '0.0.0.0', async () => {
+        logger.info(`Server running`, { url: `http://localhost:${config.port}`, frontend: rendererPath });
+    });
+}
+
+export default app;
 

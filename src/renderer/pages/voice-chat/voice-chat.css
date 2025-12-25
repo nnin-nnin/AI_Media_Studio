@@ -106,25 +106,25 @@
 }
 
 .active-char-avatar {
-    width: 180px;
-    height: 180px;
+    width: 280px;
+    height: 280px;
     border-radius: 50%;
     object-fit: cover;
-    border: 6px solid white;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    border: 8px solid white;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .active-char-display.speaking .active-char-avatar {
     transform: scale(1.05);
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 0 15px rgba(59, 130, 246, 0.2);
     border-color: #3b82f6;
 }
 
 .active-char-name {
-    font-size: 24px;
+    font-size: 32px;
     font-weight: 700;
-    margin-top: 1rem;
+    margin-top: 1.5rem;
     color: var(--text-primary);
 }
 

@@ -77,8 +77,8 @@ class GlobalSidebar {
                 <div class="nav-group">
                     ${this.renderNavItem('face-swap', window.i18n.t('STUDIO_IMAGE'), 'image')}
                     ${this.renderNavItem('video-generation', window.i18n.t('STUDIO_VIDEO'), 'video')}
-                    ${this.renderNavItem('voice-cloning', window.i18n.t('STUDIO_AUDIO'), 'mic')}
-                    ${this.renderNavItem('voice-chat', window.i18n.t('STUDIO_CHAT'), 'message')}
+                    <!-- ${this.renderNavItem('voice-cloning', window.i18n.t('STUDIO_AUDIO'), 'mic')} -->
+                    ${this.renderNavItem('voice-chat', window.i18n.t('STUDIO_AUDIO'), 'message')}
                     ${this.renderNavItem('realtime-vision', window.i18n.t('STUDIO_VISION'), 'zap')}
                 </div>
 

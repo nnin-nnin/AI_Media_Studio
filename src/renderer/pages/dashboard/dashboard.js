@@ -74,7 +74,7 @@ function loadDashboardPage(container) {
                 </div>
 
                 <!-- 3. Voice Cloning Card (Audio Studio) -->
-                <div class="feature-card" onclick="window.app.navigate('voice-cloning')">
+                <div class="feature-card" onclick="window.app.navigate('voice-chat')">
                     <div class="card-media media-placeholder voice">
                         <img src="/system/covers/voice_clone.png" alt="Voice Cloning">
                     </div>

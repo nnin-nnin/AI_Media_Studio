@@ -248,33 +248,40 @@ class VoiceChatPage {
         if (window.GlobalSidebar) {
             window.GlobalSidebar.setJobStatus('voice-chat', 'processing');
         }
+
+        // Capture settings NOW, before manual navigation or async delays
+        const speedEl = document.getElementById('voice-speed');
+        const srEl = document.getElementById('voice-sr');
+        const currentSettings = {
+            speed: speedEl ? parseFloat(speedEl.value) : 1.0,
+            sampleRate: srEl ? parseInt(srEl.value) : 22050
+        };
+
         try {
             const formData = new FormData();
             formData.append('audio', blob, 'recording.webm');
 
             const token = localStorage.getItem('ai_auth_token');
-            console.log("[VoiceChat] Sending STT request...");
+            // ... (fetch logic) ...
             const res = await window.fetch('/api/ai/stt', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
 
-            console.log("[VoiceChat] STT response status:", res.status);
+            // ... (response handling) ...
             const result = await res.json();
-            console.log("[VoiceChat] STT result:", result);
+
             if (result.status === 'success') {
                 if (result.text && result.text.trim()) {
                     this.recognitionResult.innerText = result.text;
-                    await this.handleFinalTranscript(result.text);
+                    // Pass the pre-captured settings
+                    await this.handleFinalTranscript(result.text, currentSettings);
                 } else {
+                    // ... (empty text handling) ...
                     console.warn("[VoiceChat] STT returned empty text.");
                     this.micStatus.innerText = "Couldn't hear anything. Please try again.";
                     this.recognitionResult.innerText = "";
-
-                    // Reset character avatar if it was stuck
                     const avatarContainer = document.getElementById('active-char-container');
                     if (avatarContainer) avatarContainer.classList.remove('speaking');
                 }
@@ -282,6 +289,7 @@ class VoiceChatPage {
                 throw new Error(result.message || "STT failed");
             }
         } catch (e) {
+            // ... (error handling) ...
             console.error("[VoiceChat] STT Error:", e);
             this.micStatus.innerText = "Speech recognition failed.";
             this.recognitionResult.innerText = "";
@@ -292,20 +300,17 @@ class VoiceChatPage {
         }
     }
 
-    async handleFinalTranscript(text) {
+    async handleFinalTranscript(text, settings = { speed: 1.0, sampleRate: 22050 }) {
         if (!text || !this.selectedCharacter) return;
-
         this.micStatus.innerText = window.i18n.t('CHAT_PROCESSING');
 
         try {
-            const speed = parseFloat(document.getElementById('voice-speed').value);
-            const sr = parseInt(document.getElementById('voice-sr').value);
-
+            // Use passed settings, no DOM access needed here
             const res = await fetchAPI('/api/ai/character-voice', {
                 characterId: this.selectedCharacter.id,
                 text: text,
-                speed: speed,
-                sampleRate: sr
+                speed: settings.speed,
+                sampleRate: settings.sampleRate
             });
 
             if (res.status === 'success') {
