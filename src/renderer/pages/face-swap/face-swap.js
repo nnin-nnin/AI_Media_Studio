@@ -68,6 +68,10 @@ function loadFaceSwapPage(container) {
                         <div class="studio-tag" data-prompt="${window.i18n.t('IMAGE_PROMPT_BATMAN')}">${window.i18n.t('IMAGE_TAG_BATMAN')}</div>
                         <div class="studio-tag" data-prompt="${window.i18n.t('IMAGE_PROMPT_CYBERPUNK')}">${window.i18n.t('IMAGE_TAG_CYBERPUNK')}</div>
                         <div class="studio-tag" data-prompt="${window.i18n.t('IMAGE_PROMPT_ANIME')}">${window.i18n.t('IMAGE_TAG_ANIME')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('IMAGE_PROMPT_DISNEY')}">${window.i18n.t('IMAGE_TAG_DISNEY')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('IMAGE_PROMPT_WUKONG')}">${window.i18n.t('IMAGE_TAG_WUKONG')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('IMAGE_PROMPT_NEZHA')}">${window.i18n.t('IMAGE_TAG_NEZHA')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('IMAGE_PROMPT_LANGLANG')}">${window.i18n.t('IMAGE_TAG_LANGLANG')}</div>
                     </div>
 
                     <!-- Text Editor -->

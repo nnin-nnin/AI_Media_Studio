@@ -67,6 +67,10 @@ function loadVideoGenerationPage(container) {
                         <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_CHARACTER_SMILE')}">${window.i18n.t('VIDEO_TAG_CHARACTER_SMILE')}</div>
                         <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_CHARACTER_WALK')}">${window.i18n.t('VIDEO_TAG_CHARACTER_WALK')}</div>
                         <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_CHARACTER_ACTION')}">${window.i18n.t('VIDEO_TAG_CHARACTER_ACTION')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_DISNEY')}">${window.i18n.t('IMAGE_TAG_DISNEY')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_WUKONG')}">${window.i18n.t('IMAGE_TAG_WUKONG')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_NEZHA')}">${window.i18n.t('IMAGE_TAG_NEZHA')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_LANGLANG')}">${window.i18n.t('IMAGE_TAG_LANGLANG')}</div>
                     </div>
 
                     <!-- Text Editor -->
