@@ -173,7 +173,7 @@ class GlobalSidebar {
         const recentWorkContainer = document.getElementById('sidebar-recent-work');
         if (!recentWorkContainer) return;
 
-        const recentAssets = window.AssetManager ? window.AssetManager.getRecent('all', 5) : [];
+        const recentAssets = window.AssetManager ? window.AssetManager.getRecent('all', 10) : [];
 
         if (recentAssets.length > 0) {
             recentWorkContainer.innerHTML = recentAssets.map(asset => {

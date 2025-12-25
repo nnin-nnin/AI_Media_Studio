@@ -63,14 +63,14 @@ function loadVideoGenerationPage(container) {
 
                     <!-- Quick Selection Tags -->
                     <div class="studio-tags-row">
-                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_CHARACTER_WAVE')}">${window.i18n.t('VIDEO_TAG_CHARACTER_WAVE')}</div>
-                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_CHARACTER_SMILE')}">${window.i18n.t('VIDEO_TAG_CHARACTER_SMILE')}</div>
-                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_CHARACTER_WALK')}">${window.i18n.t('VIDEO_TAG_CHARACTER_WALK')}</div>
-                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_CHARACTER_ACTION')}">${window.i18n.t('VIDEO_TAG_CHARACTER_ACTION')}</div>
-                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_DISNEY')}">${window.i18n.t('IMAGE_TAG_DISNEY')}</div>
-                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_WUKONG')}">${window.i18n.t('IMAGE_TAG_WUKONG')}</div>
-                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_NEZHA')}">${window.i18n.t('IMAGE_TAG_NEZHA')}</div>
-                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_LANGLANG')}">${window.i18n.t('IMAGE_TAG_LANGLANG')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_CLOSEUP_SMILE')}">${window.i18n.t('VIDEO_TAG_CLOSEUP_SMILE')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_SLOW_TURN')}">${window.i18n.t('VIDEO_TAG_SLOW_TURN')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_CINEMATIC_FIXED')}">${window.i18n.t('VIDEO_TAG_CINEMATIC_FIXED')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_DISNEY_PORTRAIT')}">${window.i18n.t('VIDEO_TAG_DISNEY_PORTRAIT')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_ANIME_ID')}">${window.i18n.t('VIDEO_TAG_ANIME_ID')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_STABLE_WALK')}">${window.i18n.t('VIDEO_TAG_STABLE_WALK')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_WUKONG_STABLE')}">${window.i18n.t('VIDEO_TAG_WUKONG_STABLE')}</div>
+                        <div class="studio-tag" data-prompt="${window.i18n.t('VIDEO_PROMPT_MODERN_ID')}">${window.i18n.t('VIDEO_TAG_MODERN_ID')}</div>
                     </div>
 
                     <!-- Text Editor -->
