@@ -347,17 +347,29 @@ class AIService {
 
       console.log(`[AIService] Spawning via UV: ${pythonPath} ${combinedArgs.join(' ')}`);
 
-      // CREATE CLEAN ENV: Remove proxies that might break WebSocket/SSL in Python
-      const CleanEnv = { ...process.env };
-      delete CleanEnv.HTTP_PROXY;
-      delete CleanEnv.HTTPS_PROXY;
-      delete CleanEnv.ALL_PROXY;
-      delete CleanEnv.http_proxy;
-      delete CleanEnv.https_proxy;
-      delete CleanEnv.all_proxy;
+      console.log(`[AIService] Spawning via UV: ${pythonPath} ${combinedArgs.join(' ')}`);
+
+      // Determine if we need a CLEAN environment (no proxy)
+      // Voice Cloning (voice-clone.py) uses WebSocket and often fails with proxy
+      // Other scripts (like asr_helper.py) generally use HTTP REST and might REQUIRE proxy
+      const isVoiceClone = args.some(arg => arg && arg.includes('voice-clone.py'));
+
+      let spawnEnv = { ...process.env };
+
+      if (isVoiceClone) {
+        console.log("[AIService] Detected Voice Cloning: Stripping Proxy Env Vars to ensure WebSocket stability.");
+        delete spawnEnv.HTTP_PROXY;
+        delete spawnEnv.HTTPS_PROXY;
+        delete spawnEnv.ALL_PROXY;
+        delete spawnEnv.http_proxy;
+        delete spawnEnv.https_proxy;
+        delete spawnEnv.all_proxy;
+      } else {
+        console.log(`[AIService] Standard Execution (Proxy retained if present)`);
+      }
 
       const pyProcess = spawn(pythonPath, combinedArgs, {
-        env: CleanEnv, // Explicitly pass CLEAN environment
+        env: spawnEnv,
       });
 
       let stdoutData = '';
