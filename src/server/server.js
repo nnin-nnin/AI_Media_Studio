@@ -310,15 +310,7 @@ app.get('/api/ai/characters', async (req, res) => {
 
 app.post('/api/ai/characters', async (req, res) => {
     try {
-        const { name, voice_id, avatar, description } = req.body;
-        const newChar = await prisma.character.create({
-            data: {
-                name,
-                voice_id,
-                avatar: avatar || '/assets/system/avatars/avatar_default.png',
-                description: description || 'User cloned voice'
-            }
-        });
+        const newChar = await VoiceChatService.createCharacter(req.body);
         res.json({ status: 'success', data: newChar });
     } catch (error) {
         logger.error("Create Character Error", { error: error.message });

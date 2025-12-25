@@ -214,22 +214,22 @@ async function setupRealtimeVisionListeners() {
                     statusText.textContent = window.i18n.t('VISION_STATUS_ACTIVE');
                     startBtn.style.display = 'none';
                     stopBtn.style.display = 'block';
-
-                    // Set initial prompt using the session object we just got
-                    const initPrompt = promptInput.value.trim();
-                    if (initPrompt && session) {
-                        try {
-                            session.setPrompt(initPrompt);
-                            console.log("[Vision] Initial style set to:", initPrompt);
-                        } catch (e) {
-                            console.warn("[Vision] SetPrompt failed in callback:", e);
-                        }
-                    }
                 }
             });
 
             realtimeSession = session; // Assign globally
             console.log("[Vision] Session established:", session);
+
+            // Set initial prompt immediately after session starts
+            const initPrompt = promptInput.value.trim();
+            if (initPrompt && session) {
+                try {
+                    session.setPrompt(initPrompt);
+                    console.log("[Vision] Initial style set to:", initPrompt);
+                } catch (e) {
+                    console.warn("[Vision] SetPrompt failed:", e);
+                }
+            }
 
         } catch (err) {
             console.error("[Vision] AI Mirror Error:", err);

@@ -231,13 +231,14 @@ class VoiceChatPage {
         if (this.micBtn) this.micBtn.classList.remove('recording');
         if (this.micStatus) this.micStatus.innerText = window.i18n.t('CHAT_PROCESSING');
 
-        const audioBlob = await this.recorder.stop();
-        console.log("[VoiceChat] Recorder returned blob:", audioBlob);
-        if (audioBlob && audioBlob.size > 0) {
-            await this.processRecordedAudio(audioBlob);
+        const recordResult = await this.recorder.stop();
+        if (recordResult && recordResult.blob && recordResult.maxVolume > 0.01) {
+            console.log("[VoiceChat] Sending valid audio. Max Volume:", recordResult.maxVolume);
+            await this.processRecordedAudio(recordResult.blob);
         } else {
-            console.warn("[VoiceChat] Recording produced no audio data.");
-            this.micStatus.innerText = "No audio recorded.";
+            console.warn("[VoiceChat] Recording produced no audio data or was too quiet.", recordResult);
+            this.micStatus.innerText = "No audio detected or volume too low.";
+            this.recognitionResult.innerText = "";
         }
     }
 

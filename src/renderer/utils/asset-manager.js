@@ -24,15 +24,24 @@ class AssetManager {
     }
 
     async refresh() {
-        try {
-            const data = await fetchAPI('/api/assets', {}, { method: 'GET' });
-            if (data) {
-                this.assets = data;
-                this.notify();
+        if (this._refreshPromise) return this._refreshPromise;
+
+        this._refreshPromise = (async () => {
+            try {
+                const data = await fetchAPI('/api/assets', {}, { method: 'GET' });
+                if (data) {
+                    this.assets = data;
+                    this.notify();
+                }
+                return data;
+            } catch (e) {
+                console.warn("Failed to load assets:", e.message);
+            } finally {
+                this._refreshPromise = null;
             }
-        } catch (e) {
-            console.warn("Failed to load assets:", e.message);
-        }
+        })();
+
+        return this._refreshPromise;
     }
 
     /**

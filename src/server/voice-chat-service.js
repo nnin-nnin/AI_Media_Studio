@@ -31,6 +31,18 @@ class VoiceChatService {
             text: text
         };
     }
+
+    async createCharacter(data) {
+        const { name, voice_id, avatar, description } = data;
+        return prisma.character.create({
+            data: {
+                name,
+                voice_id,
+                avatar: avatar || '/assets/system/avatars/avatar_default.png',
+                description: description || 'User cloned voice'
+            }
+        });
+    }
 }
 
 export default new VoiceChatService();

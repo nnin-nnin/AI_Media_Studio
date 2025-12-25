@@ -626,7 +626,7 @@ function setupFaceSwapEventListeners() {
             `;
         } finally {
             generateBtn.disabled = false;
-            generateBtn.innerText = originalText;
+            generateBtn.innerText = oldText;
             if (window.GlobalSidebar) {
                 window.GlobalSidebar.setJobStatus('face-swap', 'idle');
             }

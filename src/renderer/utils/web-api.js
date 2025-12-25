@@ -36,8 +36,8 @@ export async function fetchAPI(endpoint, data = {}, options = {}) {
             const response = await fetch(url, config);
 
             if (response.status === 429 && retryCount < maxRetries) {
-                const delay = initialDelay * Math.pow(2, retryCount); // Exponential backoff
-                console.warn(`[WebAPI] Rate limited (429). Retrying in ${delay}ms...`);
+                const delay = initialDelay * Math.pow(2, retryCount) + (Math.random() * 500); // Exponential with jitter
+                console.warn(`[WebAPI] Rate limited (429). Retrying in ${delay.toFixed(0)}ms...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 return attemptFetch(retryCount + 1);
             }
@@ -50,17 +50,23 @@ export async function fetchAPI(endpoint, data = {}, options = {}) {
                 throw new Error('Authentication required');
             }
 
-            if (!response.ok) {
-                const error = await response.json();
-                console.error("[WebAPI] HTTP Error:", error);
-                throw new Error(error.message || 'Server Error');
+            const text = await response.text();
+            let body = {};
+            try {
+                body = JSON.parse(text);
+            } catch (jsonErr) {
+                body = { message: text };
             }
 
-            return await response.json();
+            if (!response.ok) {
+                console.error("[WebAPI] HTTP Error:", body);
+                throw new Error(body.message || body.error || 'Server Error');
+            }
+
+            return body;
         } catch (e) {
-            if (e.message.includes('429') && retryCount < maxRetries) {
-                // Should not happen if handled above, but for safety
-                const delay = initialDelay * Math.pow(2, retryCount);
+            if (e.message.toLowerCase().includes('too many requests') && retryCount < maxRetries) {
+                const delay = initialDelay * Math.pow(2, retryCount) + (Math.random() * 500);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 return attemptFetch(retryCount + 1);
             }
@@ -204,5 +210,6 @@ if (typeof window !== 'undefined') {
         readAudioFile,
         listModels
     };
+    window.fetchAPI = fetchAPI;
     console.log('Web API Adapter initialized (Secure)');
 }

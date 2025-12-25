@@ -464,11 +464,17 @@ function setupVoiceCloningEventListeners() {
                     return;
                 }
 
-                const audioBlob = await recorder.stop();
+                const result = await recorder.stop();
+                if (!result) return;
+
+                const { blob: audioBlob, avgVolume, maxVolume } = result;
                 micSlot.classList.remove('recording');
 
-                if (!audioBlob || audioBlob.size < 1000) {
-                    alert(window.i18n.t('AUDIO_RECORD_SILENT'));
+                // Advanced Silence Detection: RMS threshold (0.01 is roughly very quiet background noise)
+                // Also check size as fallback
+                if (!audioBlob || audioBlob.size < 1000 || maxVolume < 0.01) {
+                    console.warn("[VoiceCloning] Recording stopped but audio seems silent. Avg:", avgVolume, "Max:", maxVolume);
+                    alert(`${window.i18n.t('AUDIO_RECORD_SILENT')} (Volume too low)`);
                     micSlot.innerHTML = defaultMicHTML;
                     return;
                 }

@@ -46,17 +46,16 @@ function loadAssetsPage(container) {
     renderAssetGrid('all');
     setupAssetsListeners();
 
-    // Listen for updates
-    const updateHandler = () => {
-        const activeBtn = document.querySelector('.filter-btn.active');
-        const filter = activeBtn ? activeBtn.dataset.filter : 'all';
-        renderAssetGrid(filter);
-    };
-    window.removeEventListener('assets-updated', updateHandler); // Avoid dupes if reloaded? 
-    // Actually loadAssetsPage is called on nav. We should probably attach to window but clean up?
-    // Since this is a simple app, adding it here is fine, but we might accumulate listeners if we navigate away and back.
-    // Better to handle cleanup or check if listener exists. For now, simple add.
-    window.addEventListener('assets-updated', updateHandler);
+    // Listen for updates (Named function for reliable removal)
+    if (!window._assetsUpdateHandler) {
+        window._assetsUpdateHandler = () => {
+            const activeBtn = document.querySelector('.filter-btn.active');
+            const filter = activeBtn ? activeBtn.dataset.filter : 'all';
+            renderAssetGrid(filter);
+        };
+    }
+    window.removeEventListener('assets-updated', window._assetsUpdateHandler);
+    window.addEventListener('assets-updated', window._assetsUpdateHandler);
 }
 
 function renderAssetGrid(filter) {
@@ -81,7 +80,8 @@ function renderAssetGrid(filter) {
     grid.innerHTML = assets.map(asset => {
         let content = '';
         if (asset.type === 'image') {
-            content = `<img src="${asset.url}" loading="lazy" onerror="this.onerror=null; this.parentElement.classList.add('is-missing'); this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'%3E%3Cpath d=\'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\'/%3E%3Cpolyline points=\'17 8 12 3 7 8\'/%3E%3Cline x1=\'12\' y1=\'3\' x2=\'12\' y2=\'15\'/%3E%3C/svg%3E';">`;
+            const fallbackSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='17 8 12 3 7 8'/%3E%3Cline x1='12' y1='3' x2='12' y2='15'/%3E%3C/svg%3E";
+            content = `<img src="${asset.url}" loading="lazy" onerror="this.onerror=null; this.parentElement.classList.add('is-missing'); this.src='${fallbackSvg}';">`;
         } else if (asset.type === 'video') {
             content = `<video src="${asset.url}" muted onmouseover="this.play()" onmouseout="this.pause()" onerror="this.parentElement.classList.add('is-missing'); this.style.display='none';"></video>
                        <div class="video-missing-icon">🎬</div>`;
