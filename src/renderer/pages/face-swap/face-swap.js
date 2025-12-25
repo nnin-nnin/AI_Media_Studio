@@ -56,10 +56,10 @@ function loadFaceSwapPage(container) {
                     <!-- Sample Faces -->
                     <div class="studio-sample-label">${window.i18n.t('STUDIO_SAMPLE_LABEL')}</div>
                     <div class="studio-samples-row">
-                        <img src="/assets/system/samples/sample_face_1.png" class="studio-sample-img" data-index="1">
-                        <img src="/assets/system/samples/sample_face_2.png" class="studio-sample-img" data-index="2">
-                        <img src="/assets/system/samples/sample_face_3.png" class="studio-sample-img" data-index="3">
-                        <img src="/assets/system/samples/sample_face_4.png" class="studio-sample-img" data-index="4">
+                        <img src="/system/samples/sample_face_1.png" class="studio-sample-img" data-index="1">
+                        <img src="/system/samples/sample_face_2.png" class="studio-sample-img" data-index="2">
+                        <img src="/system/samples/sample_face_3.png" class="studio-sample-img" data-index="3">
+                        <img src="/system/samples/sample_face_4.png" class="studio-sample-img" data-index="4">
                     </div>
 
                     <!-- Quick Selection Tags -->

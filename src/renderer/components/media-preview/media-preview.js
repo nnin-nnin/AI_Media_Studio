@@ -110,7 +110,7 @@ class MediaPreview {
 
         let html = '';
         if (asset.type === 'image') {
-            html = `<img src="${mediaUrl}" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'white\' stroke-width=\'2\'%3E%3Cpath d=\'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\'/%3E%3Cpolyline points=\'17 8 12 3 7 8\'/%3E%3Cline x1=\'12\' y1=\'3\' x2=\'12\' y2=\'15\'/%3E%3C/svg%3E'; this.style.opacity=0.5; this.style.width='64px';" />`;
+            html = `<img src="${mediaUrl}" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22%3E%3Cpath d=%22M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4%22/%3E%3Cpolyline points=%2217 8 12 3 7 8%22/%3E%3Cline x1=%2212%22 y1=%223%22 x2=%2212%22 y2=%2215%22/%3E%3C/svg%3E'; this.style.opacity=0.5; this.style.width='64px';" />`;
         } else if (asset.type === 'video') {
             html = `<video src="${mediaUrl}" controls autoplay loop onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'color:white; padding: 40px;\'>🎬 Missing video file</div>'"></video>`;
         } else if (asset.type === 'audio') {

@@ -59,6 +59,20 @@ const uploadsPath = path.join(process.cwd(), 'data', 'uploads');
 console.log(`[Static] Serving uploads from: ${uploadsPath}`);
 app.use('/uploads', express.static(uploadsPath));
 
+// Debug route for uploads (only if express.static falls through)
+app.get('/uploads/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const fullPath = path.join(uploadsPath, filename);
+    const exists = fs.existsSync(fullPath);
+    logger.error("Upload 404 Debug", {
+        filename,
+        fullPath,
+        exists,
+        cwd: process.cwd()
+    });
+    res.status(404).send(`File NOT found. Checked at: ${fullPath}`);
+});
+
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

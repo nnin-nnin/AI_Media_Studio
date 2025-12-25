@@ -55,10 +55,10 @@ function loadVideoGenerationPage(container) {
                     <!-- Sample Faces -->
                     <div class="studio-sample-label">${window.i18n.t('STUDIO_SAMPLE_LABEL')}</div>
                     <div class="studio-samples-row">
-                        <img class="studio-sample-img" src="/assets/system/samples/sample_face_1.png" data-index="1">
-                        <img class="studio-sample-img" src="/assets/system/samples/sample_face_2.png" data-index="2">
-                        <img class="studio-sample-img" src="/assets/system/samples/sample_face_3.png" data-index="3">
-                        <img class="studio-sample-img" src="/assets/system/samples/sample_face_4.png" data-index="4">
+                        <img class="studio-sample-img" src="/system/samples/sample_face_1.png" data-index="1">
+                        <img class="studio-sample-img" src="/system/samples/sample_face_2.png" data-index="2">
+                        <img class="studio-sample-img" src="/system/samples/sample_face_3.png" data-index="3">
+                        <img class="studio-sample-img" src="/system/samples/sample_face_4.png" data-index="4">
                     </div>
 
                     <!-- Quick Selection Tags -->
