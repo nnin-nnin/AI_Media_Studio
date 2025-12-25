@@ -607,3 +607,6 @@ async function initMicSelect() {
         window.SettingsManager.set('audioInputDeviceId', e.target.value);
     });
 }
+
+// Export for global use
+window.loadVoiceCloningPage = loadVoiceCloningPage;
