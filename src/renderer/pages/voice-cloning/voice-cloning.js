@@ -1,4 +1,5 @@
 // pages/voice-cloning/voice-cloning.js
+import { AudioRecorder } from '../../utils/audio-recorder.js';
 
 /**
  * 加载克隆声音页面内容 (Studio Layout Refactor)
@@ -51,6 +52,11 @@ function loadVoiceCloningPage(container) {
                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" x2="12" y1="19" y2="23"></line><line x1="8" x2="16" y1="23" y2="23"></line></svg>
                              <div style="font-size:12px; margin-top:5px;">${window.i18n.t('AUDIO_RECORD_LABEL')}</div>
                         </div>
+                    </div>
+
+                    <!-- Preset Voices Row (Visible in Text mode) -->
+                    <div class="studio-slots-row" id="vc-presets-row" style="display:flex; gap: 10px; margin-bottom:12px; overflow-x:auto; padding-bottom:8px;">
+                        <div class="loading-vc-presets" style="font-size:11px; color:var(--text-secondary); opacity:0.7;">Loading presets...</div>
                     </div>
 
                     <!-- Text Editor -->
@@ -159,11 +165,16 @@ function setupVoiceCloningEventListeners() {
             const mode = btn.dataset.mode;
             if (mode === 'clone') {
                 slotsRow.style.display = 'flex';
+                document.getElementById('vc-presets-row').style.display = 'none';
             } else {
                 slotsRow.style.display = 'none';
+                document.getElementById('vc-presets-row').style.display = 'flex';
             }
         });
     });
+
+    // 1.5 Load Presets
+    loadAndRenderVCPresets();
 
     // 2. Audio Slot Logic
     const slot = document.getElementById('vc-slot-ref');
@@ -257,6 +268,16 @@ function setupVoiceCloningEventListeners() {
         }
 
         const mode = document.querySelector('.mode-btn.active').dataset.mode;
+        let selectedVoiceId = null;
+
+        if (mode === 'text') {
+            const activePreset = document.querySelector('.vc-preset-item.active');
+            if (!activePreset) {
+                alert("Please select a preset voice.");
+                return;
+            }
+            selectedVoiceId = activePreset.dataset.voiceId;
+        }
 
         if (!prompt) {
             alert("Please enter text to generate speech.");
@@ -292,6 +313,8 @@ function setupVoiceCloningEventListeners() {
             const result = await window.electronAPI.cloneVoice({
                 text: prompt,
                 audio: audioData,
+                voiceId: selectedVoiceId,
+                mode: mode,
                 model: window.SettingsManager.get('audioModel') || "cosyvoice-v2"
             });
 
@@ -344,6 +367,29 @@ function setupVoiceCloningEventListeners() {
                     document.body.removeChild(a);
                 });
 
+                // --- NEW: Automatically Add to TTS Presets ---
+                if (mode === 'clone' && result.voice_id) {
+                    try {
+                        const name = `Cloned_${Date.now().toString().slice(-4)}`;
+                        const regRes = await fetch('/api/ai/characters', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: name,
+                                voice_id: result.voice_id,
+                                description: `Cloned on ${new Date().toLocaleString()}`
+                            })
+                        });
+                        const regData = await regRes.json();
+                        if (regData.status === 'success') {
+                            console.log("Cloned voice automatically added to presets:", name);
+                            await loadAndRenderVCPresets(); // Refresh the row
+                        }
+                    } catch (regErr) {
+                        console.error("Auto-registration of cloned voice failed:", regErr);
+                    }
+                }
+
             } else {
                 throw new Error(result?.message || "Generation failed");
             }
@@ -369,190 +415,104 @@ function setupVoiceCloningEventListeners() {
     });
 
 
+    // --- Preset Voices Helper ---
+    async function loadAndRenderVCPresets() {
+        const row = document.getElementById('vc-presets-row');
+        if (!row) return;
+
+        try {
+            const resp = await fetch('/api/ai/characters');
+            const data = await resp.json();
+            if (data.status === 'success') {
+                row.innerHTML = data.data.map((char, index) => `
+                    <div class="vc-preset-item ${index === 0 ? 'active' : ''}" data-voice-id="${char.voice_id}" title="${char.name}">
+                        <img src="${char.avatar}" alt="${char.name}">
+                        <span>${char.name}</span>
+                    </div>
+                `).join('');
+
+                row.querySelectorAll('.vc-preset-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        row.querySelectorAll('.vc-preset-item').forEach(i => i.classList.remove('active'));
+                        item.classList.add('active');
+                    });
+                });
+            }
+        } catch (err) {
+            console.error("Failed to load presets:", err);
+            row.innerHTML = `<div style="font-size:11px; color:var(--error);">Failed to load presets</div>`;
+        }
+    }
+
     // 6. Recording Logic
     const micSlot = document.getElementById('vc-slot-mic');
     const defaultMicHTML = micSlot?.innerHTML;
-    let mediaRecorder = null;
-    let audioChunks = [];
+    const recorder = new AudioRecorder();
+    let recordingStartTime = 0;
 
     if (micSlot) {
         micSlot.addEventListener('click', async () => {
-            // If already has audio or recording, handle reset or stop
             if (micSlot.classList.contains('has-audio')) return;
 
-            if (micSlot.classList.contains('recording')) {
+            if (recorder.isRecording) {
                 // STOP Recording
-                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                    mediaRecorder.stop();
-                    micSlot.classList.remove('recording');
-                    micSlot.innerHTML = `<div style="font-size:12px;">Synthesizing...</div>`;
+                const duration = (Date.now() - recordingStartTime) / 1000;
+                if (duration < 3) {
+                    alert(window.i18n.t('AUDIO_RECORD_TOO_SHORT'));
+                    return;
                 }
+
+                const audioBlob = await recorder.stop();
+                micSlot.classList.remove('recording');
+
+                if (!audioBlob || audioBlob.size < 1000) {
+                    alert(window.i18n.t('AUDIO_RECORD_SILENT'));
+                    micSlot.innerHTML = defaultMicHTML;
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    micSlot.innerHTML = `
+                        <div style="font-size:24px;">🎤</div>
+                        <div class="remove-btn" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
+                    `;
+                    micSlot.classList.add('has-audio');
+                    micSlot.dataset.hasAudio = "true";
+                    micSlot.title = "Recorded Audio";
+                    micSlot.dataset.audioData = reader.result;
+
+                    micSlot.querySelector('.remove-btn').addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        micSlot.innerHTML = defaultMicHTML;
+                        micSlot.classList.remove('has-audio');
+                        delete micSlot.dataset.hasAudio;
+                        delete micSlot.dataset.audioData;
+                    });
+                };
+                reader.readAsDataURL(audioBlob);
                 return;
             }
 
             // START Recording
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                // Use default supported mimeType (usually audio/webm;codecs=opus)
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-
-                mediaRecorder.addEventListener("dataavailable", event => {
-                    audioChunks.push(event.data);
-                });
-
-                mediaRecorder.addEventListener("stop", async () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-
-                    try {
-                        // Convert WebM to WAV for compatibility
-                        const arrayBuffer = await audioBlob.arrayBuffer();
-                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-                        const wavBlob = await audioBufferToWav(audioBuffer);
-
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                            const base64data = reader.result;
-
-                            // Update UI
-                            micSlot.innerHTML = `
-                                <div style="font-size:24px;">🎤</div>
-                                <div class="remove-btn" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
-                            `;
-                            micSlot.classList.add('has-audio');
-                            micSlot.dataset.hasAudio = "true";
-                            micSlot.title = "Recorded Audio (WAV)";
-                            micSlot.dataset.audioData = base64data;
-
-                            micSlot.querySelector('.remove-btn').addEventListener('click', (ev) => {
-                                ev.stopPropagation();
-                                micSlot.innerHTML = defaultMicHTML;
-                                micSlot.classList.remove('has-audio');
-                                delete micSlot.dataset.hasAudio;
-                                delete micSlot.dataset.audioData;
-                            });
-                        };
-                        reader.readAsDataURL(wavBlob);
-
-                    } catch (e) {
-                        console.error("Conversion error:", e);
-                        alert("Error converting audio: " + e.message);
-                    }
-
-                    // Stop all tracks
-                    stream.getTracks().forEach(track => track.stop());
-                });
-
-                mediaRecorder.start();
-                micSlot.classList.add('recording');
-                micSlot.innerHTML = `
-                    <div class="recording-dot"></div>
-                    <div style="font-size:12px; margin-top:5px;">Stop</div>
-                `;
-
+                const started = await recorder.start();
+                if (started) {
+                    recordingStartTime = Date.now();
+                    micSlot.classList.add('recording');
+                    micSlot.innerHTML = `
+                        <div class="recording-dot"></div>
+                        <div style="font-size:12px; margin-top:5px;">Stop</div>
+                    `;
+                }
             } catch (err) {
                 console.error("Error accessing microphone:", err);
-                alert(`Could not access microphone. Error: ${err.name} - ${err.message}. Please check permissions.`);
+                alert(`${window.i18n.t('AUDIO_RECORD_SILENT')} (${err.message})`);
             }
         });
     }
 
-    // Helper: Convert AudioBuffer to WAV Blob
-    async function audioBufferToWav(buffer) {
-        const numChannels = buffer.numberOfChannels;
-        const sampleRate = buffer.sampleRate;
-        const format = 1; // PCM
-        const bitDepth = 16;
-
-        let result;
-        if (numChannels === 2) {
-            result = interleave(buffer.getChannelData(0), buffer.getChannelData(1));
-        } else {
-            result = buffer.getChannelData(0);
-        }
-
-        return encodeWAV(result, format, sampleRate, numChannels, bitDepth);
-    }
-
-    function interleave(inputL, inputR) {
-        const length = inputL.length + inputR.length;
-        const result = new Float32Array(length);
-
-        let index = 0;
-        let inputIndex = 0;
-
-        while (index < length) {
-            result[index++] = inputL[inputIndex];
-            result[index++] = inputR[inputIndex];
-            inputIndex++;
-        }
-        return result;
-    }
-
-    function encodeWAV(samples, format, sampleRate, numChannels, bitDepth) {
-        const bytesPerSample = bitDepth / 8;
-        const blockAlign = numChannels * bytesPerSample;
-
-        const buffer = new ArrayBuffer(44 + samples.length * bytesPerSample);
-        const view = new DataView(buffer);
-
-        /* RIFF identifier */
-        writeString(view, 0, 'RIFF');
-        /* RIFF chunk length */
-        view.setUint32(4, 36 + samples.length * bytesPerSample, true);
-        /* RIFF type */
-        writeString(view, 8, 'WAVE');
-        /* format chunk identifier */
-        writeString(view, 12, 'fmt ');
-        /* format chunk length */
-        view.setUint32(16, 16, true);
-        /* sample format (raw) */
-        view.setUint16(20, format, true);
-        /* channel count */
-        view.setUint16(22, numChannels, true);
-        /* sample rate */
-        view.setUint32(24, sampleRate, true);
-        /* byte rate (sample rate * block align) */
-        view.setUint32(28, sampleRate * blockAlign, true);
-        /* block align (channel count * bytes per sample) */
-        view.setUint16(32, blockAlign, true);
-        /* bits per sample */
-        view.setUint16(34, bitDepth, true);
-        /* data chunk identifier */
-        writeString(view, 36, 'data');
-        /* data chunk length */
-        view.setUint32(40, samples.length * bytesPerSample, true);
-
-        if (bitDepth === 16) {
-            floatTo16BitPCM(view, 44, samples);
-        } else {
-            floatTo32BitPCM(view, 44, samples);
-        }
-
-        return new Blob([view], { type: 'audio/wav' });
-    }
-
-    function writeString(view, offset, string) {
-        for (let i = 0; i < string.length; i++) {
-            view.setUint8(offset + i, string.charCodeAt(i));
-        }
-    }
-
-    function floatTo16BitPCM(output, offset, input) {
-        for (let i = 0; i < input.length; i++, offset += 2) {
-            const s = Math.max(-1, Math.min(1, input[i]));
-            output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
-        }
-    }
-
-    function floatTo32BitPCM(output, offset, input) {
-        for (let i = 0; i < input.length; i++, offset += 4) {
-            const s = Math.max(-1, Math.min(1, input[i]));
-            output.setInt32(offset, s < 0 ? s * 0x80000000 : s * 0x7FFFFFFF, true);
-        }
-    }
-
+    // Helper: Convert AudioBuffer to WAV Blob (Removed as AudioRecorder handled Blob)
     // Toolbar
     document.getElementById('btn-clear-prompt')?.addEventListener('click', () => {
         const el = document.getElementById('vc-prompt-input');

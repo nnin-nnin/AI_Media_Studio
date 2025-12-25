@@ -308,6 +308,24 @@ app.get('/api/ai/characters', async (req, res) => {
     }
 });
 
+app.post('/api/ai/characters', async (req, res) => {
+    try {
+        const { name, voice_id, avatar, description } = req.body;
+        const newChar = await prisma.character.create({
+            data: {
+                name,
+                voice_id,
+                avatar: avatar || '/assets/system/avatars/avatar_default.png',
+                description: description || 'User cloned voice'
+            }
+        });
+        res.json({ status: 'success', data: newChar });
+    } catch (error) {
+        logger.error("Create Character Error", { error: error.message });
+        res.status(500).json({ status: 'error', message: error.message });
+    }
+});
+
 app.post('/api/ai/character-voice', async (req, res) => {
     try {
         const { characterId, text, speed, sampleRate } = req.body;

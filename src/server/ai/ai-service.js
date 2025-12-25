@@ -159,7 +159,16 @@ class AIService {
       envStatus[key] = process.env[key] ? 'PRESENT' : 'MISSING';
     });
 
-    console.log("[AIService] Voice Cloning Env Check:", JSON.stringify(envStatus, null, 2));
+    console.log("[AIService] Voice Generation Env Check:", JSON.stringify(envStatus, null, 2));
+
+    const mode = options.mode || 'clone';
+    const voiceId = options.voiceId;
+
+    // Path A: Pure Text-to-Speech using a preset voiceId
+    if (mode === 'text' && voiceId) {
+      console.log(`[AIService] Mode=Text. Using preset voice synthesis for ID: ${voiceId}`);
+      return await this.generateCharacterSpeech(voiceId, options.text, options);
+    }
 
     const missingEnvs = requiredEnvs.filter(env => !process.env[env]);
 
@@ -192,8 +201,21 @@ class AIService {
 
       // 保存音频到临时文件
       const audioExt = this.getAudioExtension(audioDataUrl);
-      const audioFilePath = path.join(tempDir, `input_audio_${Date.now()}.${audioExt}`);
+      let audioFilePath = path.join(tempDir, `input_audio_${Date.now()}.${audioExt}`);
       fs.writeFileSync(audioFilePath, audioBuffer);
+
+      // --- Normalize Audio if ffmpeg is available ---
+      try {
+        const normalizedPath = path.join(tempDir, `norm_audio_${Date.now()}.wav`);
+        await this.convertToStandardWav(audioFilePath, normalizedPath);
+        if (fs.existsSync(normalizedPath)) {
+          fs.unlinkSync(audioFilePath); // Remove original dirty format
+          audioFilePath = normalizedPath;
+          console.log("[AIService] Audio normalized to WAV via ffmpeg");
+        }
+      } catch (normErr) {
+        console.warn("[AIService] Audio normalization failed, using raw file:", normErr.message);
+      }
 
       // 生成输出文件路径
       const outputFilePath = path.join(tempDir, `output_voice_${Date.now()}.mp3`);
@@ -230,7 +252,8 @@ class AIService {
           console.log("Voice Cloning Succeeded, returning audio data URL (length: " + outputDataUrl.length + ")");
           return {
             status: 'success',
-            audio_url: outputDataUrl
+            audio_url: outputDataUrl,
+            voice_id: result.voice_id
           };
         } else {
           throw new Error('音频文件生成失败');
@@ -252,7 +275,7 @@ class AIService {
    * @returns {Buffer} 数据Buffer
    */
   static dataURLToBuffer(dataUrl) {
-    const matches = dataUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    const matches = dataUrl.match(/^data:(.+);base64,(.+)$/);
     if (!matches || matches.length !== 3) {
       throw new Error('无效的数据URL格式');
     }
@@ -270,6 +293,29 @@ class AIService {
     if (dataUrl.startsWith('data:audio/mpeg')) return 'mp3';
     if (dataUrl.startsWith('data:audio/webm')) return 'webm';
     return 'wav'; // 默认
+  }
+
+  /**
+   * 使用ffmpeg将音频转换为标准WAV格式 (16k, mono)
+   */
+  static async convertToStandardWav(inputPath, outputPath) {
+    return new Promise((resolve, reject) => {
+      // -ar 16000 (Sample Rate 16k)
+      // -ac 1 (Mono)
+      // -y (Overwrite)
+      const args = ['-i', inputPath, '-ar', '16000', '-ac', '1', '-y', outputPath];
+      const ffmpeg = spawn('ffmpeg', args);
+
+      let stderr = '';
+      ffmpeg.stderr.on('data', (data) => stderr += data.toString());
+
+      ffmpeg.on('close', (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`FFmpeg failed (code ${code}): ${stderr}`));
+      });
+
+      ffmpeg.on('error', (err) => reject(err));
+    });
   }
 
   /**

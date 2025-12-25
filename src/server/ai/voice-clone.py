@@ -147,7 +147,8 @@ def main():
         # 返回结果
         result = {
             "status": "success",
-            "output_file": output_path
+            "output_file": output_path,
+            "voice_id": voice_id
         }
         print(json.dumps(result))
         
