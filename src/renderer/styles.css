@@ -155,13 +155,13 @@ body {
 
 /* Premium Neural Progress Bar (Standard) */
 .energy-bar-container {
-    width: 280px;
-    height: 4px;
+    width: 380px;
+    height: 6px;
     background: rgba(0, 0, 0, 0.05);
     /* Light Track */
-    border-radius: 2px;
+    border-radius: 3px;
     overflow: hidden;
-    margin-bottom: 12px;
+    margin-bottom: 20px;
     position: relative;
 }
 
@@ -186,8 +186,8 @@ body {
 
 /* Premium Neural Progress Bar (New Standard) */
 .energy-logo-sphere {
-    width: 60px;
-    height: 60px;
+    width: 180px;
+    height: 180px;
     background: radial-gradient(circle, #4facfe 0%, transparent 70%);
     /* Blue Accent */
     border-radius: 50%;
@@ -198,17 +198,20 @@ body {
 
 .energy-logo-inner {
     position: absolute;
-    inset: 15px;
+    inset: 40px;
     background: white;
     border-radius: 50%;
-    box-shadow: 0 0 15px rgba(79, 172, 254, 0.5);
+    box-shadow: 0 0 50px rgba(79, 172, 254, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .energy-bar-fill {
     height: 100%;
     background: linear-gradient(90deg, #4facfe, #00f2fe);
     /* Cyan Gradient */
-    box-shadow: 0 0 10px rgba(79, 172, 254, 0.4);
+    box-shadow: 0 0 15px rgba(79, 172, 254, 0.5);
     transition: width 0.5s ease;
 }
 
@@ -227,13 +230,13 @@ body {
 }
 
 .energy-label {
-    margin-top: 5px;
-    font-weight: 500;
-    font-size: 14px;
+    margin-top: 15px;
+    font-weight: 700;
+    font-size: 24px;
     color: var(--text-primary);
     /* Dark Text for Light BG */
     text-transform: none;
-    letter-spacing: normal;
+    letter-spacing: 0.8px;
 }
 
 .energy-overlay {
@@ -246,9 +249,9 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.4);
-    /* Light Glass Overlay */
-    backdrop-filter: blur(25px);
+    background: var(--bg-glass);
+    /* Use themed glass background */
+    backdrop-filter: blur(20px);
     z-index: 100;
     color: var(--text-primary);
 }
@@ -262,8 +265,8 @@ body {
     width: 100%;
     height: 100vh;
     overflow: hidden;
-    background: transparent;
-    /* Changed from var(--bg-core) */
+    background: var(--bg-core);
+    /* Ensure core background fills the view */
 }
 
 #app-sidebar {

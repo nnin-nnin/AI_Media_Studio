@@ -546,7 +546,7 @@ function setupVideoGenerationEventListeners() {
             const resBox = document.querySelector('.result-preview');
             resBox.innerHTML = `
                 <div class="energy-overlay">
-                    <div class="energy-logo-sphere" style="margin-bottom: 20px;">
+                    <div class="energy-logo-sphere">
                         <div class="energy-logo-inner"></div>
                     </div>
                     <div class="energy-bar-container">
@@ -633,14 +633,14 @@ function setupVideoGenerationEventListeners() {
                 // Restore Original Energy Overlay (Matching Face Swap Style)
                 resBox.innerHTML = `
                     <div class="energy-overlay">
-                        <div class="energy-logo-sphere" style="margin-bottom: 20px;">
+                        <div class="energy-logo-sphere">
                             <div class="energy-logo-inner"></div>
                         </div>
                         <div class="energy-bar-container">
                             <div class="energy-bar-fill" id="energy-progress" style="width: 5%;"></div>
                         </div>
                         <div class="energy-label">${window.i18n.t('VG_BTN_GENERATING') || 'Generating...'}</div>
-                        <p style="color:var(--text-secondary); font-size:12px; margin-top:8px;" id="poll-status-text">排队中...</p>
+                        <p style="color:var(--text-secondary); font-size:16px; margin-top:12px;" id="poll-status-text">排队中...</p>
                     </div>
                 `;
 
@@ -670,6 +670,9 @@ function setupVideoGenerationEventListeners() {
                             clearInterval(progressInterval);
 
                             const finalResult = statusData.result;
+
+                            // Essential: Refresh assets to show the new video in history and sidebar
+                            if (window.AssetManager) window.AssetManager.refresh();
                             resBox.innerHTML = `
                                 <div style="text-align: center; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                                     <video controls autoplay loop style="max-width: 100%; max-height: 80%; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.3);">
@@ -698,13 +701,17 @@ function setupVideoGenerationEventListeners() {
                             throw new Error(statusData.message || statusData.error || "Async generation failed");
                         } else {
                             const pollText = document.getElementById('poll-status-text');
+                            const label = document.querySelector('.energy-label');
                             if (pollText) {
                                 let statusMsg = statusData.state || 'active';
-                                if (statusMsg === 'active') {
+                                if (statusMsg === 'active' || statusMsg === 'completed') {
                                     statusMsg = '生成中...';
-                                    label.innerText = window.i18n.t('FS_STATUS_PROCESSING');
+                                    if (label) label.innerText = window.i18n.t('FS_STATUS_PROCESSING');
+                                } else if (statusMsg === 'waiting') {
+                                    statusMsg = '排队中...';
+                                } else if (statusMsg === 'delayed') {
+                                    statusMsg = '服务器繁忙...';
                                 }
-                                if (statusMsg === 'waiting') statusMsg = '排队中...';
                                 pollText.innerText = statusMsg;
                             }
                         }
@@ -733,14 +740,22 @@ function setupVideoGenerationEventListeners() {
             `;
             }
         } finally {
-            if (progressInterval) clearInterval(progressInterval);
-            if (pollInterval) clearInterval(pollInterval);
+            // CRITICAL FIX: Do NOT clear intervals here if we are in 'pending' mode.
+            // Let the pollInterval and progressInterval handle themselves.
+            // We only clear them if we didn't enter the pending (polling) branch,
+            // or if an immediate error occurred.
+            const isAsync = result && result.status === 'pending';
+
+            if (!isAsync) {
+                if (progressInterval) clearInterval(progressInterval);
+                if (pollInterval) clearInterval(pollInterval);
+                if (window.GlobalSidebar) {
+                    window.GlobalSidebar.setJobStatus('video-generation', 'idle');
+                }
+            }
+
             generateBtn.innerHTML = oldText;
             generateBtn.disabled = false;
-
-            if (window.GlobalSidebar) {
-                window.GlobalSidebar.setJobStatus('video-generation', 'idle');
-            }
         }
     });
 

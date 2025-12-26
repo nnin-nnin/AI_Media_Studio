@@ -514,7 +514,7 @@ function setupFaceSwapEventListeners() {
             const resBox = document.querySelector('.result-preview');
             resBox.innerHTML = `
                 <div class="energy-overlay">
-                    <div class="energy-logo-sphere" style="margin-bottom: 20px;">
+                    <div class="energy-logo-sphere">
                         <div class="energy-logo-inner"></div>
                     </div>
                     <div class="energy-bar-container">
