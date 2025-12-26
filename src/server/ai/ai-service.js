@@ -408,7 +408,7 @@ class AIService {
             });
           }
         } else {
-          console.error(`[AIService] Python script failed with code ${code}. Stderr: ${stderrData}`);
+          logger.error(`[AIService] Python script ${command} failed with code ${code}`, { stderr: stderrData });
           resolve({
             status: 'error',
             message: `Python脚本执行失败: ${stderrData || '未知错误'}`

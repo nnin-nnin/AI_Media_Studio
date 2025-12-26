@@ -5,6 +5,8 @@ import subprocess
 import tempfile
 import dashscope
 from dashscope.audio.asr import Recognition
+import traceback
+import shutil
 
 def main():
     if len(sys.argv) < 2:
@@ -28,6 +30,13 @@ def main():
     # This fixes "actual=2" channels error and model mismatch issues
     processed_file = None
     try:
+        if not shutil.which('ffmpeg'):
+            print(json.dumps({
+                "status": "error", 
+                "message": "FFmpeg not found. Please install ffmpeg and add it to PATH."
+            }))
+            sys.exit(1)
+
         temp_fd, processed_file = tempfile.mkstemp(suffix='.wav')
         os.close(temp_fd)
         
@@ -39,7 +48,13 @@ def main():
         ]
         
         # Run ffmpeg silenty
-        subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        cp = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if cp.returncode != 0:
+            print(json.dumps({
+                "status": "error",
+                "message": f"FFmpeg conversion failed: {cp.stderr.decode()}"
+            }))
+            sys.exit(1)
         
         recognition = Recognition(model='fun-asr-realtime',
                                   format='wav', 
@@ -76,7 +91,7 @@ def main():
     except Exception as e:
         print(json.dumps({
             "status": "error",
-            "message": str(e)
+            "message": f"{str(e)}\n\n{traceback.format_exc()}"
         }))
         sys.exit(1)
     finally:
