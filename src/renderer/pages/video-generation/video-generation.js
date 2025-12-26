@@ -513,6 +513,7 @@ function setupVideoGenerationEventListeners() {
 
         let progressInterval;
         let pollInterval;
+        let result;
 
         try {
             // Get Parameters
@@ -570,7 +571,6 @@ function setupVideoGenerationEventListeners() {
                 }
             }, 1200);
 
-            let result;
             if (window.electronAPI && window.electronAPI.generateVideo) {
                 result = await window.electronAPI.generateVideo(opts);
             } else {
