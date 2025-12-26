@@ -385,21 +385,25 @@ class AIService {
         let stdoutData = '';
         let stderrData = '';
 
-        pyProcess.stdout.on('data', (data) => {
-          stdoutData += data.toString();
-        });
-
-        pyProcess.stderr.on('data', (data) => {
-          stderrData += data.toString();
-        });
+        pyProcess.stdout.on('data', (data) => { stdoutData += data.toString(); });
+        pyProcess.stderr.on('data', (data) => { stderrData += data.toString(); });
 
         pyProcess.on('close', (code) => {
           try {
+            // Priority 1: Always try to parse STDOUT JSON (scripts often exit 1 with error JSON in STDOUT)
+            let result;
+            try {
+              if (stdoutData.trim()) {
+                result = JSON.parse(stdoutData.trim());
+              }
+            } catch (e) {
+              // Parse failed, result remains undefined
+            }
+
             if (code === 0) {
-              try {
-                const result = JSON.parse(stdoutData.trim());
+              if (result) {
                 resolve(result);
-              } catch (e) {
+              } else {
                 resolve({
                   status: 'success',
                   raw_output: stdoutData,
@@ -407,11 +411,21 @@ class AIService {
                 });
               }
             } else {
-              logger.error(`[AIService] Python script ${command} failed with code ${code}`, { stderr: stderrData });
-              resolve({
-                status: 'error',
-                message: `Python脚本执行失败: ${stderrData || '未知错误'}`
+              // Failure case
+              logger.error(`[AIService] Python script ${command} failed with code ${code}`, {
+                stderr: stderrData,
+                stdout: stdoutData
               });
+
+              // If we have a parsed result with a message, use it
+              if (result && result.message) {
+                resolve(result);
+              } else {
+                resolve({
+                  status: 'error',
+                  message: `Python脚本执行失败 (Code ${code}): ${stderrData || stdoutData || '未知错误'}`
+                });
+              }
             }
           } catch (e) {
             console.error("[AIService] Fatal error in on('close') callback", e);
@@ -420,6 +434,14 @@ class AIService {
         });
 
         pyProcess.on('error', (error) => {
+          // Fallback Strategy: If 'uv' is missing, try running directly with 'python3'
+          if (pythonPath === 'uv' && error.code === 'ENOENT') {
+            console.warn("[AIService] 'uv' not found. Falling back to direct 'python3' execution.");
+            // Re-call with python3
+            this.executePythonScript('python3', args).then(resolve).catch(reject);
+            return;
+          }
+
           console.error("[AIService] Spawn error:", error);
           resolve({
             status: 'error',
