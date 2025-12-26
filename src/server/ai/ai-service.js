@@ -15,19 +15,19 @@ import logger from '../utils/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// 从环境变量中获取API密钥，如果未设置则抛出错误
-console.log("[AIService] Checking ARK_API_KEY...");
+// 从环境变量中获取API密钥
 const apiKey = process.env.ARK_API_KEY;
 if (!apiKey) {
-  console.error("[AIService] CRITICAL ERROR: ARK_API_KEY is missing!");
-  throw new Error("请设置 ARK_API_KEY 环境变量");
+  // 仅在控制台显示警告，不要在这里抛出错误，否则会导致整个服务器无法启动（导致CSS等静态资源也502）
+  console.warn("[AIService] WARNING: ARK_API_KEY is missing! AI features will fail until it's set.");
+} else {
+  console.log("[AIService] ARK_API_KEY found.");
 }
-console.log("[AIService] ARK_API_KEY found.");
 
-const client = new OpenAI({
+const client = apiKey ? new OpenAI({
   baseURL: "https://ark.cn-beijing.volces.com/api/v3",
   apiKey: apiKey,
-});
+}) : null;
 
 /**
  * AI服务类，封装所有AI功能调用
@@ -358,8 +358,6 @@ class AIService {
 
       console.log(`[AIService] Spawning via UV: ${pythonPath} ${combinedArgs.join(' ')}`);
 
-      console.log(`[AIService] Spawning via UV: ${pythonPath} ${combinedArgs.join(' ')}`);
-
       // Determine if we need a CLEAN environment (no proxy)
       // Voice Cloning (voice-clone.py) uses WebSocket and often fails with proxy
       // Other scripts (like asr_helper.py) generally use HTTP REST and might REQUIRE proxy
@@ -379,50 +377,62 @@ class AIService {
         console.log(`[AIService] Standard Execution (Proxy retained if present)`);
       }
 
-      const pyProcess = spawn(pythonPath, combinedArgs, {
-        env: spawnEnv,
-      });
+      try {
+        const pyProcess = spawn(pythonPath, combinedArgs, {
+          env: spawnEnv,
+        });
 
-      let stdoutData = '';
-      let stderrData = '';
+        let stdoutData = '';
+        let stderrData = '';
 
-      pyProcess.stdout.on('data', (data) => {
-        stdoutData += data.toString();
-      });
+        pyProcess.stdout.on('data', (data) => {
+          stdoutData += data.toString();
+        });
 
-      pyProcess.stderr.on('data', (data) => {
-        stderrData += data.toString();
-      });
+        pyProcess.stderr.on('data', (data) => {
+          stderrData += data.toString();
+        });
 
-      pyProcess.on('close', (code) => {
-        if (code === 0) {
+        pyProcess.on('close', (code) => {
           try {
-            // 尝试解析stdout中的JSON结果
-            const result = JSON.parse(stdoutData.trim());
-            resolve(result);
+            if (code === 0) {
+              try {
+                const result = JSON.parse(stdoutData.trim());
+                resolve(result);
+              } catch (e) {
+                resolve({
+                  status: 'success',
+                  raw_output: stdoutData,
+                  raw_error: stderrData
+                });
+              }
+            } else {
+              logger.error(`[AIService] Python script ${command} failed with code ${code}`, { stderr: stderrData });
+              resolve({
+                status: 'error',
+                message: `Python脚本执行失败: ${stderrData || '未知错误'}`
+              });
+            }
           } catch (e) {
-            // 如果解析失败，返回原始数据
-            resolve({
-              status: 'success',
-              raw_output: stdoutData,
-              raw_error: stderrData
-            });
+            console.error("[AIService] Fatal error in on('close') callback", e);
+            resolve({ status: 'error', message: "Internal callback error: " + e.message });
           }
-        } else {
-          logger.error(`[AIService] Python script ${command} failed with code ${code}`, { stderr: stderrData });
+        });
+
+        pyProcess.on('error', (error) => {
+          console.error("[AIService] Spawn error:", error);
           resolve({
             status: 'error',
-            message: `Python脚本执行失败: ${stderrData || '未知错误'}`
+            message: `执行Python脚本时出错 (Spawn Error): ${error.message}`
           });
-        }
-      });
-
-      pyProcess.on('error', (error) => {
-        reject({
-          status: 'error',
-          message: `执行Python脚本时出错: ${error.message}`
         });
-      });
+      } catch (e) {
+        console.error("[AIService] Sync spawn error:", e);
+        resolve({
+          status: 'error',
+          message: `同步启动Python脚本失败: ${e.message}`
+        });
+      }
     });
   }
 
