@@ -511,6 +511,9 @@ function setupVideoGenerationEventListeners() {
             window.GlobalSidebar.setJobStatus('video-generation', 'processing');
         }
 
+        let progressInterval;
+        let pollInterval;
+
         try {
             // Get Parameters
             const activeRatio = document.querySelector('.ratio-option.active')?.dataset.ratio || "16:9";
@@ -543,15 +546,18 @@ function setupVideoGenerationEventListeners() {
             const resBox = document.querySelector('.result-preview');
             resBox.innerHTML = `
                 <div class="energy-overlay">
+                    <div class="energy-logo-sphere" style="margin-bottom: 20px;">
+                        <div class="energy-logo-inner"></div>
+                    </div>
                     <div class="energy-bar-container">
-                        <div class="energy-fill" id="energy-progress" style="width: 5%;"></div>
+                        <div class="energy-bar-fill" id="energy-progress" style="width: 5%;"></div>
                     </div>
                     <div class="energy-label">${window.i18n.t('FS_STATUS_GATHERING')}</div>
                 </div>
             `;
 
             let progress = 5;
-            const progressInterval = setInterval(() => {
+            progressInterval = setInterval(() => {
                 progress += Math.random() * 8;
                 if (progress > 96) progress = 96;
                 const fill = document.getElementById('energy-progress');
@@ -589,8 +595,10 @@ function setupVideoGenerationEventListeners() {
                     </div>
                 `;
 
-                // Auto-Save to Assets
+                // ... (auto-save logic remains specific to sync success, although async saves via worker) ...
                 try {
+                    // Only auto-save here if we got the URL immediately. 
+                    // For async, the Worker does the saving.
                     window.AssetManager.add({
                         type: 'video',
                         url: result.video_url,
@@ -598,10 +606,7 @@ function setupVideoGenerationEventListeners() {
                         metadata: { duration, model: "doubao-video", ratio: activeRatio }
                     });
                     console.log("Video auto-saved to assets");
-                    // No sidebar in this view to refresh, but GlobalSidebar will pick it up
-                } catch (err) {
-                    console.error("Auto-save failed:", err);
-                }
+                } catch (err) { console.error("Auto-save failed:", err); }
 
                 // Update Save Button Visual
                 setTimeout(() => {
@@ -620,6 +625,93 @@ function setupVideoGenerationEventListeners() {
                     a.click();
                     document.body.removeChild(a);
                 });
+
+            } else if (result && result.status === 'pending') {
+                // --- Async Polling Logic ---
+                const jobId = result.jobId;
+
+                // Restore Original Energy Overlay (Matching Face Swap Style)
+                resBox.innerHTML = `
+                    <div class="energy-overlay">
+                        <div class="energy-logo-sphere" style="margin-bottom: 20px;">
+                            <div class="energy-logo-inner"></div>
+                        </div>
+                        <div class="energy-bar-container">
+                            <div class="energy-bar-fill" id="energy-progress" style="width: 5%;"></div>
+                        </div>
+                        <div class="energy-label">${window.i18n.t('VG_BTN_GENERATING') || 'Generating...'}</div>
+                        <p style="color:var(--text-secondary); font-size:12px; margin-top:8px;" id="poll-status-text">排队中...</p>
+                    </div>
+                `;
+
+                // Reset/Restart progress bar for polling phase with a slower rate
+                if (progressInterval) clearInterval(progressInterval);
+                let pollProgress = progress;
+                progressInterval = setInterval(() => {
+                    pollProgress += Math.random() * 2;
+                    if (pollProgress > 98) pollProgress = 98;
+                    const fill = document.getElementById('energy-progress');
+                    if (fill) fill.style.width = `${pollProgress}%`;
+                }, 1000);
+
+                pollInterval = setInterval(async () => {
+                    if (!document.body.contains(resBox)) {
+                        clearInterval(pollInterval);
+                        clearInterval(progressInterval);
+                        return;
+                    }
+
+                    try {
+                        const statusRes = await fetch(`/api/ai/jobs/${jobId}`);
+                        const statusData = await statusRes.json();
+
+                        if (statusData.status === 'success') {
+                            clearInterval(pollInterval);
+                            clearInterval(progressInterval);
+
+                            const finalResult = statusData.result;
+                            resBox.innerHTML = `
+                                <div style="text-align: center; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                                    <video controls autoplay loop style="max-width: 100%; max-height: 80%; border-radius:12px; box-shadow:0 20px 50px rgba(0,0,0,0.3);">
+                                        <source src="${finalResult.video_url}" type="video/mp4">
+                                        Your browser does not support video.
+                                    </video>
+                                    <div style="margin-top:1.5rem; display:flex; gap:12px;">
+                                        <button class="secondary-btn" id="btn-save-assets">Saved ✓</button>
+                                        <button class="secondary-btn" id="btn-download-video">Download</button>
+                                    </div>
+                                </div>
+                            `;
+
+                            document.getElementById('btn-download-video')?.addEventListener('click', () => {
+                                const a = document.createElement('a');
+                                a.href = finalResult.video_url;
+                                a.download = `video_${Date.now()}.mp4`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                            });
+
+                        } else if (statusData.status === 'error') {
+                            clearInterval(pollInterval);
+                            clearInterval(progressInterval);
+                            throw new Error(statusData.message || statusData.error || "Async generation failed");
+                        } else {
+                            const pollText = document.getElementById('poll-status-text');
+                            if (pollText) {
+                                let statusMsg = statusData.state || 'active';
+                                if (statusMsg === 'active') {
+                                    statusMsg = '生成中...';
+                                    label.innerText = window.i18n.t('FS_STATUS_PROCESSING');
+                                }
+                                if (statusMsg === 'waiting') statusMsg = '排队中...';
+                                pollText.innerText = statusMsg;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("Poll failed", e);
+                    }
+                }, 3000);
 
             } else {
                 throw new Error(result?.message || "Generation failed");
@@ -641,7 +733,8 @@ function setupVideoGenerationEventListeners() {
             `;
             }
         } finally {
-            if (typeof progressInterval !== 'undefined') clearInterval(progressInterval);
+            if (progressInterval) clearInterval(progressInterval);
+            if (pollInterval) clearInterval(pollInterval);
             generateBtn.innerHTML = oldText;
             generateBtn.disabled = false;
 

@@ -7,36 +7,45 @@ import logger from '../utils/logger.js';
 export class MemoryQueue {
     constructor(queueName, processor) {
         this.name = queueName;
-        this.processor = processor; // The async function to run
+        this.processor = processor;
+        this.jobs = new Map(); // Store job state
     }
 
-    /**
-     * Add a job to the memory queue.
-     * In this simple version, we start it almost immediately (next tick).
-     */
     async add(jobName, data, opts) {
         const jobId = `mem_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
 
-        const jobSim = {
+        const job = {
             id: jobId,
             name: jobName,
-            data: data
+            data: data,
+            state: 'waiting',
+            returnvalue: null,
+            failedReason: null,
+            getState: async function () { return this.state; }
         };
 
+        this.jobs.set(jobId, job);
         logger.info(`[MemoryQueue:${this.name}] Job added: ${jobId}`, { mode: 'IN_MEMORY' });
 
-        // Execute asynchronously to simulate queue behavior (don't block the API response)
         setImmediate(async () => {
             try {
+                job.state = 'active';
                 logger.info(`[MemoryQueue:${this.name}] Starting Job ${jobId}...`);
-                await this.processor(jobSim);
+                const result = await this.processor(job);
+                job.state = 'completed';
+                job.returnvalue = result;
                 logger.info(`[MemoryQueue:${this.name}] Job ${jobId} Completed.`);
             } catch (e) {
+                job.state = 'failed';
+                job.failedReason = e.message;
                 logger.error(`[MemoryQueue:${this.name}] Job ${jobId} Failed`, { error: e.message });
             }
         });
 
-        // Return immediately like BullMQ
-        return jobSim;
+        return job;
+    }
+
+    async getJob(jobId) {
+        return this.jobs.get(jobId);
     }
 }

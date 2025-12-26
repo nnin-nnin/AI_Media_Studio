@@ -39,6 +39,12 @@ class VoiceChatPage {
                     <!-- Voice Settings (Bottom) -->
                     <div class="voice-settings-panel">
                         <div class="setting-row">
+                            <div class="setting-label">Microphone</div>
+                            <select id="mic-select" class="studio-select-glass" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--glass-border);">
+                                <option value="" disabled selected>Loading...</option>
+                            </select>
+                        </div>
+                        <div class="setting-row">
                             <div class="setting-label">
                                 <span>Speed</span>
                                 <span id="speed-val">1.0x</span>
@@ -147,6 +153,70 @@ class VoiceChatPage {
                 speedVal.innerText = e.target.value + 'x';
             };
         }
+
+        // Initialize Mic Selector
+        await this.loadMicrophones();
+    }
+
+    async loadMicrophones() {
+        const micSelect = document.getElementById('mic-select');
+        if (!micSelect) return;
+
+        try {
+            micSelect.innerHTML = '<option>Loading...</option>';
+            // Request permission first found to get labels
+            // (Assumes permission already granted or will trigger prompt)
+
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioInputs = devices.filter(d => d.kind === 'audioinput');
+
+            micSelect.innerHTML = '';
+
+            // Auto-select logic
+            let savedId = localStorage.getItem('selected_mic_id');
+            let hasSelection = false;
+
+            audioInputs.forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                // Add a meaningful label if missing (common in some browsers until permission)
+                option.text = device.label || `Microphone ${index + 1}`;
+
+                // Highlight BlackHole as (Virtual) so user knows
+                if (option.text.toLowerCase().includes('blackhole')) {
+                    option.text = `🚫 ${option.text} (Virtual Loopback)`;
+                }
+
+                if (device.deviceId === savedId) {
+                    option.selected = true;
+                    hasSelection = true;
+                }
+                micSelect.appendChild(option);
+            });
+
+            // If no saved selection, attempt to pick a sensible default (NOT BlackHole)
+            if (!hasSelection && audioInputs.length > 0) {
+                const bestDevice = audioInputs.find(d =>
+                    !d.label.toLowerCase().includes('blackhole') &&
+                    !d.label.toLowerCase().includes('virtual') &&
+                    d.deviceId !== 'default'
+                );
+                if (bestDevice) {
+                    micSelect.value = bestDevice.deviceId;
+                    localStorage.setItem('selected_mic_id', bestDevice.deviceId);
+                }
+            }
+
+            // Listener
+            micSelect.onchange = (e) => {
+                localStorage.setItem('selected_mic_id', e.target.value);
+                console.log("[VoiceChat] User selected mic:", e.target.value);
+            };
+
+        } catch (e) {
+            console.error("Failed to load mics", e);
+            micSelect.innerHTML = '<option value="">Default</option>';
+        }
     }
 
     async loadCharacters() {
@@ -212,9 +282,18 @@ class VoiceChatPage {
 
     async startRecording() {
         try {
-            const savedMicId = window.SettingsManager.get('audioInputDeviceId');
-            const micId = (savedMicId && savedMicId !== 'default') ? savedMicId : null;
+            // Get explicitly selected Mic from localStorage or Dropdown
+            // We use the dropdown value as truth if available
+            const micSelect = document.getElementById('mic-select');
+            let micId = micSelect ? micSelect.value : null;
+
+            if (!micId) {
+                micId = localStorage.getItem('selected_mic_id');
+            }
+
+            console.log("[VoiceChat] Starting recording with device:", micId);
             await this.recorder.start(micId);
+
             this.isRecording = true;
             this.micBtn.classList.add('recording');
             this.micStatus.innerText = window.i18n.t('CHAT_MIC_STOP');

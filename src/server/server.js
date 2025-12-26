@@ -229,7 +229,7 @@ app.post('/api/ai/edit-image', async (req, res) => {
 });
 
 // --- Async AI Generation (Queue) ---
-import { addVideoJob, addVoiceJob } from './queue/index.js';
+import { addVideoJob, addVoiceJob, videoQueue, voiceQueue } from './queue/index.js';
 
 app.post('/api/ai/video', async (req, res) => {
     try {
@@ -266,6 +266,38 @@ app.post('/api/ai/voice', async (req, res) => {
     } catch (error) {
         logger.error("Voice Queue Error", { error: error.message });
         res.status(500).json({ status: 'error', message: "Failed to queue voice task. Ensure Redis is running." });
+    }
+});
+
+app.get('/api/ai/jobs/:id', async (req, res) => {
+    try {
+        const jobId = req.params.id;
+
+        // Check Video Queue first
+        let job = await videoQueue.getJob(jobId);
+
+        // Check Voice Queue if not found
+        if (!job) {
+            job = await voiceQueue.getJob(jobId);
+        }
+
+        if (!job) {
+            return res.status(404).json({ status: 'error', message: 'Job not found' });
+        }
+
+        const state = await job.getState();
+        const result = job.returnvalue;
+        const failedReason = job.failedReason;
+
+        res.json({
+            status: state === 'completed' ? 'success' : (state === 'failed' ? 'error' : 'pending'),
+            state: state,
+            result: result,
+            error: failedReason
+        });
+    } catch (error) {
+        logger.error("Get Job Error", { error: error.message });
+        res.status(500).json({ status: 'error', message: error.message });
     }
 });
 

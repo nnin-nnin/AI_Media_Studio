@@ -113,12 +113,22 @@ class AIService {
    */
   static async generateVideo(options) {
     try {
-      const videoUrl = await generateVideo(options);
+      const fileName = `video_${Date.now()}.mp4`;
+      const outPath = path.join(__dirname, '..', '..', '..', 'data', 'uploads', fileName);
+      fs.mkdirSync(path.dirname(outPath), { recursive: true });
 
-      if (!videoUrl) throw new Error("AI service returned an empty video URL");
+      // Inject the calculated output_path into options
+      const videoResult = await generateVideo({
+        ...options,
+        output_path: outPath
+      });
+
+      if (!videoResult) throw new Error("AI service returned an empty result");
+
+      // If generateVideo returned a path that is our outPath, return the public URL
       return {
         status: 'success',
-        video_url: videoUrl
+        video_url: `/uploads/${fileName}`
       };
     } catch (error) {
       return {

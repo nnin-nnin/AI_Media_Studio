@@ -16,14 +16,46 @@ export class AudioRecorder {
 
     async start(deviceId = null) {
         try {
-            console.log(`[AudioRecorder] Requesting microphone access (DeviceID: ${deviceId || 'System Default'})...`);
+            console.log(`[AudioRecorder] Requesting microphone access (Requested DeviceID: ${deviceId || 'Auto'})...`);
+
+            // --- Smart Device Selection Logic ---
+            let targetDeviceId = deviceId;
+            if (!targetDeviceId) {
+                // Enumerate to find a better default than "BlackHole" if present
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const audioInputs = devices.filter(d => d.kind === 'audioinput');
+
+                console.log("[AudioRecorder] Available Inputs:", audioInputs.map(d => `${d.label} (${d.deviceId})`));
+
+                // 1. Try to find the system default if it's NOT BlackHole
+                const defaultDevice = audioInputs.find(d => d.deviceId === 'default');
+                if (defaultDevice && !defaultDevice.label.toLowerCase().includes('blackhole')) {
+                    // Default is safe
+                    // targetDeviceId = undefined; // Use system default behavior
+                } else {
+                    // Default is suspicious or missing labels (permission issue? but we are about to ask) or is BlackHole
+                    // 2. Look for "Built-in" or regular mic
+                    const betterDevice = audioInputs.find(d =>
+                        !d.label.toLowerCase().includes('blackhole') &&
+                        !d.label.toLowerCase().includes('virtual') &&
+                        d.deviceId !== 'default' &&
+                        d.deviceId !== 'communications'
+                    );
+
+                    if (betterDevice) {
+                        console.log(`[AudioRecorder] Auto-switching from virtual/default to: ${betterDevice.label}`);
+                        targetDeviceId = betterDevice.deviceId;
+                    }
+                }
+            }
 
             const constraints = {
-                audio: deviceId ? { deviceId: { exact: deviceId } } : true
+                audio: targetDeviceId ? { deviceId: { exact: targetDeviceId } } : true
             };
 
             this.stream = await navigator.mediaDevices.getUserMedia(constraints);
-            console.log("[AudioRecorder] Microphope access granted for stream:", this.stream.id);
+            const track = this.stream.getAudioTracks()[0];
+            console.log(`[AudioRecorder] Microphone access granted. Using: ${track.label} (ID: ${track.id})`);
 
             // Setup Volume Analysis
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();

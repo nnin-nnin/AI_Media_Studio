@@ -514,8 +514,11 @@ function setupFaceSwapEventListeners() {
             const resBox = document.querySelector('.result-preview');
             resBox.innerHTML = `
                 <div class="energy-overlay">
+                    <div class="energy-logo-sphere" style="margin-bottom: 20px;">
+                        <div class="energy-logo-inner"></div>
+                    </div>
                     <div class="energy-bar-container">
-                        <div class="energy-fill" id="energy-progress" style="width: 10%;"></div>
+                        <div class="energy-bar-fill" id="energy-progress" style="width: 10%;"></div>
                     </div>
                     <div class="energy-label">${window.i18n.t('FS_STATUS_GATHERING')}</div>
                 </div>
@@ -571,8 +574,8 @@ function setupFaceSwapEventListeners() {
                     <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                         <img src="${imageUrl}" style="max-width:100%; max-height:100%; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
                         <div style="margin-top:10px; display:flex; gap:10px;">
-                             <button class="secondary-btn small" id="btn-save-assets">Save to Assets</button>
-                             <button class="secondary-btn small" onclick="window.open('${imageUrl}')">Open</button>
+                            <button class="secondary-btn small" id="btn-save-assets">Save to Assets</button>
+                            <button class="secondary-btn small" onclick="window.open('${imageUrl}')">Open</button>
                         </div>
                     </div>
                 `;
@@ -613,7 +616,7 @@ function setupFaceSwapEventListeners() {
                     <p style="color:var(--text-secondary);">Generation failed.</p>
                     <small>${error.message}</small>
                 </div>
-            `;
+                `;
         } finally {
             generateBtn.disabled = false;
             generateBtn.innerText = oldText;
@@ -664,10 +667,10 @@ function setupFaceSwapEventListeners() {
 
         empty.style.display = 'none';
         list.innerHTML = assets.map(asset => `
-            <div class="asset-item" onclick="window.MediaPreview.open('${asset.id}')" style="aspect-ratio:1; border-radius:8px; overflow:hidden; position:relative; cursor:pointer; border:1px solid var(--glass-border);">
-                <img src="${asset.url}" style="width:100%; height:100%; object-fit:cover;">
-            </div>
-        `).join('');
+                <div class="asset-item" onclick="window.MediaPreview.open('${asset.id}')" style="aspect-ratio:1; border-radius:8px; overflow:hidden; position:relative; cursor:pointer; border:1px solid var(--glass-border);">
+                    <img src="${asset.url}" style="width:100%; height:100%; object-fit:cover;">
+                </div>
+            `).join('');
     }
 
     // Initial render
@@ -697,7 +700,7 @@ async function initModelSelect(selectId, settingsKey, type = null) {
             const current = window.SettingsManager.get(settingsKey);
             select.innerHTML = data.models.map(m => `
                 <option value="${m.id}" ${m.id === current ? 'selected' : ''}>${m.name}</option>
-            `).join('');
+                    `).join('');
         }
     } catch (err) {
         console.error("Failed to fetch models:", err);
