@@ -88,6 +88,19 @@
    - **Linux / 终端用户**：运行 `./start.sh`
 3. 脚本会自动拉起本地服务并自动在默认浏览器中打开 `http://localhost:3000`。
 
+### 方式三：云端与服务器一行命令安装（OpenClaw 风格）
+
+适用于 Linux (Ubuntu / Debian / CentOS / Rocky) 或 macOS 服务器，一行命令全自动检测 Node.js 运行时、克隆代码、构建静态资产并可选配置 systemd 后台保活守护进程：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nnin-nnin/AI_Media_Studio/main/install.sh | bash
+```
+
+Windows PowerShell 自动化安装：
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://raw.githubusercontent.com/nnin-nnin/AI_Media_Studio/main/install.ps1 | iex"
+```
+
 ---
 
 ## 各工作室功能截图
