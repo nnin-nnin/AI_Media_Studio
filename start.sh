@@ -28,6 +28,11 @@ if [ ! -d "dist" ]; then
     npm run build
 fi
 
+if [ ! -f "data/ai_course.sqlite" ]; then
+    echo "首次启动，正在初始化本地数据库与预置角色..."
+    npm run db:seed
+fi
+
 echo "[3/3] 启动本地服务: http://localhost:3000"
 
 if command -v xdg-open >/dev/null 2>&1; then

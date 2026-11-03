@@ -3,12 +3,8 @@ import { connection } from './connection.js';
 import { MemoryQueue } from './memory-queue.js';
 import { processVideoJob, processVoiceJob } from './processors.js';
 
-// Configuration: Default to Redis unless explicitly disabled
-// Or we could try to detect? Auto-detection is hard synchronously.
-// Let's rely on an ENV var or a default setting.
-// For the user request "I want no docker", we can add USE_REDIS_QUEUE=false to .env
-// OR we can make it default false for now? No, commercial goal = true.
-const USE_REDIS = process.env.USE_REDIS_QUEUE !== 'false';
+// Configuration: Default to standalone in-memory queue unless explicitly enabled via USE_REDIS_QUEUE=true
+const USE_REDIS = process.env.USE_REDIS_QUEUE === 'true';
 
 let videoQueue, voiceQueue;
 

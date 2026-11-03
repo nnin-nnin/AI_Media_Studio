@@ -39,6 +39,12 @@ if [ ! -d "dist" ]; then
     npm run build
 fi
 
+# 检查并同步本地数据库
+if [ ! -f "data/ai_course.sqlite" ]; then
+    echo "首次启动，正在初始化本地数据库与预置角色..."
+    npm run db:seed
+fi
+
 echo "[3/3] 正在启动本地服务..."
 echo "服务地址: http://localhost:3000"
 echo "正在自动为您打开默认浏览器..."

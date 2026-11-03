@@ -9,8 +9,8 @@ const redisConfig = {
 };
 
 // Create a reused connection for the Queue (Producer)
-// Only create if we are NOT in memory mode (default is Redis mode unless explicitly false)
-const shouldConnect = process.env.USE_REDIS_QUEUE !== 'false';
+// Only create if explicitly requested via USE_REDIS_QUEUE=true (default is standalone in-memory)
+const shouldConnect = process.env.USE_REDIS_QUEUE === 'true';
 
 export const connection = shouldConnect ? new IORedis(redisConfig) : null;
 

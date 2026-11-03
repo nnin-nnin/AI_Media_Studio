@@ -559,8 +559,28 @@ app.post('/api/ai/stt', upload.single('audio'), async (req, res) => {
 
 
 
+async function ensureDatabaseInitialized() {
+    try {
+        await prisma.character.findFirst();
+    } catch (err) {
+        console.log('[Database] Uninitialized database detected. Initializing schema & default seed data...');
+        try {
+            const { execSync } = await import('child_process');
+            execSync('npx prisma db push --skip-generate', { cwd: PROJECT_ROOT, stdio: 'inherit' });
+            const { seedCharacters } = await import('../../scripts/seed_characters.js');
+            const { seedUser } = await import('../../scripts/seed_user.js');
+            await seedUser();
+            await seedCharacters();
+            console.log('[Database] Auto-initialization completed successfully.');
+        } catch (initErr) {
+            console.error('[Database] Auto-initialization failed:', initErr.message);
+        }
+    }
+}
+
 // Start Server
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    await ensureDatabaseInitialized();
     app.listen(config.port, '0.0.0.0', async () => {
         logger.info(`Server running`, { url: `http://localhost:${config.port}`, frontend: rendererPath });
     });
