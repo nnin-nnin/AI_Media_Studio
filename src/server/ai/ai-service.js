@@ -11,6 +11,7 @@ import { dirname } from 'path';
 import OpenAI from "openai";
 import axios from "axios";
 import logger from '../utils/logger.js';
+import VoiceService from './voice-service.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -254,45 +255,39 @@ class AIService {
       fs.mkdirSync(uploadsDir, { recursive: true });
       const outputFilePath = path.join(uploadsDir, outputFileName);
 
-      // 获取Python脚本路径
-      const scriptPath = path.join(__dirname, 'voice-clone.py');
+      // 1. 上传音频至腾讯云 COS 获取公网访问 URL（纯 Node.js 实现，无需 Python）
+      console.log(`[AIService] Uploading audio sample via pure Node.js COS SDK...`);
+      const audioUrl = await VoiceService.uploadToCos(audioFilePath);
+      console.log(`[AIService] Uploaded audio sample to COS: ${audioUrl}`);
 
-      // 检查Python脚本是否存在
-      if (!fs.existsSync(scriptPath)) {
-        throw new Error('声音克隆脚本不存在: ' + scriptPath);
-      }
-
-      // 使用虚拟环境中的Python
-      const venvPythonPath = path.join(__dirname, '..', '..', '..', '.venv', 'bin', 'python');
-      const pythonPath = fs.existsSync(venvPythonPath) ? venvPythonPath : (process.env.PYTHON_PATH || 'python3');
-
-      // Add model to arguments if provided
+      // 2. 调用阿里百炼 CosyVoice 声音克隆服务训练音色
       const model = options.model || 'cosyvoice-v2';
-      const args = [scriptPath, audioFilePath, options.text, outputFilePath, `--model=${model}`];
+      const voiceId = await VoiceService.enrollVoice(audioUrl, model);
+      console.log(`[AIService] Voice enrolled successfully. Voice ID: ${voiceId}`);
 
-      console.log(`[AIService] Starting real Voice Cloning with Python: ${pythonPath}`);
-      const result = await this.executePythonScript(pythonPath, args);
+      // 3. 若传入试听文本，立即合成样音
+      let publicAudioUrl = '';
+      if (options.text) {
+        const synthRes = await VoiceService.synthesizeSpeech({
+          voiceId,
+          text: options.text,
+          outputPath: outputFilePath
+        });
+        if (synthRes.status === 'success' && fs.existsSync(outputFilePath)) {
+          publicAudioUrl = `/uploads/${outputFileName}`;
+        }
+      }
 
       // 清理临时输入文件
       if (fs.existsSync(audioFilePath)) {
-        fs.unlinkSync(audioFilePath);
+        try { fs.unlinkSync(audioFilePath); } catch {}
       }
 
-      if (result.status === 'success') {
-        if (fs.existsSync(outputFilePath)) {
-          const publicAudioUrl = `/uploads/${outputFileName}`;
-          console.log("Voice Cloning Succeeded, saved to: " + publicAudioUrl);
-          return {
-            status: 'success',
-            audio_url: publicAudioUrl,
-            voice_id: result.voice_id
-          };
-        } else {
-          throw new Error('音频文件生成失败');
-        }
-      } else {
-        throw new Error(result.message);
-      }
+      return {
+        status: 'success',
+        audio_url: publicAudioUrl,
+        voice_id: voiceId
+      };
     } catch (error) {
       return {
         status: 'error',
@@ -484,83 +479,36 @@ class AIService {
 
   /**
    * Character Speech Generation (TTS)
-   * Calls DashScope (or similar) using a specific voice_id
+   * Pure Node.js implementation calling DashScope or gracefully delegating to Web Speech API
    */
   static async generateCharacterSpeech(voiceId, text, options = {}) {
-    // If no DashScope key configured, seamlessly fall back to browser Web Speech API
-    if (!process.env.DASHSCOPE_API_KEY) {
-      console.log("[AIService] No DASHSCOPE_API_KEY found, delegating TTS to Web Speech API");
+    const fileName = `chat_${Date.now()}.mp3`;
+    const outPath = path.join(getUploadsDir(), fileName);
+
+    const synthRes = await VoiceService.synthesizeSpeech({
+      voiceId,
+      text,
+      speed: options.speed || 1.0,
+      sampleRate: options.sampleRate || 22050,
+      outputPath: outPath
+    });
+
+    if (synthRes.status === 'success' && !synthRes.useWebSpeech && fs.existsSync(outPath)) {
       return {
         status: 'success',
-        audio_url: null,
-        useWebSpeech: true
+        audio_url: `/uploads/${fileName}`
       };
     }
 
-    try {
-      const fileName = `chat_${Date.now()}.mp3`;
-      const outPath = path.join(getUploadsDir(), fileName);
-      fs.mkdirSync(path.dirname(outPath), { recursive: true });
-
-      const scriptPath = path.join(__dirname, 'tts_helper.py');
-      const args = [scriptPath, voiceId, text, outPath];
-
-      if (options.speed) {
-        args.push('--speed', options.speed.toString());
-      }
-      if (options.sampleRate) {
-        args.push('--sample_rate', options.sampleRate.toString());
-      }
-
-      const result = await this.executePythonScript('python3', args);
-
-      if (result.status === 'success') {
-        return {
-          status: 'success',
-          audio_url: `/uploads/${fileName}`
-        };
-      } else {
-        console.warn("[AIService] TTS script failed, falling back to Web Speech:", result.message);
-        return {
-          status: 'success',
-          audio_url: null,
-          useWebSpeech: true
-        };
-      }
-    } catch (error) {
-      console.warn("Character TTS Error, falling back to Web Speech:", error.message);
-      return {
-        status: 'success',
-        audio_url: null,
-        useWebSpeech: true
-      };
-    }
+    return {
+      status: 'success',
+      audio_url: null,
+      useWebSpeech: true
+    };
   }
 
   static async speechToText(audioFilePath) {
-    if (!process.env.DASHSCOPE_API_KEY) {
-      return {
-        status: 'fallback',
-        message: 'USE_WEB_SPEECH'
-      };
-    }
-
-    try {
-      const scriptPath = path.join(__dirname, 'asr_helper.py');
-      const result = await this.executePythonScript('python3', [scriptPath, audioFilePath]);
-
-      if (result.status === 'success') {
-        return {
-          status: 'success',
-          text: result.text
-        };
-      } else {
-        throw new Error(result.message || 'Speech recognition failed');
-      }
-    } catch (error) {
-      console.error("ASR Error:", error.message);
-      throw error;
-    }
+    return VoiceService.speechToText(audioFilePath);
   }
 
   /**
