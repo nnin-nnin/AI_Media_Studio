@@ -10,6 +10,12 @@ const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 let mainWindow = null;
 let serverInstance = null;
 
+// Allow overriding userData via env or --user-data-dir CLI argument (for testing and multi-instance)
+const customUserData = process.env.ELECTRON_USER_DATA || process.argv.find(arg => arg.startsWith('--user-data-dir='))?.split('=')[1];
+if (customUserData) {
+    app.setPath('userData', path.resolve(customUserData));
+}
+
 // Configure persistent paths for desktop packaging
 const userDataDir = app.getPath('userData');
 const dataDir = path.join(userDataDir, 'data');
@@ -26,16 +32,30 @@ if (!fs.existsSync(path.join(uploadsDir, 'temp'))) {
 
 // Copy seed database template if user database does not exist
 if (!fs.existsSync(userDbPath)) {
-    const templateDb = path.join(__dirname, '..', 'data', 'ai_course.sqlite');
-    if (fs.existsSync(templateDb)) {
+    const templateDbCandidates = [
+        path.join(process.resourcesPath, 'data', 'ai_course.sqlite'),
+        path.join(__dirname, '..', 'data', 'ai_course.sqlite'),
+        path.join(process.cwd(), 'data', 'ai_course.sqlite')
+    ];
+    const templateDb = templateDbCandidates.find(p => fs.existsSync(p));
+    if (templateDb) {
         try {
             fs.copyFileSync(templateDb, userDbPath);
-            console.log('[Electron] Initialized user database template at:', userDbPath);
+            console.log('[Electron] Initialized user database template from:', templateDb, 'to:', userDbPath);
         } catch (e) {
             console.error('[Electron] Failed to copy database template:', e);
         }
     }
 }
+
+// In desktop mode, isolate from terminal dev keys so user settings are strictly hermetic
+delete process.env.ARK_API_KEY;
+delete process.env.DASHSCOPE_API_KEY;
+delete process.env.DECART_API_KEY;
+delete process.env.TENCENT_SECRET_ID;
+delete process.env.TENCENT_SECRET_KEY;
+delete process.env.TENCENT_COS_BUCKET;
+delete process.env.TENCENT_COS_REGION;
 
 // Set environment variables before backend server initializes
 process.env.DATA_DIR = dataDir;
@@ -43,13 +63,13 @@ process.env.DATABASE_URL = `file:${userDbPath}`;
 process.env.ENV_FILE_PATH = userEnvPath;
 process.env.USE_REDIS_QUEUE = 'false';
 
-// Load user .env if exists
+// Load user .env from userData ONLY if it exists
 if (fs.existsSync(userEnvPath)) {
     try {
         const envContent = fs.readFileSync(userEnvPath, 'utf8');
         envContent.split(/\r?\n/).forEach(line => {
             const m = line.match(/^([A-Z0-9_]+)\s*=\s*(.*)$/);
-            if (m && !process.env[m[1]]) {
+            if (m) {
                 process.env[m[1]] = m[2].replace(/^["']|["']$/g, '').trim();
             }
         });

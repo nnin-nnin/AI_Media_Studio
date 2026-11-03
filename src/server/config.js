@@ -1,4 +1,15 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import fs from 'fs';
+
+// If ENV_FILE_PATH is set (e.g. Electron desktop user data), strictly load from user config.
+// Otherwise, fall back to standard project .env in development.
+if (process.env.ENV_FILE_PATH) {
+    if (fs.existsSync(process.env.ENV_FILE_PATH)) {
+        dotenv.config({ path: process.env.ENV_FILE_PATH });
+    }
+} else {
+    dotenv.config();
+}
 
 const getEnv = (key, required = false, fallback = undefined) => {
     const value = process.env[key];
