@@ -23,7 +23,7 @@ const __dirname = dirname(__filename);
 const app = express();
 
 const PROJECT_ROOT = path.join(__dirname, '..', '..');
-const DATA_DIR = path.join(PROJECT_ROOT, 'data');
+const DATA_DIR = process.env.DATA_DIR || path.join(PROJECT_ROOT, 'data');
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 
 if (!fs.existsSync(path.join(UPLOADS_DIR, 'temp'))) {
@@ -133,7 +133,7 @@ function maskKey(val) {
 }
 
 function updateDotEnvFile(updates) {
-    const envPath = path.join(PROJECT_ROOT, '.env');
+    const envPath = process.env.ENV_FILE_PATH || path.join(PROJECT_ROOT, '.env');
     let content = '';
     if (fs.existsSync(envPath)) {
         content = fs.readFileSync(envPath, 'utf8');

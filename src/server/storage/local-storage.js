@@ -8,8 +8,8 @@ const __dirname = dirname(__filename);
 
 // Project Root is ../../../ relative to src/server/storage
 const PROJECT_ROOT = path.join(__dirname, '..', '..', '..');
-const DATA_DIR = path.join(PROJECT_ROOT, 'data');
-const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
+const DATA_DIR = process.env.DATA_DIR || path.join(PROJECT_ROOT, 'data');
+const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(DATA_DIR, 'uploads');
 
 class LocalStorageProvider {
     constructor() {

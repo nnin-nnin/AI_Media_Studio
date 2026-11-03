@@ -1,7 +1,7 @@
 {
   "name": "AI-Media-Studio",
   "version": "1.0.0",
-  "main": "src/server/server.js",
+  "main": "electron/main.js",
   "type": "module",
   "author": "Zhengmin Yu",
   "scripts": {
@@ -16,7 +16,12 @@
     "test": "vitest run",
     "test:e2e": "vitest run src/server/tests/e2e/studio.e2e.test.js",
     "pack": "bash scripts/package_release.sh",
-    "start": "concurrently \"npm run db:seed && node src/server/server.js\" \"npm run worker\""
+    "start": "concurrently \"npm run db:seed && node src/server/server.js\" \"npm run worker\"",
+    "electron": "electron .",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on tcp:5173 && electron .\"",
+    "electron:build": "npm run build && electron-builder",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:win": "npm run build && electron-builder --win"
   },
   "license": "MIT",
   "dependencies": {
@@ -26,7 +31,6 @@
     "@mediapipe/hands": "^0.4.1675469240",
     "axios": "^1.0.0",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.5.0",
     "body-parser": "^2.2.1",
     "bullmq": "^5.66.2",
     "cors": "^2.8.5",
@@ -43,10 +47,14 @@
   "devDependencies": {
     "@prisma/client": "^5.22.0",
     "concurrently": "^8.2.2",
+    "cross-env": "^10.1.0",
+    "electron": "^45.2.1",
+    "electron-builder": "^26.18.0",
     "prisma": "^5.22.0",
     "supertest": "^7.1.4",
     "vite": "^5.2.0",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.16",
+    "wait-on": "^9.5.1"
   },
   "prisma": {
     "seed": "node scripts/seed_all.js"

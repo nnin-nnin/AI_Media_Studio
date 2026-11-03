@@ -15,6 +15,10 @@ import logger from '../utils/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+function getUploadsDir() {
+  return process.env.UPLOADS_DIR || (process.env.DATA_DIR ? path.join(process.env.DATA_DIR, 'uploads') : path.join(__dirname, '..', '..', '..', 'data', 'uploads'));
+}
+
 // 动态获取 Ark OpenAI 客户端，支持在网页端热更新 API Key 后立即生效
 function getArkClient() {
   const currentKey = process.env.ARK_API_KEY;
@@ -120,7 +124,7 @@ class AIService {
   static async generateVideo(options) {
     try {
       const fileName = `video_${Date.now()}.mp4`;
-      const outPath = path.join(__dirname, '..', '..', '..', 'data', 'uploads', fileName);
+      const outPath = path.join(getUploadsDir(), fileName);
       fs.mkdirSync(path.dirname(outPath), { recursive: true });
 
       // Inject the calculated output_path into options
@@ -246,7 +250,7 @@ class AIService {
 
       // 生成输出文件路径（直接保存到 data/uploads 避免大体积 Base64 往返传输）
       const outputFileName = `voice_${Date.now()}.mp3`;
-      const uploadsDir = path.join(__dirname, '..', '..', '..', 'data', 'uploads');
+      const uploadsDir = getUploadsDir();
       fs.mkdirSync(uploadsDir, { recursive: true });
       const outputFilePath = path.join(uploadsDir, outputFileName);
 
@@ -495,7 +499,7 @@ class AIService {
 
     try {
       const fileName = `chat_${Date.now()}.mp3`;
-      const outPath = path.join(__dirname, '..', '..', '..', 'data', 'uploads', fileName);
+      const outPath = path.join(getUploadsDir(), fileName);
       fs.mkdirSync(path.dirname(outPath), { recursive: true });
 
       const scriptPath = path.join(__dirname, 'tts_helper.py');

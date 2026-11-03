@@ -30,24 +30,14 @@ describe('End-to-End (E2E) Test Suite: Full-Stack & Browser UI', () => {
             pageErrors.push(err.message);
         });
 
-        // Determine if dev server is running on FRONTEND_URL; if not, bind express app to free port
-        let devServerRunning = false;
-        try {
-            const resp = await fetch(FRONTEND_URL, { method: 'HEAD', signal: AbortSignal.timeout(800) });
-            if (resp.ok) devServerRunning = true;
-        } catch {
-            devServerRunning = false;
-        }
-
-        if (!devServerRunning) {
-            await new Promise((resolve) => {
-                serverInstance = app.listen(0, '127.0.0.1', () => {
-                    const port = serverInstance.address().port;
-                    targetUrl = `http://127.0.0.1:${port}`;
-                    resolve();
-                });
+        // Always bind app to an ephemeral port for hermetic test execution
+        await new Promise((resolve) => {
+            serverInstance = app.listen(0, '127.0.0.1', () => {
+                const port = serverInstance.address().port;
+                targetUrl = `http://127.0.0.1:${port}`;
+                resolve();
             });
-        }
+        });
     }, 30000);
 
     afterAll(async () => {
