@@ -147,19 +147,29 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 6px 8px;
+    padding: 6px 10px;
     border-radius: 8px;
     border: none;
     background: transparent;
     cursor: pointer;
     text-align: left;
-    transition: background 0.15s ease;
-    color: inherit;
+    transition: background 0.15s ease, color 0.15s ease;
+    color: var(--text-primary);
     flex: 1;
 }
 
 .sidebar-settings-btn:hover {
-    background: var(--btn-secondary-hover);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .sidebar-settings-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.settings-nav-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
 }
 
 .settings-icon-box {

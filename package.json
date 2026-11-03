@@ -47,9 +47,6 @@
   "license": "MIT",
   "dependencies": {
     "@decartai/sdk": "^0.0.27",
-    "@mediapipe/camera_utils": "^0.3.1675466862",
-    "@mediapipe/drawing_utils": "^0.3.1675466124",
-    "@mediapipe/hands": "^0.4.1675469240",
     "axios": "^1.0.0",
     "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.1",
@@ -59,12 +56,10 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "ioredis": "^5.8.2",
-    "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "openai": "^4.0.0",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1",
-    "three": "^0.182.0"
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@prisma/client": "^5.22.0",

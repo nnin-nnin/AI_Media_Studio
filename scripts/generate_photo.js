@@ -12,7 +12,7 @@ if (!process.env.ARK_API_KEY) {
   process.exit(1);
 }
 
-import { textToImage } from "./image-gen.js";
+import { textToImage } from "../src/server/ai/image-gen.js";
 
 async function main() {
   try {

@@ -50,6 +50,8 @@ if (!fs.existsSync(userDbPath)) {
 
 // In desktop mode, isolate from terminal dev keys so user settings are strictly hermetic
 delete process.env.ARK_API_KEY;
+delete process.env.VOLC_SPEECH_APPID;
+delete process.env.VOLC_SPEECH_TOKEN;
 delete process.env.DASHSCOPE_API_KEY;
 delete process.env.DECART_API_KEY;
 delete process.env.TENCENT_SECRET_ID;

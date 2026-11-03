@@ -46,10 +46,15 @@ class VoiceChatPage {
                         </div>
                         <div class="setting-row">
                             <div class="setting-label">${window.i18n.t('LABEL_SAMPLE_RATE')}</div>
-                            <select id="voice-sr" class="studio-select-glass" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--glass-border);">
+                            <select id="voice-sr" class="studio-select-glass" style="width:100%; padding:6px; border-radius:6px; border:1px solid rgba(0,0,0,0.1);">
                                 <option value="22050" selected>22050 Hz</option>
                                 <option value="44100">44100 Hz (Hi-Fi)</option>
                             </select>
+                        </div>
+                        <div class="voice-engine-meta">
+                            <span class="engine-dot" id="engine-dot"></span>
+                            <span class="engine-text" id="engine-name-label">本地免密语音</span>
+                            <button type="button" class="engine-link-btn" id="btn-open-speech-cfg" title="配置火山原厂角色语音">配置 ↗</button>
                         </div>
                     </div>
                 </div>
@@ -162,7 +167,16 @@ class VoiceChatPage {
                     this.currentAudio.pause();
                     this.currentAudio = null;
                 }
+                if (this._settingsListener) {
+                    window.removeEventListener('settings-updated', this._settingsListener);
+                }
             });
+        }
+
+        // Open speech configuration modal from control panel
+        const btnOpenSpeechCfg = document.getElementById('btn-open-speech-cfg');
+        if (btnOpenSpeechCfg) {
+            btnOpenSpeechCfg.onclick = () => window.ApiConfigModal && window.ApiConfigModal.open('speech');
         }
 
         // Voice Control Listeners
@@ -174,8 +188,38 @@ class VoiceChatPage {
             };
         }
 
+        // Check Volcengine Speech configuration
+        await this.checkSpeechConfig();
+        this._settingsListener = () => this.checkSpeechConfig();
+        window.addEventListener('settings-updated', this._settingsListener);
+
         // Initialize Mic Selector
         await this.loadMicrophones();
+    }
+
+    async checkSpeechConfig() {
+        try {
+            const res = await window.fetch('/api/settings/keys');
+            const data = await res.json();
+            const hasVolc = !!(data.keys?.VOLC_SPEECH_APPID?.configured && data.keys?.VOLC_SPEECH_TOKEN?.configured);
+            this.hasVolcSpeech = hasVolc;
+
+            const dot = document.getElementById('engine-dot');
+            const label = document.getElementById('engine-name-label');
+            const cfgBtn = document.getElementById('btn-open-speech-cfg');
+
+            if (hasVolc) {
+                if (dot) dot.className = 'engine-dot is-active';
+                if (label) label.innerText = '火山豆包原厂音色';
+                if (cfgBtn) cfgBtn.innerText = '管理';
+            } else {
+                if (dot) dot.className = 'engine-dot';
+                if (label) label.innerText = '本地免密语音';
+                if (cfgBtn) cfgBtn.innerText = '配置 ↗';
+            }
+        } catch (e) {
+            console.warn('[VoiceChat] Failed to check speech config:', e);
+        }
     }
 
     async loadMicrophones() {

@@ -155,7 +155,7 @@ export function enforceDesktopIsolation() {
             });
         }
         const managedKeys = [
-            'ARK_API_KEY', 'DASHSCOPE_API_KEY', 'DECART_API_KEY',
+            'ARK_API_KEY', 'VOLC_SPEECH_APPID', 'VOLC_SPEECH_TOKEN', 'DASHSCOPE_API_KEY', 'DECART_API_KEY',
             'TENCENT_SECRET_ID', 'TENCENT_SECRET_KEY', 'TENCENT_COS_BUCKET', 'TENCENT_COS_REGION'
         ];
         for (const k of managedKeys) {
@@ -220,6 +220,7 @@ app.get('/api/config', (req, res) => {
         decartApiKey: process.env.DECART_API_KEY || config.ai.decartApiKey,
         hasArkKey: !!(process.env.ARK_API_KEY || config.ai.arkApiKey),
         hasDashscopeKey: !!(process.env.DASHSCOPE_API_KEY || config.ai.dashscopeApiKey),
+        hasVolcSpeech: !!(process.env.VOLC_SPEECH_APPID && process.env.VOLC_SPEECH_TOKEN),
         skipAuth: config.auth.skipAuth && config.env === 'development'
     });
 });
@@ -233,11 +234,15 @@ app.get('/api/settings/keys', (req, res) => {
     const cosKey = process.env.TENCENT_SECRET_KEY || '';
     const cosBucket = process.env.TENCENT_COS_BUCKET || '';
     const cosRegion = process.env.TENCENT_COS_REGION || 'ap-beijing';
+    const volcAppId = process.env.VOLC_SPEECH_APPID || '';
+    const volcToken = process.env.VOLC_SPEECH_TOKEN || '';
 
     res.json({
         status: 'success',
         keys: {
             ARK_API_KEY: { configured: !!ark, masked: maskKey(ark) },
+            VOLC_SPEECH_APPID: { configured: !!volcAppId, value: volcAppId },
+            VOLC_SPEECH_TOKEN: { configured: !!volcToken, masked: maskKey(volcToken) },
             DASHSCOPE_API_KEY: { configured: !!dashscope, masked: maskKey(dashscope) },
             DECART_API_KEY: { configured: !!decart, masked: maskKey(decart) },
             TENCENT_SECRET_ID: { configured: !!cosId, masked: maskKey(cosId) },
@@ -252,6 +257,8 @@ app.post('/api/settings/keys', (req, res) => {
     try {
         const allowedKeys = [
             'ARK_API_KEY',
+            'VOLC_SPEECH_APPID',
+            'VOLC_SPEECH_TOKEN',
             'DASHSCOPE_API_KEY',
             'DECART_API_KEY',
             'TENCENT_SECRET_ID',
@@ -295,18 +302,28 @@ app.post('/api/settings/keys', (req, res) => {
 // --- System Config ---
 
 
-// 2. Simple In-Memory Rate Limiter
+// 2. Simple In-Memory Rate Limiter with automatic TTL eviction
 const rateLimit = new Map();
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+const RATE_LIMIT_MAX_REQUESTS = 100;
+
+// Evict expired IP buckets periodically to prevent memory leaks
+setInterval(() => {
+    const now = Date.now();
+    for (const [ip, record] of rateLimit.entries()) {
+        if (now - record.startTime > RATE_LIMIT_WINDOW_MS) {
+            rateLimit.delete(ip);
+        }
+    }
+}, 10 * 60 * 1000).unref();
+
 const rateLimiter = (req, res, next) => {
     const ip = req.ip;
     const now = Date.now();
-    const windowMs = 15 * 60 * 1000; // 15 minutes
-    const maxRequests = 100;
 
     const record = rateLimit.get(ip) || { count: 0, startTime: now };
 
-    if (now - record.startTime > windowMs) {
-        // Reset
+    if (now - record.startTime > RATE_LIMIT_WINDOW_MS) {
         record.count = 1;
         record.startTime = now;
     } else {
@@ -315,7 +332,7 @@ const rateLimiter = (req, res, next) => {
 
     rateLimit.set(ip, record);
 
-    if (record.count > maxRequests) {
+    if (record.count > RATE_LIMIT_MAX_REQUESTS) {
         logger.warn("Rate limit exceeded", { ip });
         return res.status(429).json({ status: 'error', message: 'Too many requests, please try again later.' });
     }

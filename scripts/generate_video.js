@@ -12,7 +12,7 @@ if (!process.env.ARK_API_KEY) {
   process.exit(1);
 }
 
-import { generateVideo } from "./video-gen.js";
+import { generateVideo } from "../src/server/ai/video-gen.js";
 import path from "node:path";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';

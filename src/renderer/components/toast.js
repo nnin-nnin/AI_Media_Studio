@@ -1,4 +1,4 @@
-// toast.js
+// toast.js - Clean, modern, secure notification system
 export const Toast = {
     init() {
         if (!document.querySelector('.toast-container')) {
@@ -13,25 +13,31 @@ export const Toast = {
         const container = document.querySelector('.toast-container');
 
         const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
+        toast.className = `toast is-${type}`;
 
-        const span = document.createElement('span');
-        span.textContent = message;
+        const iconWrap = document.createElement('span');
+        iconWrap.className = 'toast-icon-wrap';
+        if (type === 'success') {
+            iconWrap.innerHTML = `<svg class="toast-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5L5.5 10.5L11.5 3.5"></path></svg>`;
+        } else if (type === 'error') {
+            iconWrap.innerHTML = `<svg class="toast-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="5.5"></circle><path d="M7 4.5v3M7 9.5h.01"></path></svg>`;
+        } else {
+            iconWrap.innerHTML = `<svg class="toast-icon" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="7" r="5.5"></circle><path d="M7 6.5v3.5M7 4.5h.01"></path></svg>`;
+        }
 
-        const closeBtn = document.createElement('button');
-        closeBtn.textContent = '✕';
-        closeBtn.style.cssText = 'background:none;border:none;color:inherit;cursor:pointer;opacity:0.7;margin-left:8px;';
-        closeBtn.onclick = () => toast.remove();
+        const textSpan = document.createElement('span');
+        textSpan.className = 'toast-text';
+        textSpan.textContent = message;
 
-        toast.appendChild(span);
-        toast.appendChild(closeBtn);
+        toast.appendChild(iconWrap);
+        toast.appendChild(textSpan);
         container.appendChild(toast);
 
-        // Auto remove after 5s
+        // Auto dismiss after 2.8 seconds
         setTimeout(() => {
-            toast.style.animation = 'fadeOut 0.3s forwards';
-            setTimeout(() => toast.remove(), 300);
-        }, 5000);
+            toast.classList.add('is-leaving');
+            setTimeout(() => toast.remove(), 200);
+        }, 2800);
     }
 };
 

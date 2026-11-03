@@ -103,10 +103,7 @@ class GlobalSidebar {
                             <circle cx="12" cy="12" r="3"></circle>
                         </svg>
                     </div>
-                    <div class="user-details">
-                        <span class="user-name">服务配置</span>
-                        <span class="user-plan">API 密钥设置</span>
-                    </div>
+                    <span class="settings-nav-text">服务配置</span>
                 </button>
                 <button class="icon-btn theme-sidebar-btn" onclick="window.ThemeManager.toggle()" title="Switch Theme">
                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

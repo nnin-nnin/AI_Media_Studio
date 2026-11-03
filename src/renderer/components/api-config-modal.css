@@ -1,0 +1,437 @@
+/**
+ * api-config-modal.css
+ * Layout-first, minimalist service configuration dialog.
+ */
+.cfg-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 20000;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.cfg-dialog {
+    width: 100%;
+    max-width: 440px;
+    background: #ffffff;
+    color: #0f172a;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.03);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: cfgSlideIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cfgSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.97) translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+[data-theme="dark"] .cfg-dialog {
+    background: #18181b;
+    color: #f4f4f5;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+/* Header */
+.cfg-header {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] .cfg-header {
+    border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+
+.cfg-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: inherit;
+    margin: 0;
+}
+
+.cfg-close-btn {
+    background: transparent;
+    border: none;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s, color 0.15s;
+}
+
+.cfg-close-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #0f172a;
+}
+
+[data-theme="dark"] .cfg-close-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #f4f4f5;
+}
+
+/* Body */
+.cfg-body {
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.cfg-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cfg-row-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.cfg-label-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cfg-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #0f172a;
+}
+
+[data-theme="dark"] .cfg-label {
+    color: #f4f4f5;
+}
+
+.cfg-label-sm {
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+}
+
+[data-theme="dark"] .cfg-label-sm {
+    color: #a1a1aa;
+}
+
+.cfg-pill-opt {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: #94a3b8;
+    background: rgba(148, 163, 184, 0.12);
+}
+
+.cfg-link {
+    font-size: 11.5px;
+    color: #64748b;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.cfg-link:hover {
+    color: #0f172a;
+    text-decoration: underline;
+}
+
+[data-theme="dark"] .cfg-link {
+    color: #a1a1aa;
+}
+
+[data-theme="dark"] .cfg-link:hover {
+    color: #ffffff;
+}
+
+/* Status Badges */
+.cfg-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 450;
+    padding: 1px 7px;
+    border-radius: 9999px;
+    transition: all 0.15s;
+}
+
+.cfg-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.cfg-badge.is-connected {
+    color: #059669;
+    background: #ecfdf5;
+}
+
+.cfg-badge.is-connected .cfg-dot {
+    background: #10b981;
+}
+
+[data-theme="dark"] .cfg-badge.is-connected {
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.12);
+}
+
+.cfg-badge.is-empty {
+    color: #94a3b8;
+    background: #f1f5f9;
+}
+
+.cfg-badge.is-empty .cfg-dot {
+    background: #cbd5e1;
+}
+
+[data-theme="dark"] .cfg-badge.is-empty {
+    color: #71717a;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.cfg-badge.is-default {
+    color: #64748b;
+    background: #f1f5f9;
+}
+
+.cfg-badge.is-default .cfg-dot {
+    background: #94a3b8;
+}
+
+[data-theme="dark"] .cfg-badge.is-default {
+    color: #a1a1aa;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.cfg-badge-sm {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.cfg-badge-sm.is-connected {
+    color: #059669;
+}
+
+[data-theme="dark"] .cfg-badge-sm.is-connected {
+    color: #34d399;
+}
+
+/* Form Inputs */
+.cfg-input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 7px;
+    border: 1px solid #e2e8f0;
+    background: #fafafa;
+    color: #0f172a;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+.cfg-input::placeholder {
+    color: #94a3b8;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 12px;
+}
+
+.cfg-input:focus {
+    background: #ffffff;
+    border-color: #0f172a;
+    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.06);
+}
+
+[data-theme="dark"] .cfg-input {
+    background: #202024;
+    border-color: #2e2e33;
+    color: #f4f4f5;
+}
+
+[data-theme="dark"] .cfg-input:focus {
+    background: #27272b;
+    border-color: #e4e4e7;
+    box-shadow: 0 0 0 2px rgba(244, 244, 245, 0.1);
+}
+
+.cfg-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.cfg-hint {
+    font-size: 11px;
+    color: #94a3b8;
+    line-height: 1.3;
+}
+
+[data-theme="dark"] .cfg-hint {
+    color: #71717a;
+}
+
+/* Accordion for Extensions */
+.cfg-accordion {
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    padding-top: 10px;
+    margin-top: 4px;
+}
+
+[data-theme="dark"] .cfg-accordion {
+    border-top-color: rgba(255, 255, 255, 0.07);
+}
+
+.cfg-accordion-summary {
+    cursor: pointer;
+    user-select: none;
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 0;
+    list-style: none;
+    transition: color 0.15s;
+}
+
+.cfg-accordion-summary::-webkit-details-marker {
+    display: none;
+}
+
+.cfg-accordion-summary:hover {
+    color: #0f172a;
+}
+
+[data-theme="dark"] .cfg-accordion-summary:hover {
+    color: #f4f4f5;
+}
+
+.cfg-chevron {
+    transition: transform 0.18s ease;
+}
+
+.cfg-accordion[open] .cfg-chevron {
+    transform: rotate(180deg);
+}
+
+.cfg-accordion-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+    padding-bottom: 4px;
+}
+
+/* Footer */
+.cfg-footer {
+    padding: 12px 18px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    background: #fafafa;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+[data-theme="dark"] .cfg-footer {
+    border-top-color: rgba(255, 255, 255, 0.07);
+    background: #141416;
+}
+
+.cfg-secure-note {
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .cfg-secure-note {
+    color: #71717a;
+}
+
+.cfg-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cfg-btn-ghost {
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cfg-btn-ghost:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+[data-theme="dark"] .cfg-btn-ghost {
+    border-color: #3f3f46;
+    color: #a1a1aa;
+}
+
+[data-theme="dark"] .cfg-btn-ghost:hover {
+    background: #27272a;
+    color: #f4f4f5;
+}
+
+.cfg-btn-primary {
+    background: #0f172a;
+    border: 1px solid transparent;
+    color: #ffffff;
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.cfg-btn-primary:hover {
+    background: #1e293b;
+}
+
+[data-theme="dark"] .cfg-btn-primary {
+    background: #f4f4f5;
+    color: #0f172a;
+}
+
+[data-theme="dark"] .cfg-btn-primary:hover {
+    background: #ffffff;
+}

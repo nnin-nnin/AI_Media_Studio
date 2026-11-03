@@ -22,7 +22,9 @@ zip -r -q "$OUT_ZIP" . \
     -x "data/database.db*" \
     -x "temp/*" \
     -x "temp_*" \
+    -x "zi*" \
     -x "output_video.mp4" \
+    -x "release/*" \
     -x ".DS_Store" \
     -x "*/.DS_Store" \
     -x "$OUT_ZIP"
