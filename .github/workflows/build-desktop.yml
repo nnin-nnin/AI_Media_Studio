@@ -1,0 +1,48 @@
+name: Build Desktop Apps (Electron)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Web Assets
+        run: npm run build
+
+      - name: Build Electron App (Windows)
+        if: matrix.os == 'windows-latest'
+        run: npm run build:win
+
+      - name: Build Electron App (macOS)
+        if: matrix.os == 'macos-latest'
+        run: npm run build:mac
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI-Media-Studio-${{ matrix.os }}
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.exe
