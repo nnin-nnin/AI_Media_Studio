@@ -1,9 +1,30 @@
 {
   "name": "AI-Media-Studio",
   "version": "1.0.0",
+  "description": "Cross-platform AI creation studio featuring Image Creation & Face Swap, Video Generation, Character Voice Chat, and Realtime Vision, powered by Volcengine Ark & Doubao models.",
   "main": "electron/main.js",
   "type": "module",
   "author": "Zhengmin Yu",
+  "homepage": "https://github.com/nnin-nnin/AI_Media_Studio",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nnin-nnin/AI_Media_Studio.git"
+  },
+  "keywords": [
+    "ai",
+    "electron",
+    "volcengine",
+    "doubao",
+    "face-swap",
+    "video-generation",
+    "voice-chat",
+    "text-to-image",
+    "desktop-app",
+    "cross-platform"
+  ],
+  "bugs": {
+    "url": "https://github.com/nnin-nnin/AI_Media_Studio/issues"
+  },
   "scripts": {
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\" \"npm run worker\"",
     "server:dev": "npm run db:seed && export DEBUG=true && node --watch src/server/server.js",
