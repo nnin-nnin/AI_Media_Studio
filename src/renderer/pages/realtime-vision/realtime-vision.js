@@ -2,6 +2,8 @@
  * Real-time Vision Page (AI Mirror)
  * Uses Decart AI SDK for low-latency video transformation.
  */
+import './realtime-vision-layout.css';
+import { Toast } from '../../components/toast.js';
 
 // We use dynamic import because the project mostly uses non-module scripts,
 // but the SDK requires ESM.
@@ -9,15 +11,6 @@ let decartClient = null;
 
 async function loadRealtimeVisionPage(container) {
     if (!container) return;
-
-    // Inject styles
-    if (!document.getElementById('rv-layout-css')) {
-        const link = document.createElement('link');
-        link.id = 'rv-layout-css';
-        link.rel = 'stylesheet';
-        link.href = 'pages/realtime-vision/realtime-vision-layout.css';
-        document.head.appendChild(link);
-    }
 
     container.innerHTML = `
         <div class="studio-layout fade-in">
@@ -96,15 +89,17 @@ async function loadRealtimeVisionPage(container) {
 
             <!-- Col 3: Viewport -->
             <div class="studio-viewport">
-                <div class="video-container">
+                <div class="video-container" style="position:relative;">
                     <video id="video-output" autoplay playsinline></video>
+                    <img id="rv-snapshot-output" style="display:none; width:100%; height:100%; object-fit:cover; position:absolute; inset:0; z-index:5;" alt="Rendered Artwork">
+                    <canvas id="rv-capture-canvas" style="display:none;"></canvas>
                     
                     <div class="rv-status-panel">
                         <div class="status-dot" id="rv-status-dot"></div>
                         <span id="rv-status-text">${window.i18n.t('VISION_STATUS_DISCONNECTED')}</span>
                     </div>
 
-                    <div id="rv-loading-overlay" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; backdrop-filter:blur(4px);">
+                    <div id="rv-loading-overlay" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; backdrop-filter:blur(4px); z-index:20;">
                         <div class="spinner" style="width:30px; height:30px; border:3px solid var(--glass-border); border-top-color:var(--primary); border-radius:50%; animation:rv-spin 1s linear infinite;"></div>
                         <span style="font-size:12px;">${window.i18n.t('VISION_INITIALIZING')}</span>
                     </div>
@@ -114,6 +109,19 @@ async function loadRealtimeVisionPage(container) {
     `;
 
     setupRealtimeVisionListeners();
+
+    if (window.registerPageCleanup) {
+        window.registerPageCleanup(() => {
+            if (realtimeSession) {
+                try { realtimeSession.disconnect(); } catch (e) {}
+                realtimeSession = null;
+            }
+            if (currentStream) {
+                currentStream.getTracks().forEach(t => t.stop());
+                currentStream = null;
+            }
+        });
+    }
 }
 
 let realtimeSession = null;
@@ -162,78 +170,120 @@ async function setupRealtimeVisionListeners() {
     }
 
 
+    let isArkMirrorMode = false;
+    const snapshotOutput = document.getElementById('rv-snapshot-output');
+    const captureCanvas = document.getElementById('rv-capture-canvas');
+
     startBtn?.addEventListener('click', async () => {
         try {
             console.log("[Vision] Starting connection...");
 
-            // 1. Validate API Key
-            const apiKey = serverApiKey; // Strictly use server key
+            // 1. If Decart API Key is present, use low-latency Decart Mirage SDK
+            if (serverApiKey) {
+                isArkMirrorMode = false;
+                startBtn.disabled = true;
+                loadingOverlay.style.display = 'flex';
 
-            if (!apiKey) {
-                alert("API Key is missing. Please check ARK_API_KEY / DECART_API_KEY in your .env file.");
+                console.log("[Vision] Loading Decart SDK...");
+                const { createDecartClient, models } = await import("@decartai/sdk");
+                const model = models.realtime("mirage_v2");
+
+                console.log("[Vision] Requesting camera access...");
+                currentStream = await navigator.mediaDevices.getUserMedia({
+                    audio: true,
+                    video: {
+                        frameRate: model.fps || 24,
+                        width: model.width || 1024,
+                        height: model.height || 1024,
+                    }
+                });
+
+                console.log("[Vision] Connecting to Mirage V2...");
+                const client = createDecartClient({ apiKey: serverApiKey });
+
+                const session = await client.realtime.connect(currentStream, {
+                    model,
+                    onRemoteStream: (transformedStream) => {
+                        console.log("[Vision] Remote stream received");
+                        const vo = document.getElementById('video-output');
+                        if (vo) vo.srcObject = transformedStream;
+
+                        loadingOverlay.style.display = 'none';
+                        statusDot.classList.add('active');
+                        statusText.textContent = window.i18n.t('VISION_STATUS_ACTIVE');
+                        startBtn.style.display = 'none';
+                        stopBtn.style.display = 'block';
+                    }
+                });
+
+                realtimeSession = session;
+                const initPrompt = promptInput.value.trim();
+                if (initPrompt && session) {
+                    try { session.setPrompt(initPrompt); } catch (e) {}
+                }
                 return;
             }
 
-            console.log(`[Vision] Using API Key (Length: ${apiKey.length}): ${apiKey.substring(0, 4)}...`);
+            // 2. Otherwise, seamlessly use Volcengine Ark Seedream Image-to-Image AI Mirror!
+            isArkMirrorMode = true;
+            if (!currentStream) {
+                loadingOverlay.style.display = 'flex';
+                currentStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 1024, height: 1024, facingMode: 'user' },
+                    audio: false
+                });
 
-            startBtn.disabled = true;
+                const vo = document.getElementById('video-output');
+                if (vo) vo.srcObject = currentStream;
+
+                loadingOverlay.style.display = 'none';
+                statusDot.classList.add('active');
+                statusText.textContent = '火山引擎 AI 镜像模式 (已连通摄像头)';
+                startBtn.innerHTML = '<span>🎨</span> 转换当前画面风格';
+                stopBtn.style.display = 'block';
+                return;
+            }
+
+            // If camera is already streaming, capture frame and render with Ark Seedream
+            const vo = document.getElementById('video-output');
+            if (!vo || !captureCanvas) return;
+
             loadingOverlay.style.display = 'flex';
+            captureCanvas.width = vo.videoWidth || 1024;
+            captureCanvas.height = vo.videoHeight || 1024;
+            const ctx = captureCanvas.getContext('2d');
+            ctx.drawImage(vo, 0, 0, captureCanvas.width, captureCanvas.height);
+            const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.85);
 
-            // 2. Load SDK
-            console.log("[Vision] Loading Decart SDK...");
-            const { createDecartClient, models } = await import("@decartai/sdk");
-            const model = models.realtime("mirage_v2");
-
-            // 3. Get Stream
-            console.log("[Vision] Requesting camera access...");
-            currentStream = await navigator.mediaDevices.getUserMedia({
-                audio: true,
-                video: {
-                    frameRate: model.fps || 24,
-                    width: model.width || 1024,
-                    height: model.height || 1024,
-                }
+            const prompt = promptInput.value.trim() || 'A detailed oil painting in the style of Van Gogh, starry night, swirls';
+            const { fetchAPI } = await import('../../utils/web-api.js');
+            const res = await fetchAPI('/api/ai/edit-image', {
+                prompt: prompt,
+                image: dataUrl,
+                strength: 0.7
             });
 
-            // 4. Connect
-            console.log("[Vision] Connecting to Mirage V2...");
-            const client = createDecartClient({ apiKey });
-
-            // IMPORTANT: Fix race condition. We assign session BEFORE connect finishes if possible? 
-            // Actually SDK usually provides a way to get the session in the callback or after await.
-            const session = await client.realtime.connect(currentStream, {
-                model,
-                onRemoteStream: (transformedStream) => {
-                    console.log("[Vision] Remote stream received");
-                    const vo = document.getElementById('video-output');
-                    if (vo) vo.srcObject = transformedStream;
-
-                    // Success UI
-                    loadingOverlay.style.display = 'none';
-                    statusDot.classList.add('active');
-                    statusText.textContent = window.i18n.t('VISION_STATUS_ACTIVE');
-                    startBtn.style.display = 'none';
-                    stopBtn.style.display = 'block';
+            loadingOverlay.style.display = 'none';
+            if (res.status === 'success' && res.image_url) {
+                if (snapshotOutput) {
+                    snapshotOutput.src = res.image_url;
+                    snapshotOutput.style.display = 'block';
+                    snapshotOutput.title = '点击切回摄像头实时预览';
+                    snapshotOutput.onclick = () => {
+                        snapshotOutput.style.display = 'none';
+                    };
                 }
-            });
-
-            realtimeSession = session; // Assign globally
-            console.log("[Vision] Session established:", session);
-
-            // Set initial prompt immediately after session starts
-            const initPrompt = promptInput.value.trim();
-            if (initPrompt && session) {
-                try {
-                    session.setPrompt(initPrompt);
-                    console.log("[Vision] Initial style set to:", initPrompt);
-                } catch (e) {
-                    console.warn("[Vision] SetPrompt failed:", e);
+                if (window.AssetManager) {
+                    window.AssetManager.refresh();
                 }
+                Toast.show('画风转换完成！点击画面可切回摄像头', 'success');
+            } else {
+                Toast.show(res.message || '风格转换失败', 'error');
             }
 
         } catch (err) {
             console.error("[Vision] AI Mirror Error:", err);
-            alert("Failed to connect: " + err.message + "\nPlease check your server API Key configuration.");
+            Toast.show("启动失败: " + err.message, 'error');
 
             loadingOverlay.style.display = 'none';
             startBtn.disabled = false;
@@ -243,7 +293,7 @@ async function setupRealtimeVisionListeners() {
     stopBtn?.addEventListener('click', () => {
         console.log("[Vision] Disconnecting...");
         if (realtimeSession) {
-            realtimeSession.disconnect();
+            try { realtimeSession.disconnect(); } catch (e) {}
             realtimeSession = null;
         }
         if (currentStream) {
@@ -253,11 +303,13 @@ async function setupRealtimeVisionListeners() {
 
         const vo = document.getElementById('video-output');
         if (vo) vo.srcObject = null;
+        if (snapshotOutput) snapshotOutput.style.display = 'none';
 
         statusDot.classList.remove('active');
         statusText.textContent = window.i18n.t('VISION_STATUS_DISCONNECTED');
         startBtn.style.display = 'block';
         startBtn.disabled = false;
+        startBtn.innerHTML = `<span>🚀</span> ${window.i18n.t('VISION_START_BTN')}`;
         stopBtn.style.display = 'none';
     });
 

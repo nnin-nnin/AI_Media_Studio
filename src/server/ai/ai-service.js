@@ -15,19 +15,23 @@ import logger from '../utils/logger.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// 从环境变量中获取API密钥
-const apiKey = process.env.ARK_API_KEY;
-if (!apiKey) {
-  // 仅在控制台显示警告，不要在这里抛出错误，否则会导致整个服务器无法启动（导致CSS等静态资源也502）
-  console.warn("[AIService] WARNING: ARK_API_KEY is missing! AI features will fail until it's set.");
+// 动态获取 Ark OpenAI 客户端，支持在网页端热更新 API Key 后立即生效
+function getArkClient() {
+  const currentKey = process.env.ARK_API_KEY;
+  if (!currentKey) {
+    throw new Error("未配置 ARK_API_KEY，请点击页面左下角【⚙️ API 配置】填写密钥");
+  }
+  return new OpenAI({
+    baseURL: "https://ark.cn-beijing.volces.com/api/v3",
+    apiKey: currentKey,
+  });
+}
+
+if (!process.env.ARK_API_KEY) {
+  console.warn("[AIService] WARNING: ARK_API_KEY is missing! Configure it via the web UI settings.");
 } else {
   console.log("[AIService] ARK_API_KEY found.");
 }
-
-const client = apiKey ? new OpenAI({
-  baseURL: "https://ark.cn-beijing.volces.com/api/v3",
-  apiKey: apiKey,
-}) : null;
 
 /**
  * AI服务类，封装所有AI功能调用
@@ -63,13 +67,14 @@ class AIService {
   static async textToImage(options) {
     const {
       prompt,
-      model = "ep-20250209095657-p2j9r",
+      model = "doubao-seedream-4-0-250828",
       width = 1024,
       height = 1024,
       saveTo
     } = options;
 
-    const resp = await client.images.generate({
+    const arkClient = getArkClient();
+    const resp = await arkClient.images.generate({
       model,
       prompt,
       n: 1,
@@ -239,8 +244,11 @@ class AIService {
         console.warn("[AIService] Audio normalization failed, using raw file:", normErr.message);
       }
 
-      // 生成输出文件路径
-      const outputFilePath = path.join(tempDir, `output_voice_${Date.now()}.mp3`);
+      // 生成输出文件路径（直接保存到 data/uploads 避免大体积 Base64 往返传输）
+      const outputFileName = `voice_${Date.now()}.mp3`;
+      const uploadsDir = path.join(__dirname, '..', '..', '..', 'data', 'uploads');
+      fs.mkdirSync(uploadsDir, { recursive: true });
+      const outputFilePath = path.join(uploadsDir, outputFileName);
 
       // 获取Python脚本路径
       const scriptPath = path.join(__dirname, 'voice-clone.py');
@@ -261,20 +269,18 @@ class AIService {
       console.log(`[AIService] Starting real Voice Cloning with Python: ${pythonPath}`);
       const result = await this.executePythonScript(pythonPath, args);
 
+      // 清理临时输入文件
+      if (fs.existsSync(audioFilePath)) {
+        fs.unlinkSync(audioFilePath);
+      }
+
       if (result.status === 'success') {
-        // 读取生成的音频文件并转换为数据URL
         if (fs.existsSync(outputFilePath)) {
-          const outputBuffer = fs.readFileSync(outputFilePath);
-          const outputDataUrl = `data:audio/mpeg;base64,${outputBuffer.toString('base64')}`;
-
-          // 清理临时文件
-          fs.unlinkSync(audioFilePath);
-          fs.unlinkSync(outputFilePath);
-
-          console.log("Voice Cloning Succeeded, returning audio data URL (length: " + outputDataUrl.length + ")");
+          const publicAudioUrl = `/uploads/${outputFileName}`;
+          console.log("Voice Cloning Succeeded, saved to: " + publicAudioUrl);
           return {
             status: 'success',
-            audio_url: outputDataUrl,
+            audio_url: publicAudioUrl,
             voice_id: result.voice_id
           };
         } else {
@@ -349,14 +355,29 @@ class AIService {
    * @param {Array} args - 参数
    * @returns {Promise<Object>} 执行结果
    */
-  static async executePythonScript(command, args) {
-    return new Promise((resolve, reject) => {
-      // In development, we use 'uv run' to ensure the correct environment
-      // In production, we might use a specific python path
-      let pythonPath = 'uv';
-      let combinedArgs = ['run', '--project', path.join(__dirname, '..', '..', '..'), command || 'python3', ...args];
+  static resolveVenvPython() {
+    const projectRoot = path.join(__dirname, '..', '..', '..');
+    const winPython = path.join(projectRoot, '.venv', 'Scripts', 'python.exe');
+    const unixPython = path.join(projectRoot, '.venv', 'bin', 'python');
+    if (fs.existsSync(winPython)) return winPython;
+    if (fs.existsSync(unixPython)) return unixPython;
+    return process.env.PYTHON_PATH || (process.platform === 'win32' ? 'python' : 'python3');
+  }
 
-      console.log(`[AIService] Spawning via UV: ${pythonPath} ${combinedArgs.join(' ')}`);
+  static async executePythonScript(command, args, useDirectPython = false) {
+    return new Promise((resolve, reject) => {
+      const projectRoot = path.join(__dirname, '..', '..', '..');
+      const resolvedPython = this.resolveVenvPython();
+      const hasVenvPython = resolvedPython.includes('.venv');
+
+      // Prefer .venv python directly if present (works on both Windows & macOS without requiring uv at runtime)
+      const useDirect = useDirectPython || hasVenvPython;
+      const pythonPath = useDirect ? resolvedPython : 'uv';
+      const combinedArgs = useDirect
+        ? args
+        : ['run', '--project', projectRoot, command || 'python3', ...args];
+
+      console.log(`[AIService] Spawning Python: ${pythonPath} ${combinedArgs.join(' ')}`);
 
       // Determine if we need a CLEAN environment (no proxy)
       // Voice Cloning (voice-clone.py) uses WebSocket and often fails with proxy
@@ -434,11 +455,10 @@ class AIService {
         });
 
         pyProcess.on('error', (error) => {
-          // Fallback Strategy: If 'uv' is missing, try running directly with 'python3'
-          if (pythonPath === 'uv' && error.code === 'ENOENT') {
-            console.warn("[AIService] 'uv' not found. Falling back to direct 'python3' execution.");
-            // Re-call with python3
-            this.executePythonScript('python3', args).then(resolve).catch(reject);
+          // Fallback Strategy: If 'uv' is missing, try running directly with resolved python
+          if (!useDirect && error.code === 'ENOENT') {
+            console.warn("[AIService] 'uv' not found. Falling back to direct python execution.");
+            this.executePythonScript('python3', args, true).then(resolve).catch(reject);
             return;
           }
 
@@ -463,6 +483,16 @@ class AIService {
    * Calls DashScope (or similar) using a specific voice_id
    */
   static async generateCharacterSpeech(voiceId, text, options = {}) {
+    // If no DashScope key configured, seamlessly fall back to browser Web Speech API
+    if (!process.env.DASHSCOPE_API_KEY) {
+      console.log("[AIService] No DASHSCOPE_API_KEY found, delegating TTS to Web Speech API");
+      return {
+        status: 'success',
+        audio_url: null,
+        useWebSpeech: true
+      };
+    }
+
     try {
       const fileName = `chat_${Date.now()}.mp3`;
       const outPath = path.join(__dirname, '..', '..', '..', 'data', 'uploads', fileName);
@@ -486,18 +516,33 @@ class AIService {
           audio_url: `/uploads/${fileName}`
         };
       } else {
-        throw new Error(result.message || 'TTS generation failed');
+        console.warn("[AIService] TTS script failed, falling back to Web Speech:", result.message);
+        return {
+          status: 'success',
+          audio_url: null,
+          useWebSpeech: true
+        };
       }
     } catch (error) {
-      console.error("Character TTS Error:", error.message);
-      throw error;
+      console.warn("Character TTS Error, falling back to Web Speech:", error.message);
+      return {
+        status: 'success',
+        audio_url: null,
+        useWebSpeech: true
+      };
     }
   }
 
   static async speechToText(audioFilePath) {
+    if (!process.env.DASHSCOPE_API_KEY) {
+      return {
+        status: 'fallback',
+        message: 'USE_WEB_SPEECH'
+      };
+    }
+
     try {
       const scriptPath = path.join(__dirname, 'asr_helper.py');
-      // Use python3 or a configured path
       const result = await this.executePythonScript('python3', [scriptPath, audioFilePath]);
 
       if (result.status === 'success') {
@@ -522,7 +567,8 @@ class AIService {
    */
   static async chat(prompt, systemPrompt = "You are a helpful AI assistant.") {
     try {
-      const response = await client.chat.completions.create({
+      const arkClient = getArkClient();
+      const response = await arkClient.chat.completions.create({
         model: "doubao-1-5-pro-32k-250115", // A common Ark endpoint ID pattern or model name
         messages: [
           { role: "system", content: systemPrompt },
@@ -545,13 +591,14 @@ class AIService {
   static async listModels(type = null) {
     try {
       console.log(`Fetching ${type || 'all'} models from Ark API...`);
+      const arkClient = getArkClient();
 
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("ARK API Timeout")), 5000)
       );
 
       const response = await Promise.race([
-        client.models.list(),
+        arkClient.models.list(),
         timeoutPromise
       ]);
 
@@ -584,9 +631,11 @@ class AIService {
 
       // Fallback: 根据类型返回过滤后的默认值
       const allFallbacks = [
-        { id: "doubao-seedream-4-0-250828", name: "Doubao Image (Seedream 4.0)", type: 'image' },
-        { id: "doubao-seedance-1-0-pro-fast-251015", name: "Doubao Video (Seedance 1.0 Fast)", type: 'video' },
-        { id: "cosyvoice-v3", name: "CosyVoice V3 (Standard)", type: 'audio' }
+        { id: "doubao-seedream-4-0-250828", name: "Doubao Image (Seedream 4.0 通用稳定版)", type: 'image' },
+        { id: "doubao-seedream-5-0-260128", name: "Doubao Image (Seedream 5.0 旗舰版)", type: 'image' },
+        { id: "doubao-seedance-1-0-pro-fast-251015", name: "Doubao Video (Seedance 1.0 Fast 极速版)", type: 'video' },
+        { id: "doubao-seedance-2-0-fast-260128", name: "Doubao Video (Seedance 2.0 Fast 旗舰版)", type: 'video' },
+        { id: "cosyvoice-v3", name: "CosyVoice V3 (标准语音)", type: 'audio' }
       ];
 
       const filteredFallbacks = type

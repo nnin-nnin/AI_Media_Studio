@@ -2,6 +2,7 @@
  * voice-chat.js
  * AI角色互动页面逻辑
  */
+import './voice-chat.css';
 import { fetchAPI } from '../../utils/web-api.js';
 import { AudioRecorder } from '../../utils/audio-recorder.js';
 
@@ -11,24 +12,16 @@ class VoiceChatPage {
         this.isRecording = false;
         this.recorder = new AudioRecorder();
         this.characters = [];
+        this.currentAudio = null;
     }
 
     async render(container) {
-        // Inject styles
-        if (!document.getElementById('vc-css')) {
-            const link = document.createElement('link');
-            link.id = 'vc-css';
-            link.rel = 'stylesheet';
-            link.href = 'pages/voice-chat/voice-chat.css';
-            document.head.appendChild(link);
-        }
-
         container.innerHTML = `
             <div class="studio-layout fade-in">
                 <!-- Col 2: Controls (Left Panel) -->
                 <div class="studio-controls">
                     <div class="studio-header">
-                        <div style="font-weight:600; font-size:14px;">Voice Studio</div>
+                        <div style="font-weight:600; font-size:14px;">${window.i18n.t('CHAT_TITLE')}</div>
                     </div>
 
                     <!-- Character List -->
@@ -39,20 +32,20 @@ class VoiceChatPage {
                     <!-- Voice Settings (Bottom) -->
                     <div class="voice-settings-panel">
                         <div class="setting-row">
-                            <div class="setting-label">Microphone</div>
+                            <div class="setting-label">${window.i18n.t('LABEL_MIC_INPUT')}</div>
                             <select id="mic-select" class="studio-select-glass" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--glass-border);">
-                                <option value="" disabled selected>Loading...</option>
+                                <option value="" disabled selected>${window.i18n.t('COMMON_LOADING')}</option>
                             </select>
                         </div>
                         <div class="setting-row">
                             <div class="setting-label">
-                                <span>Speed</span>
+                                <span>${window.i18n.t('AUDIO_SPEED_LABEL')}</span>
                                 <span id="speed-val">1.0x</span>
                             </div>
                             <input type="range" class="studio-slider" id="voice-speed" min="0.5" max="2.0" step="0.1" value="1.0">
                         </div>
                         <div class="setting-row">
-                            <div class="setting-label">Sample Rate</div>
+                            <div class="setting-label">${window.i18n.t('LABEL_SAMPLE_RATE')}</div>
                             <select id="voice-sr" class="studio-select-glass" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--glass-border);">
                                 <option value="22050" selected>22050 Hz</option>
                                 <option value="44100">44100 Hz (Hi-Fi)</option>
@@ -66,7 +59,7 @@ class VoiceChatPage {
                     <!-- Default State (No Character Selected) -->
                     <div id="vc-empty-state" style="text-align:center; opacity:0.6;">
                         <div style="font-size:48px; margin-bottom:1rem;">🎙️</div>
-                        <p>Select a character to start chatting</p>
+                        <p>${window.i18n.t('CHAT_WELCOME')}</p>
                     </div>
 
                     <!-- Active Chat Interface -->
@@ -139,10 +132,37 @@ class VoiceChatPage {
             this.sendTextBtn.onclick = () => {
                 const text = this.manualTextInput.value.trim();
                 if (text) {
-                    this.handleFinalTranscript(text);
+                    const speedEl = document.getElementById('voice-speed');
+                    const srEl = document.getElementById('voice-sr');
+                    this.handleFinalTranscript(text, {
+                        speed: speedEl ? parseFloat(speedEl.value) : 1.0,
+                        sampleRate: srEl ? parseInt(srEl.value) : 22050
+                    });
                     this.manualTextInput.value = '';
                 }
             };
+        }
+
+        if (this.manualTextInput) {
+            this.manualTextInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.sendTextBtn?.click();
+                }
+            });
+        }
+
+        if (window.registerPageCleanup) {
+            window.registerPageCleanup(() => {
+                if (this.isRecording) {
+                    this.isRecording = false;
+                    this.recorder.stop().catch(() => {});
+                }
+                if (this.currentAudio) {
+                    this.currentAudio.pause();
+                    this.currentAudio = null;
+                }
+            });
         }
 
         // Voice Control Listeners
@@ -233,12 +253,13 @@ class VoiceChatPage {
 
     renderCharacterList() {
         if (!this.characterList) return;
+        const escapeHTML = window.escapeHTML || (s => s);
         this.characterList.innerHTML = this.characters.map(char => `
-            <div class="character-card" data-id="${char.id}">
-                <img src="${char.avatar}" alt="${char.name}">
+            <div class="character-card" data-id="${escapeHTML(char.id)}">
+                <img src="${escapeHTML(char.avatar)}" alt="${escapeHTML(char.name)}">
                 <div class="character-info">
-                    <h3>${char.name}</h3>
-                    <p>${char.description || ''}</p>
+                    <h3>${escapeHTML(char.name)}</h3>
+                    <p>${escapeHTML(char.description || '')}</p>
                 </div>
             </div>
         `).join('');
@@ -401,20 +422,48 @@ class VoiceChatPage {
                     window.AssetManager.refresh();
                 }
 
-                const audio = new Audio(res.audio_url);
+                if (this.currentAudio) {
+                    this.currentAudio.pause();
+                }
+
                 const avatarContainer = document.getElementById('active-char-container');
 
-                audio.onplay = () => {
-                    if (avatarContainer) avatarContainer.classList.add('speaking');
-                    this.micStatus.innerText = "Speaking...";
-                };
+                if (res.audio_url) {
+                    const audio = new Audio(res.audio_url);
+                    this.currentAudio = audio;
 
-                audio.onended = () => {
-                    if (avatarContainer) avatarContainer.classList.remove('speaking');
+                    audio.onplay = () => {
+                        if (avatarContainer) avatarContainer.classList.add('speaking');
+                        this.micStatus.innerText = "Speaking...";
+                    };
+
+                    audio.onended = () => {
+                        if (avatarContainer) avatarContainer.classList.remove('speaking');
+                        this.micStatus.innerText = window.i18n.t('CHAT_MIC_START');
+                    };
+
+                    audio.play();
+                } else if ('speechSynthesis' in window) {
+                    // Fallback to Web Speech API when no DashScope key is set
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(res.text);
+                    utterance.rate = settings.speed || 1.0;
+                    utterance.lang = 'zh-CN';
+
+                    utterance.onstart = () => {
+                        if (avatarContainer) avatarContainer.classList.add('speaking');
+                        this.micStatus.innerText = "Speaking...";
+                    };
+
+                    utterance.onend = () => {
+                        if (avatarContainer) avatarContainer.classList.remove('speaking');
+                        this.micStatus.innerText = window.i18n.t('CHAT_MIC_START');
+                    };
+
+                    window.speechSynthesis.speak(utterance);
+                } else {
                     this.micStatus.innerText = window.i18n.t('CHAT_MIC_START');
-                };
-
-                audio.play();
+                }
             }
         } catch (e) {
             console.error("TTS Failed", e);

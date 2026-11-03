@@ -21,19 +21,27 @@ class VoiceChatService {
             throw new Error("Character not found");
         }
 
-        logger.info("Character Voice Read-back", {
+        logger.info("Character Voice Generation", {
             character: character.name,
             text: text,
             options: options
         });
 
-        // Simply generate Speech for the user's text (Parrot Mode)
-        const result = await AIService.generateCharacterSpeech(character.voice_id, text, options);
+        let spokenText = text;
+        if (options.useLLM !== false) {
+            const systemPrompt = `You are roleplaying as ${character.name} (${character.description || 'a friendly character'}). Keep your reply natural, in-character, and concise (1-2 sentences) suitable for spoken voice output.`;
+            const aiReply = await AIService.chat(text, systemPrompt);
+            if (aiReply && !aiReply.startsWith('AI: ')) {
+                spokenText = aiReply;
+            }
+        }
+
+        const result = await AIService.generateCharacterSpeech(character.voice_id, spokenText, options);
 
         return {
             ...result,
             characterName: character.name,
-            text: text
+            text: spokenText
         };
     }
 

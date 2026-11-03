@@ -4,16 +4,14 @@ import fs from "node:fs";
 import path from "node:path";
 import axios from "axios";
 
-// 从环境变量中获取API密钥，如果未设置则抛出错误
-const apiKey = process.env.ARK_API_KEY;
-if (!apiKey) {
-  throw new Error("请设置 ARK_API_KEY 环境变量");
+// 动态获取 API Key，避免未配置时导致服务启动崩溃
+function getArkApiKey() {
+  const apiKey = process.env.ARK_API_KEY;
+  if (!apiKey) {
+    throw new Error("未配置 ARK_API_KEY，请点击页面左下角【⚙️ API 配置】填写密钥");
+  }
+  return apiKey;
 }
-
-const client = new OpenAI({
-  baseURL: "https://ark.cn-beijing.volces.com/api/v3",
-  apiKey: apiKey,
-});
 
 /**
  * Helper for axios calls with retry logic to handle ECONNRESET and transient network errors
@@ -77,6 +75,7 @@ export async function generateVideo({
   poll_interval = 3,
 }) {
   try {
+    const apiKey = getArkApiKey();
     // fast 模型时长保护
     const max_supported_for_fast = 5;
     if (model.includes("fast") && duration > max_supported_for_fast) {

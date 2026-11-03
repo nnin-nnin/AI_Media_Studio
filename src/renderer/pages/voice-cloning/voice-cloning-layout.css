@@ -41,7 +41,7 @@
 }
 
 .mode-btn.active {
-    background: white;
+    background: var(--bg-card);
     color: var(--text-primary);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
@@ -99,7 +99,7 @@
     resize: none;
     font-family: inherit;
     font-size: 1.5rem;
-    color: #000000;
+    color: var(--text-primary);
     font-weight: 500;
     background: transparent;
     min-height: 8rem;
@@ -108,7 +108,7 @@
 
 .vc-textarea:focus {
     background: transparent;
-    color: #000000;
+    color: var(--text-primary);
 }
 
 /* Toolbar (Unified) */

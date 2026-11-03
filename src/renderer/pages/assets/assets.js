@@ -2,17 +2,10 @@
  * Assets Page
  * Displays gallery of all saved assets (Images, Videos, Voice)
  */
+import './assets.css';
+
 function loadAssetsPage(container) {
     if (!container) return;
-
-    // Inject styles
-    if (!document.getElementById('assets-css')) {
-        const link = document.createElement('link');
-        link.id = 'assets-css';
-        link.rel = 'stylesheet';
-        link.href = 'pages/assets/assets.css';
-        document.head.appendChild(link);
-    }
 
     container.innerHTML = `
         <div class="assets-page fade-in">
@@ -21,12 +14,12 @@ function loadAssetsPage(container) {
 
             <div class="assets-main">
                 <div class="assets-header">
-                    <h1>Asset Library</h1>
+                    <h1>${window.i18n.t('ASSETS_TITLE')}</h1>
                     <div class="assets-filters">
-                        <button class="filter-btn active" data-filter="all">All</button>
-                        <button class="filter-btn" data-filter="image">Images</button>
-                        <button class="filter-btn" data-filter="video">Videos</button>
-                        <button class="filter-btn" data-filter="audio">Audio</button>
+                        <button class="filter-btn active" data-filter="all">${window.i18n.t('ASSETS_FILTER_ALL')}</button>
+                        <button class="filter-btn" data-filter="image">${window.i18n.t('ASSETS_FILTER_IMAGE')}</button>
+                        <button class="filter-btn" data-filter="video">${window.i18n.t('ASSETS_FILTER_VIDEO')}</button>
+                        <button class="filter-btn" data-filter="audio">${window.i18n.t('ASSETS_FILTER_AUDIO')}</button>
                     </div>
                 </div>
 
@@ -36,8 +29,8 @@ function loadAssetsPage(container) {
                 
                 <div id="assets-empty" class="assets-empty">
                     <div class="empty-icon">📂</div>
-                    <p>No assets found</p>
-                    <small>Generate something in the studios to see it here.</small>
+                    <p>${window.i18n.t('ASSETS_EMPTY_TITLE')}</p>
+                    <small>${window.i18n.t('ASSETS_EMPTY_SUBTITLE')}</small>
                 </div>
             </div>
         </div>
@@ -90,18 +83,22 @@ function renderAssetGrid(filter) {
             content = `<div class="audio-card">🎵</div>`;
         }
 
+        const escapeHTML = window.escapeHTML || (s => s);
+        const safeId = escapeHTML(asset.id);
+        const safePrompt = escapeHTML(asset.prompt || 'Untitled');
+
         return `
-            <div class="asset-card fade-in" onclick="window.MediaPreview.open('${asset.id}')">
+            <div class="asset-card fade-in" onclick="window.MediaPreview.open('${safeId}')">
                 <div class="asset-preview">
                     ${content}
                 <div class="asset-overlay">
-                    <button class="icon-on-dark" onclick="event.stopPropagation(); window.AssetManager.delete('${asset.id}');">
+                    <button class="icon-on-dark" onclick="event.stopPropagation(); window.AssetManager.delete('${safeId}');">
                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
                 </div>
                 <div class="asset-info">
-                    <div class="asset-title">${asset.prompt || 'Untitled'}</div>
+                    <div class="asset-title">${safePrompt}</div>
                     <div class="asset-meta">${new Date(asset.created_at).toLocaleDateString()}</div>
                 </div>
             </div>

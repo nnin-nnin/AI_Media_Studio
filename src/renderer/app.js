@@ -1,6 +1,29 @@
 // app.js - 主应用文件
 
-// --- Global API Interceptor (Removed) ---
+let currentPageCleanup = null;
+
+/**
+ * 全局 HTML 转义工具函数，防止 XSS 注入
+ * @param {string} str
+ * @returns {string}
+ */
+window.escapeHTML = function (str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+};
+
+/**
+ * 注册当前页面的资源清理回调（切换页面时自动调用）
+ * @param {Function} cleanupFn
+ */
+window.registerPageCleanup = function (cleanupFn) {
+    currentPageCleanup = cleanupFn;
+};
 
 // 暴露初始化函数给外部回调
 window.initializeApp = initializeApp;
@@ -97,6 +120,16 @@ function showPage(page) {
     const mainContent = document.getElementById('main-content');
     if (!mainContent) return;
 
+    // 切换页面前自动释放上一页的硬件/会话资源（摄像头、麦克风、WebRTC、轮询等）
+    if (typeof currentPageCleanup === 'function') {
+        try {
+            currentPageCleanup();
+        } catch (err) {
+            console.warn('[Router] Page cleanup error:', err);
+        }
+        currentPageCleanup = null;
+    }
+
     // 根据页面类型加载对应内容
     switch (page) {
         case 'dashboard':
@@ -125,7 +158,7 @@ function showPage(page) {
             if (window.loadAssetsPage) window.loadAssetsPage(mainContent);
             break;
         default:
-            loadHomePage(mainContent);
+            loadDashboardPage(mainContent);
     }
 
     // 更新激活状态

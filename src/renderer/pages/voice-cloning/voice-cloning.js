@@ -1,20 +1,14 @@
 // pages/voice-cloning/voice-cloning.js
 import { AudioRecorder } from '../../utils/audio-recorder.js';
+import './voice-cloning-layout.css';
+
+const notifyError = (msg) => window.Toast ? window.Toast.show(msg, 'error') : alert(msg);
 
 /**
  * 加载克隆声音页面内容 (Studio Layout Refactor)
  */
 function loadVoiceCloningPage(container) {
     if (!container) return;
-
-    // Inject styles if not present
-    if (!document.getElementById('vc-layout-css')) {
-        const link = document.createElement('link');
-        link.id = 'vc-layout-css';
-        link.rel = 'stylesheet';
-        link.href = 'pages/voice-cloning/voice-cloning-layout.css';
-        document.head.appendChild(link);
-    }
 
     container.innerHTML = `
         <div class="studio-layout fade-in">
@@ -56,7 +50,7 @@ function loadVoiceCloningPage(container) {
 
                     <!-- Preset Voices Row (Visible in Text mode) -->
                     <div class="studio-slots-row" id="vc-presets-row" style="display:flex; gap: 10px; margin-bottom:12px; overflow-x:auto; padding-bottom:8px;">
-                        <div class="loading-vc-presets" style="font-size:11px; color:var(--text-secondary); opacity:0.7;">Loading presets...</div>
+                        <div class="loading-vc-presets" style="font-size:11px; color:var(--text-secondary); opacity:0.7;">${window.i18n.t('COMMON_LOADING')}</div>
                     </div>
 
                     <!-- Text Editor -->
@@ -74,11 +68,11 @@ function loadVoiceCloningPage(container) {
                     <div class="studio-tab-header">
                         <button class="studio-tab-btn active" data-tab="settings">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                            Settings
+                            ${window.i18n.t('TAB_SETTINGS')}
                         </button>
                         <button class="studio-tab-btn" data-tab="assets">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
-                            Assets
+                            ${window.i18n.t('TAB_ASSETS')}
                         </button>
                     </div>
                     <div class="studio-tab-content">
@@ -98,7 +92,7 @@ function loadVoiceCloningPage(container) {
                             <input type="range" class="studio-slider" id="similarity-slider" min="0" max="100" value="75">
 
                             <div style="margin-top:12px;">
-                                    <label style="display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px;">Microphone Input</label>
+                                    <label style="display:block; font-size:11px; color:var(--text-secondary); margin-bottom:4px;">${window.i18n.t('LABEL_MIC_INPUT')}</label>
                                     <select id="vc-mic-select" class="studio-select-glass">
                                         <option value="default">Default System Audio</option>
                                     </select>
@@ -107,7 +101,8 @@ function loadVoiceCloningPage(container) {
 
                          <!-- Tab: Assets -->
                          <div id="tab-assets" class="tab-pane" style="display:none;">
-                            <div style="text-align:center; margin-top:2rem; font-size:12px; color:var(--text-secondary);">
+                            <div id="vc-asset-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+                            <div id="vc-asset-empty" style="text-align:center; margin-top:2rem; font-size:12px; color:var(--text-secondary);">
                                 ${window.i18n.t('AUDIO_ASSETS_EMPTY')}
                             </div>
                          </div>
@@ -271,44 +266,86 @@ function setupVoiceCloningEventListeners() {
         if (mode === 'text') {
             const activePreset = document.querySelector('.vc-preset-item.active');
             if (!activePreset) {
-                alert("Please select a preset voice.");
+                notifyError("Please select a preset voice.");
                 return;
             }
             selectedVoiceId = activePreset.dataset.voiceId;
         }
 
         if (!prompt) {
-            alert("Please enter text to generate speech.");
+            notifyError("Please enter text to generate speech.");
             return;
         }
 
         if (mode === 'clone' && !audioData) {
-            alert("Please upload a reference audio or record your voice for cloning.");
+            notifyError("Please upload a reference audio or record your voice for cloning.");
             return;
         }
 
         const oldText = generateBtn.innerHTML;
-        generateBtn.innerHTML = "Generating...";
+        generateBtn.innerHTML = window.i18n.t('FS_BTN_GENERATING') || "Generating...";
         generateBtn.disabled = true;
 
         if (window.GlobalSidebar) {
             window.GlobalSidebar.setJobStatus('voice-cloning', 'processing');
         }
 
+        const renderAudioSuccess = (resBox, audioUrl, isMock = false, autoSave = true) => {
+            resBox.innerHTML = `
+                <div style="text-align: center; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    <audio controls autoplay style="width: 300px; border-radius:30px; box-shadow:0 10px 30px rgba(0,0,0,0.1);">
+                        <source src="${audioUrl}" type="audio/mpeg">
+                        Your browser does not support audio.
+                    </audio>
+                    <div style="margin-top:1.5rem; display:flex; gap:12px;">
+                         <button class="secondary-btn" id="btn-save-assets" disabled>${window.i18n.t('COMMON_SAVED')}</button>
+                         <button class="secondary-btn" id="btn-download-audio">${window.i18n.t('COMMON_EXPORT')}</button>
+                    </div>
+                    ${isMock ? `<div style="margin-top:12px; font-size:10px; color:var(--primary);">${window.i18n.t('AUDIO_MOCK_NOTICE')}</div>` : ''}
+                </div>
+            `;
+
+            if (autoSave) {
+                try {
+                    window.AssetManager.add({
+                        type: 'audio',
+                        url: audioUrl,
+                        prompt: prompt || "Cloned Voice",
+                        metadata: { model: "cosyvoice" }
+                    });
+                } catch (err) {
+                    console.error("Auto-save failed:", err);
+                }
+            } else if (window.AssetManager) {
+                window.AssetManager.refresh();
+            }
+
+            document.getElementById('btn-download-audio')?.addEventListener('click', () => {
+                const a = document.createElement('a');
+                a.href = audioUrl;
+                a.download = `voice_${Date.now()}.mp3`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+        };
+
+        let pollInterval;
+        let result;
+
         try {
             const resBox = document.querySelector('.result-preview');
-            // Fake Visualizer
             resBox.innerHTML = `
                 <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
                     <div class="audio-visualizer">
                         ${Array(10).fill(0).map(() => `<div class="visual-bar" style="height:${20 + Math.random() * 40}px; animation-duration:${0.3 + Math.random() * 0.5}s"></div>`).join('')}
                     </div>
-                    <p style="margin-top:20px; color:var(--text-secondary);">${window.i18n.t('AUDIO_GENERATE_LOADING')}</p>
+                    <p style="margin-top:20px; color:var(--text-secondary);" id="vc-poll-status">${window.i18n.t('AUDIO_GENERATE_LOADING')}</p>
                 </div>
             `;
 
             // Call API
-            const result = await window.electronAPI.cloneVoice({
+            result = await window.electronAPI.cloneVoice({
                 text: prompt,
                 audio: audioData,
                 voiceId: selectedVoiceId,
@@ -320,77 +357,72 @@ function setupVoiceCloningEventListeners() {
                 if (!result.audio_url) {
                     throw new Error("AI generated success but no audio URL was returned.");
                 }
-                resBox.innerHTML = `
-                    <div style="text-align: center; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                        <audio controls autoplay style="width: 300px; border-radius:30px; box-shadow:0 10px 30px rgba(0,0,0,0.1);">
-                            <source src="${result.audio_url}" type="audio/mpeg">
-                            Your browser does not support audio.
-                        </audio>
-                        <div style="margin-top:1.5rem; display:flex; gap:12px;">
-                             <button class="secondary-btn" id="btn-save-assets">${window.i18n.t('COMMON_SAVE')}</button>
-                             <button class="secondary-btn" id="btn-download-audio">${window.i18n.t('COMMON_EXPORT')}</button>
-                        </div>
-                        ${result.isMock ? `<div style="margin-top:12px; font-size:10px; color:var(--primary);">${window.i18n.t('AUDIO_MOCK_NOTICE')}</div>` : ''}
-                    </div>
-                `;
-
-                // Auto-Save to Assets
-                try {
-                    window.AssetManager.add({
-                        type: 'audio',
-                        url: result.audio_url,
-                        prompt: prompt || "Cloned Voice",
-                        metadata: { model: "cosyvoice" }
-                    });
-                    console.log("Voice auto-saved to assets");
-                } catch (err) {
-                    console.error("Auto-save failed:", err);
-                }
-
-                // Update Save Button Visual
-                setTimeout(() => {
-                    const saveBtn = document.getElementById('btn-save-assets');
-                    if (saveBtn) {
-                        saveBtn.innerHTML = `${window.i18n.t('COMMON_SAVE')} ✓`;
-                        saveBtn.disabled = true;
+                renderAudioSuccess(resBox, result.audio_url, result.isMock, true);
+            } else if (result && result.status === 'pending') {
+                const jobId = result.jobId;
+                pollInterval = setInterval(async () => {
+                    if (!document.body.contains(resBox)) {
+                        clearInterval(pollInterval);
+                        return;
                     }
-                }, 500);
+                    try {
+                        const statusRes = await fetch(`/api/ai/jobs/${jobId}`);
+                        const statusData = await statusRes.json();
 
-                document.getElementById('btn-download-audio')?.addEventListener('click', () => {
-                    const a = document.createElement('a');
-                    a.href = result.audio_url;
-                    a.download = `voice_${Date.now()}.mp3`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                });
-
-                // Auto-registration to character presets removed per user request (too messy/ugly)
-
+                        if (statusData.status === 'success') {
+                            clearInterval(pollInterval);
+                            if (window.GlobalSidebar) {
+                                window.GlobalSidebar.setJobStatus('voice-cloning', 'idle');
+                            }
+                            const finalResult = statusData.result;
+                            renderAudioSuccess(resBox, finalResult.audio_url, finalResult.isMock, false);
+                        } else if (statusData.status === 'error') {
+                            clearInterval(pollInterval);
+                            if (window.GlobalSidebar) {
+                                window.GlobalSidebar.setJobStatus('voice-cloning', 'idle');
+                            }
+                            const errMsg = statusData.message || statusData.error || "Voice generation failed";
+                            notifyError(errMsg);
+                            const safeErr = window.escapeHTML ? window.escapeHTML(errMsg) : errMsg;
+                            resBox.innerHTML = `
+                                <div class="preview-placeholder">
+                                    <span style="font-size:48px; margin-bottom:1rem; opacity:0.5;">⚠️</span>
+                                    <p style="color:var(--text-secondary);">${window.i18n.t('COMMON_ERROR')}</p>
+                                    <small>${safeErr}</small>
+                                </div>
+                            `;
+                        }
+                    } catch (e) {
+                        console.warn("Voice job poll failed", e);
+                    }
+                }, 2000);
             } else {
                 throw new Error(result?.message || "Generation failed");
             }
 
         } catch (error) {
             console.error(error);
-            alert("Error: " + error.message);
+            notifyError(error.message);
             const resBox = document.querySelector('.result-preview');
             if (resBox) {
+                const safeErr = window.escapeHTML ? window.escapeHTML(error.message) : error.message;
                 resBox.innerHTML = `
                      <div class="preview-placeholder">
                         <span style="font-size:48px; margin-bottom:1rem; opacity:0.5;">⚠️</span>
-                        <p style="color:var(--text-secondary);">Generation failed.</p>
+                        <p style="color:var(--text-secondary);">${window.i18n.t('COMMON_ERROR')}</p>
+                        <small>${safeErr}</small>
                      </div>
                 `;
             }
         } finally {
+            const isAsync = result && result.status === 'pending';
             const generateBtn = document.getElementById('generate-voice-btn');
             if (generateBtn) {
                 generateBtn.innerHTML = oldText;
                 generateBtn.disabled = false;
             }
 
-            if (window.GlobalSidebar) {
+            if (!isAsync && window.GlobalSidebar) {
                 window.GlobalSidebar.setJobStatus('voice-cloning', 'idle');
             }
         }
@@ -405,12 +437,15 @@ function setupVoiceCloningEventListeners() {
         try {
             const data = await window.fetchAPI('/api/ai/characters?category=cloned', {}, { method: 'GET' });
             if (data.status === 'success') {
-                row.innerHTML = data.data.map((char, index) => `
-                    <div class="vc-preset-item ${index === 0 ? 'active' : ''}" data-voice-id="${char.voice_id}" title="${char.name}">
-                        <img src="${char.avatar}" alt="${char.name}">
-                        <span>${char.name}</span>
-                    </div>
-                `).join('');
+                row.innerHTML = data.data.map((char, index) => {
+                    const safeName = window.escapeHTML ? window.escapeHTML(char.name) : char.name;
+                    return `
+                        <div class="vc-preset-item ${index === 0 ? 'active' : ''}" data-voice-id="${char.voice_id}" title="${safeName}">
+                            <img src="${char.avatar}" alt="${safeName}">
+                            <span>${safeName}</span>
+                        </div>
+                    `;
+                }).join('');
 
                 row.querySelectorAll('.vc-preset-item').forEach(item => {
                     item.addEventListener('click', () => {
@@ -439,7 +474,7 @@ function setupVoiceCloningEventListeners() {
                 // STOP Recording
                 const duration = (Date.now() - recordingStartTime) / 1000;
                 if (duration < 3) {
-                    alert(window.i18n.t('AUDIO_RECORD_TOO_SHORT'));
+                    notifyError(window.i18n.t('AUDIO_RECORD_TOO_SHORT'));
                     return;
                 }
 
@@ -449,11 +484,9 @@ function setupVoiceCloningEventListeners() {
                 const { blob: audioBlob, avgVolume, maxVolume } = result;
                 micSlot.classList.remove('recording');
 
-                // Advanced Silence Detection: RMS threshold (0.01 is roughly very quiet background noise)
-                // Also check size as fallback
                 if (!audioBlob || audioBlob.size < 1000 || maxVolume < 0.01) {
                     console.warn("[VoiceCloning] Recording stopped but audio seems silent. Avg:", avgVolume, "Max:", maxVolume);
-                    alert(`${window.i18n.t('AUDIO_RECORD_SILENT')} (Volume too low)`);
+                    notifyError(`${window.i18n.t('AUDIO_RECORD_SILENT')} (Volume too low)`);
                     micSlot.innerHTML = defaultMicHTML;
                     return;
                 }
@@ -496,17 +529,54 @@ function setupVoiceCloningEventListeners() {
                 }
             } catch (err) {
                 console.error("Error accessing microphone:", err);
-                alert(`${window.i18n.t('AUDIO_RECORD_SILENT')} (${err.message})`);
+                notifyError(`${window.i18n.t('AUDIO_RECORD_SILENT')} (${err.message})`);
             }
         });
     }
 
-    // Helper: Convert AudioBuffer to WAV Blob (Removed as AudioRecorder handled Blob)
+    // 7. Render Audio Assets Tab
+    function renderAssetsTab() {
+        const list = document.getElementById('vc-asset-list');
+        const empty = document.getElementById('vc-asset-empty');
+        if (!list || !empty || !window.AssetManager) return;
+
+        const assets = window.AssetManager.getRecent('audio', 20);
+        if (assets.length === 0) {
+            list.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+        }
+
+        empty.style.display = 'none';
+        list.innerHTML = assets.map(asset => {
+            const safePrompt = window.escapeHTML ? window.escapeHTML(asset.prompt || 'Audio') : (asset.prompt || 'Audio');
+            return `
+                <div class="asset-item" onclick="window.MediaPreview.open('${asset.id}')" style="display:flex; align-items:center; gap:10px; padding:10px; border-radius:8px; cursor:pointer; border:1px solid var(--glass-border); background:var(--bg-card);">
+                    <span style="font-size:18px;">🎵</span>
+                    <span style="font-size:12px; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1;" title="${safePrompt}">${safePrompt}</span>
+                </div>
+            `;
+        }).join('');
+    }
+
+    renderAssetsTab();
+    const updateHandler = () => renderAssetsTab();
+    window.addEventListener('assets-updated', updateHandler);
+
     // Toolbar
     document.getElementById('btn-clear-prompt')?.addEventListener('click', () => {
         const el = document.getElementById('vc-prompt-input');
         if (el) el.value = '';
     });
+
+    if (window.registerPageCleanup) {
+        window.registerPageCleanup(() => {
+            if (recorder.isRecording) {
+                recorder.stop();
+            }
+            window.removeEventListener('assets-updated', updateHandler);
+        });
+    }
 }
 
 window.loadVoiceCloningPage = loadVoiceCloningPage;

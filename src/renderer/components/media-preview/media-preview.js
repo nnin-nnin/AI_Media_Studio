@@ -93,6 +93,11 @@ class MediaPreview {
         this.title.innerText = asset.prompt || 'Untitled Asset';
         this.meta.innerText = `${asset.type.toUpperCase()} • ${new Date(asset.created_at).toLocaleString()}`;
 
+        if (this._currentLocalUrl) {
+            URL.revokeObjectURL(this._currentLocalUrl);
+            this._currentLocalUrl = null;
+        }
+
         // Try to get from local cache first
         let mediaUrl = asset.url;
         if (window.LocalCacheManager) {

@@ -56,10 +56,12 @@ app.use((req, res, next) => {
 
 // Static files (Frontend)
 const rendererPath = path.join(PROJECT_ROOT, 'src', 'renderer');
+const distPath = path.join(PROJECT_ROOT, 'dist');
 const assetsPath = path.join(rendererPath, 'assets');
 console.log(`[Static] Resolving paths:
   - PROJECT_ROOT: ${PROJECT_ROOT}
   - rendererPath: ${rendererPath}
+  - distPath: ${distPath}
   - assetsPath: ${assetsPath}
   - UPLOADS_DIR: ${UPLOADS_DIR}
 `);
@@ -70,7 +72,10 @@ app.use('/uploads', express.static(UPLOADS_DIR));
 // Priority 2: System Assets (maps /assets/xxx to root /xxx as per Vite's publicDir)
 app.use(express.static(assetsPath));
 
-// Priority 3: Frontend Source (index.html, etc.)
+// Priority 3: Built Production Frontend (dist/) if available, fallback to renderer source
+if (fs.existsSync(path.join(distPath, 'index.html'))) {
+    app.use(express.static(distPath));
+}
 app.use(express.static(rendererPath));
 
 // Debug route for uploads (only if express.static falls through)
@@ -122,12 +127,117 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
  *       200:
  *         description: Server configuration loaded
  */
+function maskKey(val) {
+    if (!val || val.length < 8) return val ? '****' : '';
+    return `${val.slice(0, 4)}****${val.slice(-4)}`;
+}
+
+function updateDotEnvFile(updates) {
+    const envPath = path.join(PROJECT_ROOT, '.env');
+    let content = '';
+    if (fs.existsSync(envPath)) {
+        content = fs.readFileSync(envPath, 'utf8');
+    } else {
+        content = 'PORT=3000\nNODE_ENV=development\nDEBUG=true\nSKIP_AUTH=true\nUSE_REDIS_QUEUE=false\nDATABASE_URL="file:../data/ai_course.sqlite"\n';
+    }
+
+    const lines = content.split(/\r?\n/);
+    const updatedKeys = new Set();
+
+    const newLines = lines.map(line => {
+        const match = line.match(/^([A-Z0-9_]+)\s*=/);
+        if (match && Object.prototype.hasOwnProperty.call(updates, match[1])) {
+            const key = match[1];
+            updatedKeys.add(key);
+            return `${key}=${updates[key]}`;
+        }
+        return line;
+    });
+
+    for (const [key, val] of Object.entries(updates)) {
+        if (!updatedKeys.has(key)) {
+            newLines.push(`${key}=${val}`);
+        }
+    }
+
+    fs.writeFileSync(envPath, newLines.join('\n').replace(/\n+$/, '\n'), 'utf8');
+}
+
 app.get('/api/config', (req, res) => {
     res.json({
         debugMode: config.debug,
-        decartApiKey: config.ai.decartApiKey,
+        decartApiKey: process.env.DECART_API_KEY || config.ai.decartApiKey,
+        hasArkKey: !!(process.env.ARK_API_KEY || config.ai.arkApiKey),
+        hasDashscopeKey: !!(process.env.DASHSCOPE_API_KEY || config.ai.dashscopeApiKey),
         skipAuth: config.auth.skipAuth && config.env === 'development'
     });
+});
+
+app.get('/api/settings/keys', (req, res) => {
+    const ark = process.env.ARK_API_KEY || '';
+    const dashscope = process.env.DASHSCOPE_API_KEY || '';
+    const decart = process.env.DECART_API_KEY || '';
+    const cosId = process.env.TENCENT_SECRET_ID || '';
+    const cosKey = process.env.TENCENT_SECRET_KEY || '';
+    const cosBucket = process.env.TENCENT_COS_BUCKET || '';
+    const cosRegion = process.env.TENCENT_COS_REGION || 'ap-beijing';
+
+    res.json({
+        status: 'success',
+        keys: {
+            ARK_API_KEY: { configured: !!ark, masked: maskKey(ark) },
+            DASHSCOPE_API_KEY: { configured: !!dashscope, masked: maskKey(dashscope) },
+            DECART_API_KEY: { configured: !!decart, masked: maskKey(decart) },
+            TENCENT_SECRET_ID: { configured: !!cosId, masked: maskKey(cosId) },
+            TENCENT_SECRET_KEY: { configured: !!cosKey, masked: maskKey(cosKey) },
+            TENCENT_COS_BUCKET: { configured: !!cosBucket, value: cosBucket },
+            TENCENT_COS_REGION: { configured: !!cosRegion, value: cosRegion }
+        }
+    });
+});
+
+app.post('/api/settings/keys', (req, res) => {
+    try {
+        const allowedKeys = [
+            'ARK_API_KEY',
+            'DASHSCOPE_API_KEY',
+            'DECART_API_KEY',
+            'TENCENT_SECRET_ID',
+            'TENCENT_SECRET_KEY',
+            'TENCENT_COS_BUCKET',
+            'TENCENT_COS_REGION'
+        ];
+        const updates = {};
+        for (const k of allowedKeys) {
+            if (typeof req.body[k] === 'string' && req.body[k].trim() !== '') {
+                const cleanVal = req.body[k].trim();
+                updates[k] = cleanVal;
+                process.env[k] = cleanVal;
+            }
+        }
+
+        // Sync runtime config object
+        if (updates.ARK_API_KEY) config.ai.arkApiKey = updates.ARK_API_KEY;
+        if (updates.DASHSCOPE_API_KEY) config.ai.dashscopeApiKey = updates.DASHSCOPE_API_KEY;
+        if (updates.DECART_API_KEY) config.ai.decartApiKey = updates.DECART_API_KEY;
+        if (updates.TENCENT_SECRET_ID) config.ai.tencent.secretId = updates.TENCENT_SECRET_ID;
+        if (updates.TENCENT_SECRET_KEY) config.ai.tencent.secretKey = updates.TENCENT_SECRET_KEY;
+        if (updates.TENCENT_COS_BUCKET) config.ai.tencent.bucket = updates.TENCENT_COS_BUCKET;
+        if (updates.TENCENT_COS_REGION) config.ai.tencent.region = updates.TENCENT_COS_REGION;
+
+        if (Object.keys(updates).length > 0) {
+            updateDotEnvFile(updates);
+        }
+
+        res.json({
+            status: 'success',
+            message: 'API 密钥已保存并立即生效',
+            updated: Object.keys(updates)
+        });
+    } catch (e) {
+        logger.error("Save API Keys Error", { error: e.message });
+        res.status(500).json({ status: 'error', message: e.message });
+    }
 });
 
 // --- System Config ---
@@ -338,13 +448,15 @@ app.post('/api/ai/character-voice', async (req, res) => {
         const { characterId, text, speed, sampleRate } = req.body;
         const result = await VoiceChatService.generateCharacterVoice(characterId, text, { speed, sampleRate });
 
-        await AssetStore.add({
-            userId: req.user.id,
-            type: 'audio',
-            url: result.audio_url,
-            prompt: `[${result.characterName}] ${result.text}`,
-            metadata: JSON.stringify({ characterId, source: 'voice-chat' })
-        });
+        if (result.audio_url) {
+            await AssetStore.add({
+                userId: req.user.id,
+                type: 'audio',
+                url: result.audio_url,
+                prompt: `[${result.characterName}] ${result.text}`,
+                metadata: JSON.stringify({ characterId, source: 'voice-chat' })
+            });
+        }
 
         res.json(result);
     } catch (error) {

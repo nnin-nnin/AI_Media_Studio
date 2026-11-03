@@ -34,12 +34,16 @@ export async function fetchAPI(endpoint, data = {}, options = {}) {
                 return attemptFetch(retryCount + 1);
             }
 
-            const text = await response.text();
             let body = {};
-            try {
-                body = JSON.parse(text);
-            } catch (jsonErr) {
-                body = { message: text };
+            if (typeof response.text === 'function') {
+                const text = await response.text();
+                try {
+                    body = JSON.parse(text);
+                } catch (jsonErr) {
+                    body = { message: text };
+                }
+            } else if (typeof response.json === 'function') {
+                body = await response.json();
             }
 
             if (!response.ok) {
@@ -49,7 +53,7 @@ export async function fetchAPI(endpoint, data = {}, options = {}) {
 
             return body;
         } catch (e) {
-            if (e.message.toLowerCase().includes('too many requests') && retryCount < maxRetries) {
+            if (e.message && e.message.toLowerCase().includes('too many requests') && retryCount < maxRetries) {
                 const delay = initialDelay * Math.pow(2, retryCount) + (Math.random() * 500);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 return attemptFetch(retryCount + 1);
@@ -62,7 +66,7 @@ export async function fetchAPI(endpoint, data = {}, options = {}) {
         return await attemptFetch(0);
     } catch (e) {
         console.error('API Error:', e);
-        if (window.Toast) {
+        if (typeof window !== 'undefined' && window.Toast) {
             window.Toast.show(e.message || 'API Connection Failed', 'error');
         }
         throw e;

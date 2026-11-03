@@ -4,16 +4,17 @@ import fs from "node:fs";
 import path from "node:path";
 import axios from "axios"; // 仅用于把返回的URL落盘
 
-// 从环境变量中获取API密钥，如果未设置则抛出错误
-const apiKey = process.env.ARK_API_KEY;
-if (!apiKey) {
-  throw new Error("请设置 ARK_API_KEY 环境变量");
+// 动态获取 OpenAI (Ark) 客户端，支持运行时热更新 API Key 且不在启动时崩溃
+function getArkClient() {
+  const apiKey = process.env.ARK_API_KEY;
+  if (!apiKey) {
+    throw new Error("未配置 ARK_API_KEY，请点击页面左下角【⚙️ API 配置】填写密钥");
+  }
+  return new OpenAI({
+    baseURL: "https://ark.cn-beijing.volces.com/api/v3",
+    apiKey: apiKey,
+  });
 }
-
-const client = new OpenAI({
-  baseURL: "https://ark.cn-beijing.volces.com/api/v3",
-  apiKey: apiKey,
-});
 
 
 // 图生图（image-to-image）
@@ -26,6 +27,7 @@ export async function imageToImage({
   watermark = false,
   saveTo,
 }) {
+  const client = getArkClient();
   console.log("Image原图为...", image);
   const resp = await client.images.generate({
     model,

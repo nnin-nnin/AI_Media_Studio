@@ -1,19 +1,13 @@
 // pages/face-swap/face-swap.js
+import './face-swap-layout.css';
+
+const notifyError = (msg) => window.Toast ? window.Toast.show(msg, 'error') : alert(msg);
 
 /**
  * 加载变脸图片页面内容 (Runway Style Refactor)
  */
 function loadFaceSwapPage(container) {
     if (!container) return;
-
-    // Inject styles if not present
-    if (!document.getElementById('fs-layout-css')) {
-        const link = document.createElement('link');
-        link.id = 'fs-layout-css';
-        link.rel = 'stylesheet';
-        link.href = 'pages/face-swap/face-swap-layout.css';
-        document.head.appendChild(link);
-    }
 
     container.innerHTML = `
         <div class="studio-layout fade-in">
@@ -22,15 +16,15 @@ function loadFaceSwapPage(container) {
                 
                 <!-- 1. Header & Mode -->
                 <div class="studio-header">
-                    <div style="font-weight:600; font-size:14px;">Image Studio</div>
+                    <div style="font-weight:600; font-size:14px;">${window.i18n.t('STUDIO_IMAGE')}</div>
                     <div class="studio-mode-switch">
                         <button class="mode-btn" data-mode="text">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            Text
+                            ${window.i18n.t('MODE_TEXT')}
                         </button>
                         <button class="mode-btn active" data-mode="image">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
-                            Image
+                            ${window.i18n.t('MODE_IMAGE')}
                         </button>
                     </div>
                 </div>
@@ -90,17 +84,17 @@ function loadFaceSwapPage(container) {
                     <div class="studio-tab-header">
                         <button class="studio-tab-btn active" data-tab="settings">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                            Settings
+                            ${window.i18n.t('TAB_SETTINGS')}
                         </button>
                         <button class="studio-tab-btn" data-tab="assets">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
-                            Assets
+                            ${window.i18n.t('TAB_ASSETS')}
                         </button>
                     </div>
                     <div class="studio-tab-content">
                          <!-- Tab: Settings -->
                          <div id="tab-settings" class="tab-pane">
-                            <span class="bg-label">Aspect Ratio</span>
+                            <span class="bg-label">${window.i18n.t('LABEL_ASPECT_RATIO')}</span>
                             <div class="ratio-grid">
                                 <div class="ratio-option active" data-ratio="16:9">
                                     <div class="ratio-box ratio-16-9"></div>
@@ -125,7 +119,7 @@ function loadFaceSwapPage(container) {
                             </div>
 
                              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-                                <span class="bg-label">Reference Strength</span>
+                                <span class="bg-label">${window.i18n.t('LABEL_REF_STRENGTH')}</span>
                                 <span id="fs-strength-value" style="font-size: 11px; color: var(--primary); font-weight: 600;">75%</span>
                              </div>
                              <input type="range" class="studio-slider" id="fs-strength-slider" min="0" max="100" value="75" style="margin-top:8px;">
@@ -138,7 +132,7 @@ function loadFaceSwapPage(container) {
                                 <!-- Dynamic Assets -->
                             </div>
                             <div id="fs-asset-empty" style="text-align:center; margin-top:1rem; font-size:12px; color:var(--text-secondary); display:none;">
-                                No history found
+                                ${window.i18n.t('COMMON_NO_HISTORY')}
                             </div>
                          </div>
                     </div>
@@ -157,7 +151,7 @@ function loadFaceSwapPage(container) {
             <div class="studio-viewport">
                 <!-- Simple Header -->
                 <div style="position:absolute; top:20px; right:20px; display:flex; gap:10px; z-index:10;">
-                    <div class="status-badge" style="background:rgba(255,255,255,0.1); padding:4px 8px; border-radius:4px; font-size:12px;">Ready</div>
+                    <div class="status-badge" style="background:rgba(255,255,255,0.1); padding:4px 8px; border-radius:4px; font-size:12px;">${window.i18n.t('COMMON_READY')}</div>
                 </div>
 
                 <!-- Empty State / Result -->
@@ -174,7 +168,7 @@ function loadFaceSwapPage(container) {
         <div id="fs-camera-modal" class="fs-modal" style="display:none;">
             <div class="fs-modal-content">
                 <div class="fs-modal-header">
-                    <span>Capture Reference</span>
+                    <span>${window.i18n.t('CAMERA_CAPTURE_TITLE')}</span>
                     <button id="fs-camera-close">&times;</button>
                 </div>
                 <div class="fs-camera-container">
@@ -182,7 +176,7 @@ function loadFaceSwapPage(container) {
                     <canvas id="fs-capture-canvas" style="display:none;"></canvas>
                 </div>
                 <div class="fs-modal-footer">
-                    <button class="primary-btn" id="fs-btn-capture">Snap Photo</button>
+                    <button class="primary-btn" id="fs-btn-capture">${window.i18n.t('CAMERA_SNAP_BTN')}</button>
                 </div>
             </div>
         </div>
@@ -287,7 +281,7 @@ function setupFaceSwapEventListeners() {
                 img.onload = () => {
                     const minDim = 300;
                     if (img.width < minDim || img.height < minDim) {
-                        alert(`Image too small (${img.width}x${img.height}px). Minimum required is ${minDim}x${minDim}px.`);
+                        notifyError(`${window.i18n.t('MSG_IMAGE_TOO_SMALL')} (${img.width}x${img.height}px)`);
                         e.target.value = ""; // Clear input
                         return;
                     }
@@ -356,7 +350,7 @@ function setupFaceSwapEventListeners() {
                 promptInputArea.style.transition = 'background-color 0.3s';
                 promptInputArea.style.backgroundColor = 'rgba(255, 217, 61, 0.2)'; // Faint yellow
                 setTimeout(() => {
-                    promptInputArea.style.backgroundColor = 'white';
+                    promptInputArea.style.backgroundColor = '';
                 }, 300);
             }
         });
@@ -380,7 +374,7 @@ function setupFaceSwapEventListeners() {
             cameraModal.style.display = 'flex';
         } catch (err) {
             console.error("Camera access denied:", err);
-            alert("Could not access camera. Please check permissions.");
+            notifyError(window.i18n.t('MSG_CAMERA_DENIED'));
         }
     });
 
@@ -389,8 +383,8 @@ function setupFaceSwapEventListeners() {
             cameraStream.getTracks().forEach(track => track.stop());
             cameraStream = null;
         }
-        cameraModal.style.display = 'none';
-        videoPreview.srcObject = null;
+        if (cameraModal) cameraModal.style.display = 'none';
+        if (videoPreview) videoPreview.srcObject = null;
     };
 
     cameraClose?.addEventListener('click', stopCamera);
@@ -400,32 +394,23 @@ function setupFaceSwapEventListeners() {
 
         // Match the canvas perfectly to the video stream dimensions
         const ctx = captureCanvas.getContext('2d');
+        captureCanvas.width = videoPreview.videoWidth;
+        captureCanvas.height = videoPreview.videoHeight;
+
+        const minDim = 300;
+        if (captureCanvas.width < minDim || captureCanvas.height < minDim) {
+            notifyError(`${window.i18n.t('MSG_IMAGE_TOO_SMALL')} (${captureCanvas.width}x${captureCanvas.height}px)`);
+            stopCamera();
+            return;
+        }
+
         ctx.drawImage(videoPreview, 0, 0, captureCanvas.width, captureCanvas.height);
         const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.9);
 
         // Update Slot
         const slotElement = document.getElementById('slot-ref-1');
         if (slotElement) {
-            slotElement.innerHTML = `
-                <img src="${dataUrl}">
-                <div class="remove-btn" title="Remove">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </div>
-            `;
-            slotElement.classList.add('has-image');
-            slotElement.dataset.hasImage = "true";
-
-            slotElement.querySelector('.remove-btn').addEventListener('click', (ev) => {
-                ev.stopPropagation();
-                slotElement.innerHTML = defaultIconHTML;
-                slotElement.classList.remove('has-image');
-                delete slotElement.dataset.hasImage;
-
-                const newInput = slotElement.querySelector('input');
-                if (newInput) {
-                    newInput.addEventListener('change', (ev2) => handleFileSelect(ev2, slotElement, defaultIconHTML));
-                }
-            });
+            setSlotImage(slotElement, dataUrl, defaultIconHTML);
         }
 
         stopCamera();
@@ -486,7 +471,7 @@ function setupFaceSwapEventListeners() {
         const imgElement = slot?.querySelector('img');
 
         if (!prompt && !hasImage) {
-            alert("Please enter a prompt or upload an image.");
+            notifyError(window.i18n.t('MSG_PROMPT_OR_IMAGE_REQUIRED'));
             return;
         }
 
@@ -498,6 +483,7 @@ function setupFaceSwapEventListeners() {
             window.GlobalSidebar.setJobStatus('face-swap', 'processing');
         }
 
+        let progressInterval;
         try {
             // Get Parameters
             const activeRatio = document.querySelector('.ratio-option.active')?.dataset.ratio || "1:1";
@@ -525,7 +511,7 @@ function setupFaceSwapEventListeners() {
             `;
 
             let progress = 10;
-            const progressInterval = setInterval(() => {
+            progressInterval = setInterval(() => {
                 progress += Math.random() * 12;
                 if (progress > 94) progress = 94;
                 const fill = document.getElementById('energy-progress');
@@ -574,8 +560,8 @@ function setupFaceSwapEventListeners() {
                     <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                         <img src="${imageUrl}" style="max-width:100%; max-height:100%; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.2);">
                         <div style="margin-top:10px; display:flex; gap:10px;">
-                            <button class="secondary-btn small" id="btn-save-assets">Save to Assets</button>
-                            <button class="secondary-btn small" onclick="window.open('${imageUrl}')">Open</button>
+                            <button class="secondary-btn small" id="btn-save-assets" disabled>${window.i18n.t('COMMON_SAVED')}</button>
+                            <button class="secondary-btn small" onclick="window.open('${imageUrl}')">${window.i18n.t('COMMON_OPEN')}</button>
                         </div>
                     </div>
                 `;
@@ -593,33 +579,28 @@ function setupFaceSwapEventListeners() {
                 } catch (err) {
                     console.error("Auto-save failed:", err);
                 }
-
-                // Add Save Listener (Just for visual feedback or updates)
-                setTimeout(() => {
-                    const saveBtn = document.getElementById('btn-save-assets');
-                    if (saveBtn) {
-                        saveBtn.innerHTML = "Saved ✓";
-                        saveBtn.disabled = true;
-                    }
-                }, 0);
             } else {
                 throw new Error(result?.message || "Unknown error");
             }
 
         } catch (error) {
             console.error(error);
-            alert("Error: " + error.message);
+            notifyError(error.message);
             const resBox = document.querySelector('.result-preview');
-            resBox.innerHTML = `
-                <div class="preview-placeholder">
-                    <span style="font-size:32px; margin-bottom:1rem; opacity:0.5;">⚠️</span>
-                    <p style="color:var(--text-secondary);">Generation failed.</p>
-                    <small>${error.message}</small>
-                </div>
+            if (resBox) {
+                const safeErr = window.escapeHTML ? window.escapeHTML(error.message) : error.message;
+                resBox.innerHTML = `
+                    <div class="preview-placeholder">
+                        <span style="font-size:32px; margin-bottom:1rem; opacity:0.5;">⚠️</span>
+                        <p style="color:var(--text-secondary);">${window.i18n.t('COMMON_ERROR')}</p>
+                        <small>${safeErr}</small>
+                    </div>
                 `;
+            }
         } finally {
+            if (progressInterval) clearInterval(progressInterval);
             generateBtn.disabled = false;
-            generateBtn.innerText = oldText;
+            generateBtn.innerHTML = oldText;
             if (window.GlobalSidebar) {
                 window.GlobalSidebar.setJobStatus('face-swap', 'idle');
             }
@@ -627,14 +608,6 @@ function setupFaceSwapEventListeners() {
     });
 
     // 6. Toolbar
-    document.getElementById('btn-clear-prompt')?.addEventListener('click', () => {
-        const el = document.getElementById('fs-prompt-input');
-        if (el) {
-            el.value = '';
-            el.focus();
-        }
-    });
-
     document.getElementById('btn-gen-prompt')?.addEventListener('click', () => {
         const el = document.getElementById('fs-prompt-input');
         if (el) {
@@ -649,7 +622,6 @@ function setupFaceSwapEventListeners() {
             el.focus();
         }
     });
-
 
     // 7. Render Assets
     function renderAssetsTab() {
@@ -668,7 +640,7 @@ function setupFaceSwapEventListeners() {
         empty.style.display = 'none';
         list.innerHTML = assets.map(asset => `
                 <div class="asset-item" onclick="window.MediaPreview.open('${asset.id}')" style="aspect-ratio:1; border-radius:8px; overflow:hidden; position:relative; cursor:pointer; border:1px solid var(--glass-border);">
-                    <img src="${asset.url}" style="width:100%; height:100%; object-fit:cover;">
+                    <img src="${asset.url}" loading="lazy" style="width:100%; height:100%; object-fit:cover;">
                 </div>
             `).join('');
     }
@@ -681,8 +653,14 @@ function setupFaceSwapEventListeners() {
 
     // Listen for global asset updates
     const updateHandler = () => renderAssetsTab();
-    window.removeEventListener('assets-updated', updateHandler); // Attempt cleanup (not effective with anon function previously, but good practice going forward if we lift this)
     window.addEventListener('assets-updated', updateHandler);
+
+    if (window.registerPageCleanup) {
+        window.registerPageCleanup(() => {
+            stopCamera();
+            window.removeEventListener('assets-updated', updateHandler);
+        });
+    }
 }
 
 /**

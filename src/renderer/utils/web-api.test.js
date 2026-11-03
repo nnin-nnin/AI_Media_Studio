@@ -28,16 +28,13 @@ describe('Web API Utility', () => {
                 json: async () => mockError,
             });
 
-            // The function catches errors and returns an error object
-            const result = await fetchAPI('/test', {});
-            expect(result).toEqual({ status: 'error', message: 'Invalid prompt' });
+            await expect(fetchAPI('/test', {})).rejects.toThrow('Invalid prompt');
         });
 
         it('should handle network exceptions', async () => {
             global.fetch.mockRejectedValue(new Error('Network Error'));
 
-            const result = await fetchAPI('/test', {});
-            expect(result).toEqual({ status: 'error', message: 'Network Error' });
+            await expect(fetchAPI('/test', {})).rejects.toThrow('Network Error');
         });
     });
 

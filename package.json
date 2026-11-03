@@ -13,6 +13,9 @@
     "db:seed": "node scripts/seed_all.js",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "vitest run",
+    "test:e2e": "vitest run src/server/tests/e2e/studio.e2e.test.js",
+    "pack": "bash scripts/package_release.sh",
     "start": "concurrently \"npm run db:seed && node src/server/server.js\" \"npm run worker\""
   },
   "license": "MIT",

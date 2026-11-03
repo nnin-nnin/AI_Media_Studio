@@ -14,11 +14,17 @@ export const Toast = {
 
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
-        toast.innerHTML = `
-            <span>${message}</span>
-            <button onclick="this.parentElement.remove()" style="background:none;border:none;color:inherit;cursor:pointer;opacity:0.7;">✕</button>
-        `;
 
+        const span = document.createElement('span');
+        span.textContent = message;
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕';
+        closeBtn.style.cssText = 'background:none;border:none;color:inherit;cursor:pointer;opacity:0.7;margin-left:8px;';
+        closeBtn.onclick = () => toast.remove();
+
+        toast.appendChild(span);
+        toast.appendChild(closeBtn);
         container.appendChild(toast);
 
         // Auto remove after 5s

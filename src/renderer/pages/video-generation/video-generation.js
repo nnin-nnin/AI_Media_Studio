@@ -1,19 +1,13 @@
 // pages/video-generation/video-generation.js
+import './video-generation-layout.css';
+
+const notifyError = (msg) => window.Toast ? window.Toast.show(msg, 'error') : alert(msg);
 
 /**
  * 加载生成视频页面内容 (Studio Layout Refactor)
  */
 function loadVideoGenerationPage(container) {
     if (!container) return;
-
-    // Inject styles if not present
-    if (!document.getElementById('vg-layout-css')) {
-        const link = document.createElement('link');
-        link.id = 'vg-layout-css';
-        link.rel = 'stylesheet';
-        link.href = 'pages/video-generation/video-generation-layout.css';
-        document.head.appendChild(link);
-    }
 
     container.innerHTML = `
         <div class="studio-layout fade-in">
@@ -27,11 +21,11 @@ function loadVideoGenerationPage(container) {
                     <div class="studio-mode-switch">
                         <button class="mode-btn" data-mode="text">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            Text
+                            ${window.i18n.t('MODE_TEXT')}
                         </button>
                         <button class="mode-btn active" data-mode="image">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
-                            Image
+                            ${window.i18n.t('MODE_IMAGE')}
                         </button>
                     </div>
                 </div>
@@ -92,17 +86,17 @@ function loadVideoGenerationPage(container) {
                     <div class="studio-tab-header">
                         <button class="studio-tab-btn active" data-tab="settings">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                            Settings
+                            ${window.i18n.t('TAB_SETTINGS')}
                         </button>
                         <button class="studio-tab-btn" data-tab="assets">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
-                            Assets
+                            ${window.i18n.t('TAB_ASSETS')}
                         </button>
                     </div>
                     <div class="studio-tab-content">
                          <!-- Tab: Settings -->
                          <div id="tab-settings" class="tab-pane">
-                            <span class="bg-label">Aspect Ratio</span>
+                            <span class="bg-label">${window.i18n.t('LABEL_ASPECT_RATIO')}</span>
                             <div class="ratio-grid">
                                 <div class="ratio-option active" data-ratio="16:9">
                                     <div class="ratio-box ratio-16-9"></div>
@@ -127,16 +121,16 @@ function loadVideoGenerationPage(container) {
                             </div>
 
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-                                <span class="bg-label">Duration</span>
+                                <span class="bg-label">${window.i18n.t('LABEL_DURATION')}</span>
                             </div>
                             <div class="duration-chips" style="display: flex; gap: 8px; margin-top: 8px;">
                                 <div class="duration-chip active" data-value="5">5s</div>
                                 <div class="duration-chip" data-value="10">10s</div>
                             </div>
-                            <p style="font-size:10px; color:var(--text-secondary); margin-top:4px;">Currently limited to 5s or 10s by model.</p>
+                            <p style="font-size:10px; color:var(--text-secondary); margin-top:4px;">${window.i18n.t('LABEL_DURATION_HINT')}</p>
 
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-                                <span class="bg-label">Motion Strength</span>
+                                <span class="bg-label">${window.i18n.t('LABEL_MOTION_STRENGTH')}</span>
                                 <span id="motion-display" style="font-size: 11px; color: var(--primary); font-weight: 600;">5</span>
                             </div>
                             <input type="range" class="studio-slider" id="motion-slider" min="1" max="10" value="5" style="margin-top:8px;">
@@ -149,7 +143,7 @@ function loadVideoGenerationPage(container) {
                                 <!-- Dynamic Assets -->
                             </div>
                             <div id="vg-asset-empty" style="text-align:center; margin-top:1rem; font-size:12px; color:var(--text-secondary); display:none;">
-                                No history found
+                                ${window.i18n.t('COMMON_NO_HISTORY')}
                             </div>
                          </div>
                     </div>
@@ -167,7 +161,7 @@ function loadVideoGenerationPage(container) {
             <div class="studio-viewport">
                 <!-- Preview Header -->
                 <div style="position:absolute; top:20px; right:20px; display:flex; gap:10px; z-index:10;">
-                   <div class="status-badge" style="background:rgba(255,255,255,0.1); padding:4px 8px; border-radius:4px; font-size:12px;">Ready</div>
+                   <div class="status-badge" style="background:rgba(255,255,255,0.1); padding:4px 8px; border-radius:4px; font-size:12px;">${window.i18n.t('COMMON_READY')}</div>
                 </div>
 
                 <!-- Empty State / Result -->
@@ -186,7 +180,7 @@ function loadVideoGenerationPage(container) {
         <div id="vg-camera-modal" class="vg-modal" style="display:none;">
             <div class="vg-modal-content">
                 <div class="vg-modal-header">
-                    <span>Capture Reference</span>
+                    <span>${window.i18n.t('CAMERA_CAPTURE_TITLE')}</span>
                     <button id="vg-camera-close">&times;</button>
                 </div>
                 <div class="vg-camera-container">
@@ -194,7 +188,7 @@ function loadVideoGenerationPage(container) {
                     <canvas id="vg-capture-canvas" style="display:none;"></canvas>
                 </div>
                 <div class="vg-modal-footer">
-                    <button class="primary-btn" id="vg-btn-capture">Snap Photo</button>
+                    <button class="primary-btn" id="vg-btn-capture">${window.i18n.t('CAMERA_SNAP_BTN')}</button>
                 </div>
             </div>
         </div>
@@ -307,7 +301,7 @@ function setupVideoGenerationEventListeners() {
                 img.onload = () => {
                     const minDim = 300;
                     if (img.width < minDim || img.height < minDim) {
-                        alert(`Image too small (${img.width}x${img.height}px). Minimum required is ${minDim}x${minDim}px.`);
+                        notifyError(`${window.i18n.t('MSG_IMAGE_TOO_SMALL')} (${img.width}x${img.height}px)`);
                         e.target.value = ""; // Clear input
                         return;
                     }
@@ -371,7 +365,7 @@ function setupVideoGenerationEventListeners() {
             cameraModal.style.display = 'flex';
         } catch (err) {
             console.error("Camera access denied:", err);
-            alert("Could not access camera. Please check permissions.");
+            notifyError(window.i18n.t('MSG_CAMERA_DENIED'));
         }
     });
 
@@ -380,8 +374,8 @@ function setupVideoGenerationEventListeners() {
             cameraStream.getTracks().forEach(track => track.stop());
             cameraStream = null;
         }
-        cameraModal.style.display = 'none';
-        videoPreview.srcObject = null;
+        if (cameraModal) cameraModal.style.display = 'none';
+        if (videoPreview) videoPreview.srcObject = null;
     };
 
     cameraClose?.addEventListener('click', stopCamera);
@@ -396,7 +390,7 @@ function setupVideoGenerationEventListeners() {
         // Quality check
         const minDim = 300;
         if (captureCanvas.width < minDim || captureCanvas.height < minDim) {
-            alert(`Camera resolution too low (${captureCanvas.width}x${captureCanvas.height}px).`);
+            notifyError(`${window.i18n.t('MSG_IMAGE_TOO_SMALL')} (${captureCanvas.width}x${captureCanvas.height}px)`);
             stopCamera();
             return;
         }
@@ -407,26 +401,7 @@ function setupVideoGenerationEventListeners() {
         // Update Slot
         const slotRef = document.getElementById('vg-slot-ref');
         if (slotRef) {
-            slotRef.innerHTML = `
-                <img src="${dataUrl}">
-                <div class="remove-btn" title="Remove">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </div>
-            `;
-            slotRef.classList.add('has-image');
-            slotRef.dataset.hasImage = "true";
-
-            slotRef.querySelector('.remove-btn').addEventListener('click', (ev) => {
-                ev.stopPropagation();
-                slotRef.innerHTML = defaultIconHTML;
-                slotRef.classList.remove('has-image');
-                delete slotRef.dataset.hasImage;
-                // Re-attach file listener
-                const newInput = slotRef.querySelector('input');
-                if (newInput) {
-                    newInput.addEventListener('change', (ev2) => handleFileSelect(ev2, slotRef, defaultIconHTML));
-                }
-            });
+            setSlotImage(slotRef, dataUrl, defaultIconHTML);
         }
 
         stopCamera();
@@ -499,7 +474,7 @@ function setupVideoGenerationEventListeners() {
         const imgElement = slot?.querySelector('img');
 
         if (!prompt && !hasImage) {
-            alert("Please enter a prompt or upload an image.");
+            notifyError(window.i18n.t('MSG_PROMPT_OR_IMAGE_REQUIRED'));
             return;
         }
 
@@ -518,20 +493,6 @@ function setupVideoGenerationEventListeners() {
         try {
             // Get Parameters
             const activeRatio = document.querySelector('.ratio-option.active')?.dataset.ratio || "16:9";
-            // Map ratio to resolution or orientation
-            // Simple mapping: 16:9 -> landscape, 9:16 -> portrait, 1:1 -> square
-            let orientation = 'landscape';
-            if (activeRatio === '9:16') orientation = 'portrait';
-            if (activeRatio === '1:1') orientation = 'square';
-
-            // Note: API might expect 'resolution' string like "720p". 
-            // In original code, we inferred 720p. 
-            // Let's pass resolution if supported, or orientation. 
-            // Checking ai-service.js: it accepts 'resolution' (e.g. '720p') but doesn't seem to use ratio explicitly?
-            // Actually, for video gen, usually you send width/height or aspect ratio.
-            // Let's stick to what worked before: passing a resolution string and maybe relying on model defaults?
-            // The previous code had "Orientation" buttons which mapped to 720p.
-
             const duration = (typeof window.vgSelectedDuration === 'function') ? window.vgSelectedDuration() : 5;
 
             // Prepare Opts
@@ -539,9 +500,9 @@ function setupVideoGenerationEventListeners() {
                 prompt: prompt || "A high quality video",
                 image_url: hasImage ? imgElement.src : null,
                 duration: duration,
-                resolution: "720p", // Defaulting as before
-                ratio: activeRatio, // Passing ratio just in case backend uses it
-                model: window.SettingsManager.get('videoModel') // Using configured model
+                resolution: "720p",
+                ratio: activeRatio,
+                model: window.SettingsManager.get('videoModel')
             };
 
             const resBox = document.querySelector('.result-preview');
@@ -574,7 +535,6 @@ function setupVideoGenerationEventListeners() {
             if (window.electronAPI && window.electronAPI.generateVideo) {
                 result = await window.electronAPI.generateVideo(opts);
             } else {
-                // Fallback to global fetchAPI which includes 429 retry support
                 result = await window.fetchAPI('/api/ai/video', opts);
             }
 
@@ -589,16 +549,13 @@ function setupVideoGenerationEventListeners() {
                             Your browser does not support video.
                         </video>
                         <div style="margin-top:1.5rem; display:flex; gap:12px;">
-                             <button class="secondary-btn" id="btn-save-assets">Save to Assets</button>
-                             <button class="secondary-btn" id="btn-download-video">Download</button>
+                             <button class="secondary-btn" id="btn-save-assets" disabled>${window.i18n.t('COMMON_SAVED')}</button>
+                             <button class="secondary-btn" id="btn-download-video">${window.i18n.t('COMMON_DOWNLOAD')}</button>
                         </div>
                     </div>
                 `;
 
-                // ... (auto-save logic remains specific to sync success, although async saves via worker) ...
                 try {
-                    // Only auto-save here if we got the URL immediately. 
-                    // For async, the Worker does the saving.
                     window.AssetManager.add({
                         type: 'video',
                         url: result.video_url,
@@ -607,15 +564,6 @@ function setupVideoGenerationEventListeners() {
                     });
                     console.log("Video auto-saved to assets");
                 } catch (err) { console.error("Auto-save failed:", err); }
-
-                // Update Save Button Visual
-                setTimeout(() => {
-                    const saveBtn = document.getElementById('btn-save-assets');
-                    if (saveBtn) {
-                        saveBtn.innerHTML = "Saved ✓";
-                        saveBtn.disabled = true;
-                    }
-                }, 500);
 
                 document.getElementById('btn-download-video')?.addEventListener('click', () => {
                     const a = document.createElement('a');
@@ -630,7 +578,6 @@ function setupVideoGenerationEventListeners() {
                 // --- Async Polling Logic ---
                 const jobId = result.jobId;
 
-                // Restore Original Energy Overlay (Matching Face Swap Style)
                 resBox.innerHTML = `
                     <div class="energy-overlay">
                         <div class="energy-logo-sphere">
@@ -644,7 +591,6 @@ function setupVideoGenerationEventListeners() {
                     </div>
                 `;
 
-                // Reset/Restart progress bar for polling phase with a slower rate
                 if (progressInterval) clearInterval(progressInterval);
                 let pollProgress = progress;
                 progressInterval = setInterval(() => {
@@ -668,10 +614,12 @@ function setupVideoGenerationEventListeners() {
                         if (statusData.status === 'success') {
                             clearInterval(pollInterval);
                             clearInterval(progressInterval);
+                            if (window.GlobalSidebar) {
+                                window.GlobalSidebar.setJobStatus('video-generation', 'idle');
+                            }
 
                             const finalResult = statusData.result;
 
-                            // Essential: Refresh assets to show the new video in history and sidebar
                             if (window.AssetManager) window.AssetManager.refresh();
                             resBox.innerHTML = `
                                 <div style="text-align: center; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
@@ -680,8 +628,8 @@ function setupVideoGenerationEventListeners() {
                                         Your browser does not support video.
                                     </video>
                                     <div style="margin-top:1.5rem; display:flex; gap:12px;">
-                                        <button class="secondary-btn" id="btn-save-assets">Saved ✓</button>
-                                        <button class="secondary-btn" id="btn-download-video">Download</button>
+                                        <button class="secondary-btn" id="btn-save-assets" disabled>${window.i18n.t('COMMON_SAVED')}</button>
+                                        <button class="secondary-btn" id="btn-download-video">${window.i18n.t('COMMON_DOWNLOAD')}</button>
                                     </div>
                                 </div>
                             `;
@@ -698,7 +646,21 @@ function setupVideoGenerationEventListeners() {
                         } else if (statusData.status === 'error') {
                             clearInterval(pollInterval);
                             clearInterval(progressInterval);
-                            throw new Error(statusData.message || statusData.error || "Async generation failed");
+                            if (window.GlobalSidebar) {
+                                window.GlobalSidebar.setJobStatus('video-generation', 'idle');
+                            }
+                            const errMsg = statusData.message || statusData.error || "Async generation failed";
+                            notifyError(errMsg);
+                            const safeErr = window.escapeHTML ? window.escapeHTML(errMsg) : errMsg;
+                            resBox.innerHTML = `
+                                <div class="energy-overlay" style="background:#000;">
+                                     <div style="text-align:center; color:white;">
+                                        <span style="font-size:32px; margin-bottom:1rem; display:block;">⚠️</span>
+                                        <p>${window.i18n.t('COMMON_ERROR')}</p>
+                                        <small style="opacity:0.6;">${safeErr}</small>
+                                     </div>
+                                </div>
+                            `;
                         } else {
                             const pollText = document.getElementById('poll-status-text');
                             const label = document.querySelector('.energy-label');
@@ -726,24 +688,21 @@ function setupVideoGenerationEventListeners() {
 
         } catch (error) {
             console.error(error);
-            alert("Error: " + error.message);
+            notifyError(error.message);
             const resBox = document.querySelector('.result-preview');
             if (resBox) {
+                const safeErr = window.escapeHTML ? window.escapeHTML(error.message) : error.message;
                 resBox.innerHTML = `
                 <div class="energy-overlay" style="background:#000;">
                      <div style="text-align:center; color:white;">
                         <span style="font-size:32px; margin-bottom:1rem; display:block;">⚠️</span>
                         <p>${window.i18n.t('COMMON_ERROR')}</p>
-                        <small style="opacity:0.6;">${error.message}</small>
+                        <small style="opacity:0.6;">${safeErr}</small>
                      </div>
                 </div>
             `;
             }
         } finally {
-            // CRITICAL FIX: Do NOT clear intervals here if we are in 'pending' mode.
-            // Let the pollInterval and progressInterval handle themselves.
-            // We only clear them if we didn't enter the pending (polling) branch,
-            // or if an immediate error occurred.
             const isAsync = result && result.status === 'pending';
 
             if (!isAsync) {
@@ -773,7 +732,7 @@ function setupVideoGenerationEventListeners() {
                 promptInputArea.style.transition = 'background-color 0.3s';
                 promptInputArea.style.backgroundColor = 'rgba(255, 217, 61, 0.2)'; // Unified Pop Yellow
                 setTimeout(() => {
-                    promptInputArea.style.backgroundColor = 'white';
+                    promptInputArea.style.backgroundColor = '';
                 }, 300);
             }
         });
@@ -817,10 +776,10 @@ function setupVideoGenerationEventListeners() {
         const el = document.getElementById('vg-prompt-input');
         if (el) {
             const prompts = [
-                window.i18n.t('VIDEO_PROMPT_CHARACTER_WAVE'),
-                window.i18n.t('VIDEO_PROMPT_CHARACTER_SMILE'),
-                window.i18n.t('VIDEO_PROMPT_CHARACTER_WALK'),
-                window.i18n.t('VIDEO_PROMPT_CHARACTER_ACTION'),
+                window.i18n.t('VIDEO_PROMPT_CLOSEUP_SMILE'),
+                window.i18n.t('VIDEO_PROMPT_SLOW_TURN'),
+                window.i18n.t('VIDEO_PROMPT_SINGING'),
+                window.i18n.t('VIDEO_PROMPT_DANCING'),
                 window.i18n.t('VIDEO_PROMPT_RANDOM_5')
             ];
             el.value = prompts[Math.floor(Math.random() * prompts.length)];
@@ -834,6 +793,13 @@ function setupVideoGenerationEventListeners() {
 
     const updateHandler = () => renderAssetsTab();
     window.addEventListener('assets-updated', updateHandler);
+
+    if (window.registerPageCleanup) {
+        window.registerPageCleanup(() => {
+            stopCamera();
+            window.removeEventListener('assets-updated', updateHandler);
+        });
+    }
 }
 
 // Make it globally available

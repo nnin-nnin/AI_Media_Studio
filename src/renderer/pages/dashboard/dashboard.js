@@ -2,21 +2,13 @@
  * Dashboard Page Logic
  * Renders the main entry point with feature cards.
  */
+import './dashboard.css';
 
 function loadDashboardPage(container) {
     if (!container) return; // Guard clause
 
     // Clear and set styles
     container.innerHTML = '';
-
-    // Dynamically load CSS if not already present (optional, but good for modularity)
-    if (!document.getElementById('dashboard-css')) {
-        const link = document.createElement('link');
-        link.id = 'dashboard-css';
-        link.rel = 'stylesheet';
-        link.href = 'pages/dashboard/dashboard.css?v=4';
-        document.head.appendChild(link);
-    }
 
     const dashboardHTML = `
         <div class="dashboard-container">
