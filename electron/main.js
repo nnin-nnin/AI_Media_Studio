@@ -79,7 +79,10 @@ if (fs.existsSync(userEnvPath)) {
 }
 
 async function startBackendServer() {
-    const { default: appServer } = await import('../src/server/server.js');
+    const { default: appServer, enforceDesktopIsolation } = await import('../src/server/server.js');
+    if (typeof enforceDesktopIsolation === 'function') {
+        enforceDesktopIsolation();
+    }
     return new Promise((resolve) => {
         // Listen on ephemeral free port or standard 3000
         serverInstance = appServer.listen(0, '127.0.0.1', () => {

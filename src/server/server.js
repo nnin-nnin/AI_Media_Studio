@@ -142,6 +142,46 @@ function maskKey(val) {
     return `${val.slice(0, 4)}****${val.slice(-4)}`;
 }
 
+export function enforceDesktopIsolation() {
+    if (process.env.ENV_FILE_PATH) {
+        const allowedKeys = {};
+        if (fs.existsSync(process.env.ENV_FILE_PATH)) {
+            const content = fs.readFileSync(process.env.ENV_FILE_PATH, 'utf8');
+            content.split(/\r?\n/).forEach(line => {
+                const m = line.match(/^([A-Z0-9_]+)\s*=\s*(.*)$/);
+                if (m && m[2].trim()) {
+                    allowedKeys[m[1]] = m[2].replace(/^["']|["']$/g, '').trim();
+                }
+            });
+        }
+        const managedKeys = [
+            'ARK_API_KEY', 'DASHSCOPE_API_KEY', 'DECART_API_KEY',
+            'TENCENT_SECRET_ID', 'TENCENT_SECRET_KEY', 'TENCENT_COS_BUCKET', 'TENCENT_COS_REGION'
+        ];
+        for (const k of managedKeys) {
+            if (allowedKeys[k]) {
+                process.env[k] = allowedKeys[k];
+            } else {
+                delete process.env[k];
+            }
+        }
+        if (config && config.ai) {
+            config.ai.arkApiKey = process.env.ARK_API_KEY || '';
+            config.ai.dashscopeApiKey = process.env.DASHSCOPE_API_KEY || '';
+            config.ai.decartApiKey = process.env.DECART_API_KEY || '';
+            if (config.ai.tencent) {
+                config.ai.tencent.secretId = process.env.TENCENT_SECRET_ID || '';
+                config.ai.tencent.secretKey = process.env.TENCENT_SECRET_KEY || '';
+                config.ai.tencent.bucket = process.env.TENCENT_COS_BUCKET || '';
+                config.ai.tencent.region = process.env.TENCENT_COS_REGION || 'ap-beijing';
+            }
+        }
+    }
+}
+
+// Purge any leaked environment variables injected by database/Prisma loaders on startup
+enforceDesktopIsolation();
+
 function updateDotEnvFile(updates) {
     const envPath = process.env.ENV_FILE_PATH || path.join(PROJECT_ROOT, '.env');
     let content = '';
@@ -174,6 +214,7 @@ function updateDotEnvFile(updates) {
 }
 
 app.get('/api/config', (req, res) => {
+    enforceDesktopIsolation();
     res.json({
         debugMode: config.debug,
         decartApiKey: process.env.DECART_API_KEY || config.ai.decartApiKey,
@@ -184,6 +225,7 @@ app.get('/api/config', (req, res) => {
 });
 
 app.get('/api/settings/keys', (req, res) => {
+    enforceDesktopIsolation();
     const ark = process.env.ARK_API_KEY || '';
     const dashscope = process.env.DASHSCOPE_API_KEY || '';
     const decart = process.env.DECART_API_KEY || '';
