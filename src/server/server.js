@@ -69,6 +69,16 @@ console.log(`[Static] Resolving paths:
 // Priority 1: Uploads
 app.use('/uploads', express.static(UPLOADS_DIR));
 
+// Priority 1.5: Locales
+const distLocales = path.join(distPath, 'locales');
+const srcLocales = path.join(rendererPath, 'locales');
+if (fs.existsSync(distLocales)) {
+    app.use('/locales', express.static(distLocales));
+}
+if (fs.existsSync(srcLocales)) {
+    app.use('/locales', express.static(srcLocales));
+}
+
 // Priority 2: System Assets (maps /assets/xxx to root /xxx as per Vite's publicDir)
 app.use(express.static(assetsPath));
 

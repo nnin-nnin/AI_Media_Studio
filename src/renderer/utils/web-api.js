@@ -132,8 +132,7 @@ export const listModels = async () => {
 
 // Legacy / Window Attachment for Renderer
 if (typeof window !== 'undefined') {
-    // In Web-Only mode, we ALWAYS use this adapter.
-    window.electronAPI = {
+    const apiAdapter = {
         generateImage,
         editImage,
         generateVideo,
@@ -145,6 +144,18 @@ if (typeof window !== 'undefined') {
         readAudioFile,
         listModels
     };
+
+    try {
+        if (!window.electronAPI) {
+            window.electronAPI = apiAdapter;
+        } else {
+            Object.assign(window.electronAPI, apiAdapter);
+        }
+    } catch (e) {
+        console.warn('[WebAPI] Could not assign window.electronAPI directly:', e);
+    }
+
+    window.webAPI = apiAdapter;
     window.fetchAPI = fetchAPI;
     console.log('Web API Adapter initialized (Secure Mode: Single User)');
 }

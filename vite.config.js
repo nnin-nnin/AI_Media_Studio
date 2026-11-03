@@ -1,7 +1,23 @@
 import { defineConfig } from 'vite';
 import path from 'path';
+import fs from 'fs';
+
+function copyLocalesPlugin() {
+    return {
+        name: 'copy-locales',
+        closeBundle() {
+            const src = path.join(__dirname, 'src/renderer/locales');
+            const dest = path.join(__dirname, 'dist/locales');
+            if (fs.existsSync(src)) {
+                fs.cpSync(src, dest, { recursive: true });
+                console.log('[Vite] Successfully copied locales to dist/locales');
+            }
+        }
+    };
+}
 
 export default defineConfig({
+    plugins: [copyLocalesPlugin()],
     root: path.join(__dirname, 'src/renderer'), // Set the root to the renderer directory
     publicDir: path.join(__dirname, 'src/renderer/assets'), // If you have a separate public dir, otherwise assets in root are fine
     base: './', // Use relative paths for assets in build

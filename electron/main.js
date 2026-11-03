@@ -106,6 +106,27 @@ function createWindow(targetUrl) {
         return { action: 'deny' };
     });
 
+    // Pipe renderer console messages to terminal for seamless debugging
+    mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+        const levels = ['DEBUG', 'INFO', 'WARN', 'ERROR'];
+        console.log(`[Renderer ${levels[level] || level}] ${message}`);
+    });
+
+    // Toggle DevTools shortcut (Cmd+Option+I on Mac, Ctrl+Shift+I or F12 on Windows)
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+        if (input.type === 'keyDown') {
+            if (input.key === 'F12' ||
+                (input.meta && input.alt && input.key.toLowerCase() === 'i') ||
+                (input.control && input.shift && input.key.toLowerCase() === 'i')) {
+                mainWindow.webContents.toggleDevTools();
+            }
+        }
+    });
+
+    if (process.env.DEBUG === 'true' || process.argv.includes('--devtools')) {
+        mainWindow.webContents.openDevTools();
+    }
+
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
     });
