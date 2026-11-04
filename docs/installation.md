@@ -13,6 +13,28 @@ AI 媒体工作室提供两种运行体验：**独立桌面客户端**（推荐�
 
 ---
 
+## ⚡️ 极速一键终端安装命令（无需手动下载）
+
+打开系统自带的终端，复制粘贴对应平台的单行指令并回车：
+
+### 🍎 macOS 用户（终端 Terminal）
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nnin-nnin/AI_Media_Studio/main/install-app.sh | bash
+```
+
+> **功能特性**：自动识别 Apple Silicon (M1/M2/M3/M4) 或 Intel 架构，自动下载官方发布 DMG 镜像，静默安装至 `/Applications/AI 媒体工作室.app`，并**自动清除 `com.apple.quarantine` 隔离属性（彻底解决“已损坏移到废纸篓”报错）**，最后自动拉起客户端。
+
+### 🪟 Windows 用户（PowerShell）
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://raw.githubusercontent.com/nnin-nnin/AI_Media_Studio/main/install-app.ps1 | iex"
+```
+
+> **功能特性**：自动下载 Windows 官方安装引导包，执行 `Unblock-File` 解除 SmartScreen 执行限制，并自动唤起安装向导。
+
+---
+
 ## Windows 用户安装指南
 
 ### 方式一：独立桌面客户端（推荐首选，零环境依赖）

@@ -49,7 +49,29 @@
 
 ---
 
-## 快速下载与安装
+## 极速一键安装（推荐）
+
+无需手动去 Releases 挑选文件，打开系统终端执行对应的一行命令，脚本将自动完成系统架构识别、下载、解除系统安全拦截并启动：
+
+### 🍎 macOS 用户（终端 Terminal）
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nnin-nnin/AI_Media_Studio/main/install-app.sh | bash
+```
+> 自动适配 M1/M2/M3/M4 与 Intel 芯片，静默挂载 DMG，安装至应用程序目录并自动清除 Gatekeeper 隔离拦截。
+
+### 🪟 Windows 用户（PowerShell）
+
+按 `Win + X` 打开 **PowerShell** 或 **终端**，执行：
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://raw.githubusercontent.com/nnin-nnin/AI_Media_Studio/main/install-app.ps1 | iex"
+```
+> 自动下载最新安装引导程序，解除 SmartScreen 拦截并自动唤起安装。
+
+---
+
+## 快速下载与安装（手动安装包）
 
 前往 [GitHub Releases 页面](https://github.com/nnin-nnin/AI_Media_Studio/releases) 获取适用于您操作系统的最新安装包：
 
