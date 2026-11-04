@@ -166,6 +166,78 @@ function showPage(page) {
     if (window.GlobalSidebar) {
         window.GlobalSidebar.setActive(page);
     }
+
+    // 为 Studio 页面初始化可自由拖拽调整比例的分割线 (Splitter Resizer)
+    setupStudioResizer(mainContent);
+}
+
+/**
+ * 初始化工作室面板拖拽分割线
+ * @param {HTMLElement} container
+ */
+function setupStudioResizer(container) {
+    const layout = container.querySelector('.studio-layout');
+    const controls = container.querySelector('.studio-controls');
+    const viewport = container.querySelector('.studio-viewport');
+    if (!layout || !controls || !viewport) return;
+
+    let resizer = layout.querySelector('.studio-resizer');
+    if (!resizer) {
+        resizer = document.createElement('div');
+        resizer.className = 'studio-resizer';
+        resizer.title = '拖拽调整控制面板与画布比例 / 双击重置';
+        layout.insertBefore(resizer, viewport);
+    }
+
+    // 恢复用户保存的面板偏好宽度
+    const savedWidth = localStorage.getItem('ai_studio_controls_width');
+    if (savedWidth) {
+        const parsed = parseInt(savedWidth, 10);
+        if (parsed >= 260 && parsed <= 650) {
+            controls.style.flex = `0 0 ${parsed}px`;
+        }
+    }
+
+    let startX = 0;
+    let startWidth = 0;
+    let isDragging = false;
+
+    const onMouseMove = (e) => {
+        if (!isDragging) return;
+        const deltaX = e.clientX - startX;
+        const newWidth = Math.max(260, Math.min(650, startWidth + deltaX));
+        controls.style.flex = `0 0 ${newWidth}px`;
+    };
+
+    const onMouseUp = () => {
+        if (!isDragging) return;
+        isDragging = false;
+        resizer.classList.remove('is-dragging');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+
+        const currentWidth = Math.round(controls.getBoundingClientRect().width);
+        localStorage.setItem('ai_studio_controls_width', currentWidth);
+    };
+
+    resizer.onmousedown = (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startWidth = controls.getBoundingClientRect().width;
+        resizer.classList.add('is-dragging');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+        e.preventDefault();
+    };
+
+    resizer.ondblclick = () => {
+        controls.style.flex = '0 0 clamp(28rem, 28vw, 42rem)';
+        localStorage.removeItem('ai_studio_controls_width');
+    };
 }
 
 /**

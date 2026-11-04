@@ -100,8 +100,8 @@ function createWindow(targetUrl) {
     mainWindow = new BrowserWindow({
         width: 1360,
         height: 880,
-        minWidth: 1024,
-        minHeight: 700,
+        minWidth: 768,
+        minHeight: 520,
         title: 'AI 媒体工作室',
         icon: fs.existsSync(appIconPath) ? appIconPath : undefined,
         backgroundColor: '#0f172a',

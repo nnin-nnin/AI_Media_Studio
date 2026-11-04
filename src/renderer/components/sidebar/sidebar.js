@@ -28,6 +28,7 @@ class GlobalSidebar {
             this.setJobStatus(studioId, status);
         });
         this.updateRecentWork();
+        this.setupResizer();
 
         // Initial sync with backend for persistent tasks
         this.syncWithBackend();
@@ -112,6 +113,7 @@ class GlobalSidebar {
                     </svg>
                 </button>
             </div>
+            <div class="sidebar-resizer-handle" id="sidebar-resizer" title="拖拽调整侧边栏宽度 / 双击折叠"></div>
         `;
     }
 
@@ -198,7 +200,64 @@ class GlobalSidebar {
         const sidebar = document.getElementById('app-sidebar');
         if (sidebar) {
             sidebar.classList.toggle('collapsed', this.isCollapsed);
+            sidebar.style.width = this.isCollapsed ? '6.4rem' : '22rem';
         }
+    }
+
+    setupResizer() {
+        const resizer = document.getElementById('sidebar-resizer');
+        const sidebar = this.container || document.getElementById('app-sidebar');
+        if (!resizer || !sidebar) return;
+
+        let startX = 0;
+        let startWidth = 0;
+        let isDragging = false;
+
+        const onMouseMove = (e) => {
+            if (!isDragging) return;
+            const deltaX = e.clientX - startX;
+            const newWidth = Math.max(64, Math.min(360, startWidth + deltaX));
+
+            if (newWidth < 110) {
+                if (!this.isCollapsed) {
+                    this.isCollapsed = true;
+                    sidebar.classList.add('collapsed');
+                }
+                sidebar.style.width = '6.4rem';
+            } else {
+                if (this.isCollapsed) {
+                    this.isCollapsed = false;
+                    sidebar.classList.remove('collapsed');
+                }
+                sidebar.style.width = `${newWidth}px`;
+            }
+        };
+
+        const onMouseUp = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            resizer.classList.remove('is-dragging');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+        };
+
+        resizer.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startWidth = sidebar.getBoundingClientRect().width;
+            resizer.classList.add('is-dragging');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+            e.preventDefault();
+        });
+
+        resizer.addEventListener('dblclick', () => {
+            this.toggle();
+        });
     }
 
     redraw() {

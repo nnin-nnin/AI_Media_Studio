@@ -46,8 +46,20 @@
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 8px;
     text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all 0.15s ease;
+}
+
+.nav-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    display: inline-block;
 }
 
 .nav-list-item:hover {
@@ -224,14 +236,30 @@
     padding: 0;
 }
 
-#app-sidebar.collapsed .sidebar-group-label {
-    display: none;
+#app-sidebar.collapsed .sidebar-header .icon-btn:nth-child(2) {
+    /* Hide the redundant Home button when collapsed */
+    display: none !important;
 }
 
+#app-sidebar.collapsed .sidebar-group-label,
+#app-sidebar.collapsed .nav-label,
+#app-sidebar.collapsed .settings-nav-text,
+#app-sidebar.collapsed .session-list,
+#app-sidebar.collapsed .user-details {
+    display: none !important;
+}
 
-#app-sidebar.collapsed .sidebar-header .icon-btn:nth-child(2) {
-    /* Hide the Home button (or redundant elements) */
-    display: none;
+#app-sidebar.collapsed .sidebar-nav-list {
+    padding: 0 0.8rem;
+    align-items: center;
+}
+
+#app-sidebar.collapsed .nav-group {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
 }
 
 #app-sidebar.collapsed .nav-list-item,
@@ -240,15 +268,12 @@
 #app-sidebar.collapsed .session-item,
 #app-sidebar.collapsed .user-profile {
     justify-content: center;
-    padding: 10px 0;
-    /* Vertical padding, no horizontal */
+    padding: 0;
     width: 44px;
-    /* Square-ish target */
     height: 44px;
     margin: 0 auto;
-    /* Center in container */
-    font-size: 0;
-    /* Hide text nodes */
+    border-radius: 8px;
+    flex: none;
 }
 
 #app-sidebar.collapsed .nav-list-item svg,
@@ -256,20 +281,62 @@
 #app-sidebar.collapsed .new-session-btn svg,
 #app-sidebar.collapsed .session-item svg {
     margin: 0;
-    /* Remove right margin */
 }
 
-#app-sidebar.collapsed .user-details {
-    display: none;
+#app-sidebar.collapsed .nav-divider {
+    width: 32px;
+    margin: 0.8rem auto;
 }
 
-#app-sidebar.collapsed .session-list {
-    display: none;
-    /* Hide session list in collapsed mode or simplify */
+#app-sidebar.collapsed .sidebar-footer {
+    flex-direction: column;
+    padding: 10px 0;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+#app-sidebar.collapsed .sidebar-settings-btn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    margin: 0 auto;
+    justify-content: center;
+    flex: none;
+}
+
+#app-sidebar.collapsed .settings-icon-box {
+    margin: 0;
+    background: transparent;
+}
+
+#app-sidebar.collapsed .theme-sidebar-btn {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto;
+    justify-content: center;
 }
 
 #app-sidebar.collapsed .new-session-btn {
     border: none;
+}
+
+/* Sidebar Drag Resizer Handle */
+.sidebar-resizer-handle {
+    position: absolute;
+    top: 0;
+    right: -4px;
+    width: 8px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 60;
+    background: transparent;
+    transition: background 0.15s ease;
+}
+
+.sidebar-resizer-handle:hover,
+.sidebar-resizer-handle.is-dragging {
+    background: rgba(59, 130, 246, 0.4);
 }
 
 /* --- Status Indicators & Fine-grained Updates --- */

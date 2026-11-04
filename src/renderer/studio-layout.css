@@ -14,13 +14,17 @@
 
 /* Column 2: Controls (Left Panel) */
 .studio-controls {
-    flex: 0 0 clamp(32rem, 25vw, 45rem);
+    flex: 0 0 clamp(28rem, 28vw, 42rem);
+    min-width: 26rem;
+    max-width: 55rem;
     background: var(--bg-glass);
     border-right: var(--glass-border);
     display: flex;
     flex-direction: column;
+    height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
+    position: relative;
     z-index: 40;
     backdrop-filter: blur(10px);
     scrollbar-gutter: stable;
@@ -64,12 +68,16 @@
 
 /* 1. Universal Studio Header & Mode Switcher */
 .studio-header {
+    position: sticky;
+    top: 0;
     padding: 1rem 1.5rem;
     border-bottom: var(--glass-border);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: var(--bg-glass);
+    background: var(--bg-card);
+    z-index: 25;
+    flex-shrink: 0;
 }
 
 .studio-mode-switch {
@@ -321,9 +329,34 @@
 
 /* 4. Action Area (Buttons) */
 .studio-action-area {
+    position: sticky;
+    bottom: 0;
+    margin-top: auto;
     padding: 1.5rem;
     border-top: var(--glass-border);
-    background: var(--bg-glass);
+    background: var(--bg-card);
+    z-index: 25;
+    flex-shrink: 0;
+    box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.06);
+}
+
+/* Draggable Splitter between Controls and Viewport */
+.studio-resizer {
+    width: 8px;
+    height: 100%;
+    cursor: col-resize;
+    background: transparent;
+    position: relative;
+    z-index: 45;
+    flex-shrink: 0;
+    margin-left: -4px;
+    margin-right: -4px;
+    transition: background 0.15s ease;
+}
+
+.studio-resizer:hover,
+.studio-resizer.is-dragging {
+    background: rgba(59, 130, 246, 0.5);
 }
 
 /* Global Viewport Header */
