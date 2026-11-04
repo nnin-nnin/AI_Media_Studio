@@ -31,6 +31,7 @@ dist-ssr
 /data/ai_course.sqlite
 /data/uploads/*
 !/data/uploads/.gitkeep
+/src/server/db/generated/
 
 # IDE
 .vscode

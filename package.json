@@ -32,7 +32,8 @@
     "worker": "node src/server/start-worker.js",
     "db:push": "prisma db push",
     "db:seed": "node scripts/seed_all.js",
-    "build": "vite build",
+    "postinstall": "prisma generate",
+    "build": "prisma generate && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:e2e": "vitest run src/server/tests/e2e/studio.e2e.test.js",
@@ -47,6 +48,7 @@
   "license": "MIT",
   "dependencies": {
     "@decartai/sdk": "^0.0.27",
+    "@prisma/client": "^5.22.0",
     "axios": "^1.0.0",
     "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.1",
@@ -61,7 +63,6 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
-    "@prisma/client": "^5.22.0",
     "concurrently": "^8.2.2",
     "cross-env": "^10.1.0",
     "electron": "^45.2.1",

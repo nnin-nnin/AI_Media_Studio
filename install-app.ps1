@@ -9,7 +9,13 @@ Write-Host "==========================================================" -Foregro
 Write-Host "    AI 媒体工作室 (AI Media Studio) - Windows 一键安装程序 " -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
-$Version = "v1.0.7"
+try {
+    $LatestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/nnin-nnin/AI_Media_Studio/releases/latest" -UseBasicParsing
+    $Version = $LatestRelease.tag_name
+} catch {
+    $Version = "v1.0.8"
+}
+if (-not $Version) { $Version = "v1.0.8" }
 $InstallerName = "AI.Setup.1.0.0.exe"
 $DownloadUrl = "https://github.com/nnin-nnin/AI_Media_Studio/releases/download/$Version/$InstallerName"
 $TempPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "AI_Media_Studio_Setup.exe")

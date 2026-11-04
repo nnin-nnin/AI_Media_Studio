@@ -36,7 +36,8 @@ else
     DMG_FILENAME="AI.-1.0.0.dmg"
 fi
 
-VERSION="v1.0.7"
+LATEST_TAG=$(curl -s https://api.github.com/repos/nnin-nnin/AI_Media_Studio/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' 2>/dev/null || true)
+VERSION="${LATEST_TAG:-v1.0.8}"
 DOWNLOAD_URL="https://github.com/nnin-nnin/AI_Media_Studio/releases/download/${VERSION}/${DMG_FILENAME}"
 TEMP_DMG="/tmp/AI_Media_Studio_${VERSION}.dmg"
 MOUNT_POINT="/tmp/ai_media_studio_mount_$$"

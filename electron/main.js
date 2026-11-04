@@ -55,12 +55,6 @@ delete process.env.VOLC_SPEECH_TOKEN;
 delete process.env.DASHSCOPE_API_KEY;
 delete process.env.DECART_API_KEY;
 
-// Set environment variables before backend server initializes
-process.env.DATA_DIR = dataDir;
-process.env.DATABASE_URL = `file:${userDbPath}`;
-process.env.ENV_FILE_PATH = userEnvPath;
-process.env.USE_REDIS_QUEUE = 'false';
-
 // Load user .env from userData ONLY if it exists
 if (fs.existsSync(userEnvPath)) {
     try {
@@ -75,6 +69,12 @@ if (fs.existsSync(userEnvPath)) {
         console.warn('[Electron] Failed reading user .env:', e);
     }
 }
+
+// Ensure critical desktop environment variables remain strictly hermetic
+process.env.DATA_DIR = dataDir;
+process.env.DATABASE_URL = `file:${userDbPath}`;
+process.env.ENV_FILE_PATH = userEnvPath;
+process.env.USE_REDIS_QUEUE = 'false';
 
 async function startBackendServer() {
     const { default: appServer, enforceDesktopIsolation } = await import('../src/server/server.js');

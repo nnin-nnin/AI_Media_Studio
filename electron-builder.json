@@ -11,7 +11,12 @@
     "prisma/**/*",
     "data/ai_course.sqlite",
     "node_modules/**/*",
+    "node_modules/.prisma/**/*",
     "package.json"
+  ],
+  "asarUnpack": [
+    "src/server/db/generated/client/**/*",
+    "node_modules/@prisma/client/**/*"
   ],
   "extraResources": [
     {
