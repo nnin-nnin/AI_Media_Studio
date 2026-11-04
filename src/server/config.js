@@ -40,13 +40,7 @@ const config = {
     ai: {
         arkApiKey: getEnv('ARK_API_KEY', false, ''),
         decartApiKey: getEnv('DECART_API_KEY', false, ''),
-        dashscopeApiKey: getEnv('DASHSCOPE_API_KEY', false, ''),
-        tencent: {
-            secretId: getEnv('TENCENT_SECRET_ID', false, ''),
-            secretKey: getEnv('TENCENT_SECRET_KEY', false, ''),
-            bucket: getEnv('TENCENT_COS_BUCKET', false, ''),
-            region: getEnv('TENCENT_COS_REGION', false, 'ap-beijing')
-        }
+        dashscopeApiKey: getEnv('DASHSCOPE_API_KEY', false, '')
     }
 };
 

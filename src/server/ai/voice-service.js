@@ -3,7 +3,6 @@ import os from 'os';
 import path from 'path';
 import crypto from 'crypto';
 import axios from 'axios';
-import COS from 'cos-nodejs-sdk-v5';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 
@@ -53,43 +52,12 @@ function resolvePythonBinary() {
  */
 class VoiceService {
     /**
-     * Upload local audio file to Tencent COS
+     * Deprecated stub for previous COS audio upload
      * @param {string} localFilePath 
      * @returns {Promise<string>} public URL
      */
     static async uploadToCos(localFilePath) {
-        const secretId = process.env.TENCENT_SECRET_ID;
-        const secretKey = process.env.TENCENT_SECRET_KEY;
-        const bucket = process.env.TENCENT_COS_BUCKET;
-        const region = process.env.TENCENT_COS_REGION || 'ap-beijing';
-
-        if (!secretId || !secretKey || !bucket) {
-            throw new Error('未配置腾讯云 COS（缺少 TENCENT_SECRET_ID / TENCENT_SECRET_KEY / TENCENT_COS_BUCKET），无法上传声音样本');
-        }
-
-        const cos = new COS({
-            SecretId: secretId,
-            SecretKey: secretKey
-        });
-
-        const ext = path.extname(localFilePath) || '.wav';
-        const key = `uploads/${crypto.randomUUID().replace(/-/g, '')}${ext}`;
-
-        return new Promise((resolve, reject) => {
-            cos.uploadFile({
-                Bucket: bucket,
-                Region: region,
-                Key: key,
-                FilePath: localFilePath,
-                SliceSize: 1024 * 1024 * 5
-            }, (err, data) => {
-                if (err) {
-                    return reject(new Error(`腾讯云 COS 上传失败: ${err.message || err}`));
-                }
-                const url = data.Location ? (data.Location.startsWith('http') ? data.Location : `https://${data.Location}`) : `https://${bucket}.cos.${region}.myqcloud.com/${key}`;
-                resolve(url);
-            });
-        });
+        throw new Error('腾讯云 COS 已在全新火山引擎架构中彻底弃用。请使用系统内置的火山 OpenSpeech 语音合成引擎。');
     }
 
     /**

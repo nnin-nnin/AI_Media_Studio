@@ -44,8 +44,28 @@ console.log("[Config Debug] Loaded config:", JSON.stringify({
     hasDecartKey: !!config.ai.decartApiKey
 }, null, 2));
 
-// Middleware
-app.use(cors());
+// Middleware: Strict CORS policy for local studio security
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (Electron desktop, curl, native loopback)
+        if (!origin || origin === 'null') {
+            return callback(null, true);
+        }
+        try {
+            const url = new URL(origin);
+            if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+                return callback(null, true);
+            }
+        } catch {
+            // invalid URL format
+        }
+        if (config.env === 'development') {
+            return callback(null, true);
+        }
+        return callback(new Error('Cross-Origin Request Blocked by Security Policy'));
+    },
+    credentials: true
+}));
 app.use(bodyParser.json({ limit: '50mb' })); // Increase limit for image/audio data
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -155,8 +175,7 @@ export function enforceDesktopIsolation() {
             });
         }
         const managedKeys = [
-            'ARK_API_KEY', 'VOLC_SPEECH_APPID', 'VOLC_SPEECH_TOKEN', 'DASHSCOPE_API_KEY', 'DECART_API_KEY',
-            'TENCENT_SECRET_ID', 'TENCENT_SECRET_KEY', 'TENCENT_COS_BUCKET', 'TENCENT_COS_REGION'
+            'ARK_API_KEY', 'VOLC_SPEECH_APPID', 'VOLC_SPEECH_TOKEN', 'DASHSCOPE_API_KEY', 'DECART_API_KEY'
         ];
         for (const k of managedKeys) {
             if (allowedKeys[k]) {
@@ -169,12 +188,6 @@ export function enforceDesktopIsolation() {
             config.ai.arkApiKey = process.env.ARK_API_KEY || '';
             config.ai.dashscopeApiKey = process.env.DASHSCOPE_API_KEY || '';
             config.ai.decartApiKey = process.env.DECART_API_KEY || '';
-            if (config.ai.tencent) {
-                config.ai.tencent.secretId = process.env.TENCENT_SECRET_ID || '';
-                config.ai.tencent.secretKey = process.env.TENCENT_SECRET_KEY || '';
-                config.ai.tencent.bucket = process.env.TENCENT_COS_BUCKET || '';
-                config.ai.tencent.region = process.env.TENCENT_COS_REGION || 'ap-beijing';
-            }
         }
     }
 }
@@ -215,9 +228,12 @@ function updateDotEnvFile(updates) {
 
 app.get('/api/config', (req, res) => {
     enforceDesktopIsolation();
+    const clientIp = req.ip || req.connection?.remoteAddress || '';
+    const isLocal = clientIp === '127.0.0.1' || clientIp === '::1' || clientIp === '::ffff:127.0.0.1';
     res.json({
         debugMode: config.debug,
-        decartApiKey: process.env.DECART_API_KEY || config.ai.decartApiKey,
+        decartApiKey: isLocal ? (process.env.DECART_API_KEY || config.ai.decartApiKey) : '',
+        hasDecartKey: !!(process.env.DECART_API_KEY || config.ai.decartApiKey),
         hasArkKey: !!(process.env.ARK_API_KEY || config.ai.arkApiKey),
         hasDashscopeKey: !!(process.env.DASHSCOPE_API_KEY || config.ai.dashscopeApiKey),
         hasVolcSpeech: !!(process.env.VOLC_SPEECH_APPID && process.env.VOLC_SPEECH_TOKEN),
@@ -230,10 +246,6 @@ app.get('/api/settings/keys', (req, res) => {
     const ark = process.env.ARK_API_KEY || '';
     const dashscope = process.env.DASHSCOPE_API_KEY || '';
     const decart = process.env.DECART_API_KEY || '';
-    const cosId = process.env.TENCENT_SECRET_ID || '';
-    const cosKey = process.env.TENCENT_SECRET_KEY || '';
-    const cosBucket = process.env.TENCENT_COS_BUCKET || '';
-    const cosRegion = process.env.TENCENT_COS_REGION || 'ap-beijing';
     const volcAppId = process.env.VOLC_SPEECH_APPID || '';
     const volcToken = process.env.VOLC_SPEECH_TOKEN || '';
 
@@ -244,11 +256,7 @@ app.get('/api/settings/keys', (req, res) => {
             VOLC_SPEECH_APPID: { configured: !!volcAppId, value: volcAppId },
             VOLC_SPEECH_TOKEN: { configured: !!volcToken, masked: maskKey(volcToken) },
             DASHSCOPE_API_KEY: { configured: !!dashscope, masked: maskKey(dashscope) },
-            DECART_API_KEY: { configured: !!decart, masked: maskKey(decart) },
-            TENCENT_SECRET_ID: { configured: !!cosId, masked: maskKey(cosId) },
-            TENCENT_SECRET_KEY: { configured: !!cosKey, masked: maskKey(cosKey) },
-            TENCENT_COS_BUCKET: { configured: !!cosBucket, value: cosBucket },
-            TENCENT_COS_REGION: { configured: !!cosRegion, value: cosRegion }
+            DECART_API_KEY: { configured: !!decart, masked: maskKey(decart) }
         }
     });
 });
@@ -260,11 +268,7 @@ app.post('/api/settings/keys', (req, res) => {
             'VOLC_SPEECH_APPID',
             'VOLC_SPEECH_TOKEN',
             'DASHSCOPE_API_KEY',
-            'DECART_API_KEY',
-            'TENCENT_SECRET_ID',
-            'TENCENT_SECRET_KEY',
-            'TENCENT_COS_BUCKET',
-            'TENCENT_COS_REGION'
+            'DECART_API_KEY'
         ];
         const updates = {};
         for (const k of allowedKeys) {
@@ -279,10 +283,6 @@ app.post('/api/settings/keys', (req, res) => {
         if (updates.ARK_API_KEY) config.ai.arkApiKey = updates.ARK_API_KEY;
         if (updates.DASHSCOPE_API_KEY) config.ai.dashscopeApiKey = updates.DASHSCOPE_API_KEY;
         if (updates.DECART_API_KEY) config.ai.decartApiKey = updates.DECART_API_KEY;
-        if (updates.TENCENT_SECRET_ID) config.ai.tencent.secretId = updates.TENCENT_SECRET_ID;
-        if (updates.TENCENT_SECRET_KEY) config.ai.tencent.secretKey = updates.TENCENT_SECRET_KEY;
-        if (updates.TENCENT_COS_BUCKET) config.ai.tencent.bucket = updates.TENCENT_COS_BUCKET;
-        if (updates.TENCENT_COS_REGION) config.ai.tencent.region = updates.TENCENT_COS_REGION;
 
         if (Object.keys(updates).length > 0) {
             updateDotEnvFile(updates);

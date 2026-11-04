@@ -64,7 +64,7 @@ class ApiConfigModal {
                         <!-- Group 3: Optional Extensions (Collapsible) -->
                         <details class="cfg-accordion">
                             <summary class="cfg-accordion-summary">
-                                <span>更多服务 (阿里云、Decart、腾讯云 COS)</span>
+                                <span>可选拓展服务 (阿里云百炼、Decart 视觉)</span>
                                 <svg class="cfg-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M3 4.5l3 3 3-3"></path>
                                 </svg>
@@ -84,18 +84,6 @@ class ApiConfigModal {
                                         <span id="badge-decart-key" class="cfg-badge-sm">未配置</span>
                                     </div>
                                     <input type="password" id="input-decart-key" class="cfg-input" placeholder="输入 Decart API Key" autocomplete="off">
-                                </div>
-
-                                <div class="cfg-group">
-                                    <div class="cfg-row-header">
-                                        <span class="cfg-label-sm">腾讯云 COS 存储 (用于声音复刻)</span>
-                                    </div>
-                                    <div class="cfg-grid-2">
-                                        <input type="password" id="input-cos-id" class="cfg-input" placeholder="Secret ID" autocomplete="off">
-                                        <input type="password" id="input-cos-key" class="cfg-input" placeholder="Secret Key" autocomplete="off">
-                                        <input type="text" id="input-cos-bucket" class="cfg-input" placeholder="Bucket 名称" autocomplete="off">
-                                        <input type="text" id="input-cos-region" class="cfg-input" placeholder="Region (如 ap-beijing)" autocomplete="off">
-                                    </div>
                                 </div>
                             </div>
                         </details>
@@ -213,15 +201,6 @@ class ApiConfigModal {
                     decartBadge.textContent = data.keys.DECART_API_KEY?.configured ? '已配置' : '未配置';
                     decartBadge.className = data.keys.DECART_API_KEY?.configured ? 'cfg-badge-sm is-connected' : 'cfg-badge-sm';
                 }
-
-                const bucketInput = document.getElementById('input-cos-bucket');
-                const regionInput = document.getElementById('input-cos-region');
-                if (bucketInput && data.keys.TENCENT_COS_BUCKET?.value) {
-                    bucketInput.value = data.keys.TENCENT_COS_BUCKET.value;
-                }
-                if (regionInput && data.keys.TENCENT_COS_REGION?.value) {
-                    regionInput.value = data.keys.TENCENT_COS_REGION.value;
-                }
             }
         } catch (e) {
             console.warn('[ApiConfigModal] Failed to load key status:', e);
@@ -234,11 +213,7 @@ class ApiConfigModal {
             VOLC_SPEECH_APPID: document.getElementById('input-volc-appid')?.value.trim() || '',
             VOLC_SPEECH_TOKEN: document.getElementById('input-volc-token')?.value.trim() || '',
             DASHSCOPE_API_KEY: document.getElementById('input-dashscope-key')?.value.trim() || '',
-            DECART_API_KEY: document.getElementById('input-decart-key')?.value.trim() || '',
-            TENCENT_SECRET_ID: document.getElementById('input-cos-id')?.value.trim() || '',
-            TENCENT_SECRET_KEY: document.getElementById('input-cos-key')?.value.trim() || '',
-            TENCENT_COS_BUCKET: document.getElementById('input-cos-bucket')?.value.trim() || '',
-            TENCENT_COS_REGION: document.getElementById('input-cos-region')?.value.trim() || ''
+            DECART_API_KEY: document.getElementById('input-decart-key')?.value.trim() || ''
         };
 
         try {
@@ -249,7 +224,7 @@ class ApiConfigModal {
             });
             const data = await res.json();
             if (data.status === 'success') {
-                ['input-ark-key', 'input-volc-token', 'input-dashscope-key', 'input-decart-key', 'input-cos-id', 'input-cos-key'].forEach(id => {
+                ['input-ark-key', 'input-volc-token', 'input-dashscope-key', 'input-decart-key'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.value = '';
                 });

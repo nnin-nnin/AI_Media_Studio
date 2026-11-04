@@ -54,10 +54,6 @@ delete process.env.VOLC_SPEECH_APPID;
 delete process.env.VOLC_SPEECH_TOKEN;
 delete process.env.DASHSCOPE_API_KEY;
 delete process.env.DECART_API_KEY;
-delete process.env.TENCENT_SECRET_ID;
-delete process.env.TENCENT_SECRET_KEY;
-delete process.env.TENCENT_COS_BUCKET;
-delete process.env.TENCENT_COS_REGION;
 
 // Set environment variables before backend server initializes
 process.env.DATA_DIR = dataDir;

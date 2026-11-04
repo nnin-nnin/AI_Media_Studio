@@ -155,25 +155,7 @@ class AIService {
    * @returns {Promise<Object>} 结果对象
    */
   static async cloneVoice(options) {
-    // Standard names used in our scripts
-    const requiredEnvs = ["DASHSCOPE_API_KEY", "TENCENT_SECRET_ID", "TENCENT_SECRET_KEY", "TENCENT_COS_BUCKET"];
-
-    // Mapping for alternative names (e.g. TENCENTCLOUD_ prefix is official)
-    const aliases = {
-      "TENCENT_SECRET_ID": ["TENCENTCLOUD_SECRET_ID"],
-      "TENCENT_SECRET_KEY": ["TENCENTCLOUD_SECRET_KEY"]
-    };
-
-    // Fill missing ones from aliases
-    requiredEnvs.forEach(key => {
-      if (!process.env[key] && aliases[key]) {
-        const alias = aliases[key].find(a => process.env[a]);
-        if (alias) {
-          process.env[key] = process.env[alias];
-          console.log(`[AIService] Environment: Aliasing ${alias} -> ${key}`);
-        }
-      }
-    });
+    const requiredEnvs = ["DASHSCOPE_API_KEY"];
 
     const envStatus = {};
     requiredEnvs.forEach(key => {
@@ -255,10 +237,10 @@ class AIService {
       fs.mkdirSync(uploadsDir, { recursive: true });
       const outputFilePath = path.join(uploadsDir, outputFileName);
 
-      // 1. 上传音频至腾讯云 COS 获取公网访问 URL（纯 Node.js 实现，无需 Python）
-      console.log(`[AIService] Uploading audio sample via pure Node.js COS SDK...`);
+      // 1. 上传音频获取公网访问 URL
+      console.log(`[AIService] Uploading audio sample...`);
       const audioUrl = await VoiceService.uploadToCos(audioFilePath);
-      console.log(`[AIService] Uploaded audio sample to COS: ${audioUrl}`);
+      console.log(`[AIService] Uploaded audio sample: ${audioUrl}`);
 
       // 2. 调用阿里百炼 CosyVoice 声音克隆服务训练音色
       const model = options.model || 'cosyvoice-v2';
