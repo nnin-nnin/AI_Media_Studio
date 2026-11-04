@@ -92,12 +92,18 @@ async function startBackendServer() {
 }
 
 function createWindow(targetUrl) {
+    const appIconPath = path.join(__dirname, '..', 'build', 'icon.png');
+    if (process.platform === 'darwin' && app.dock && fs.existsSync(appIconPath)) {
+        app.dock.setIcon(appIconPath);
+    }
+
     mainWindow = new BrowserWindow({
         width: 1360,
         height: 880,
         minWidth: 1024,
         minHeight: 700,
         title: 'AI 媒体工作室',
+        icon: fs.existsSync(appIconPath) ? appIconPath : undefined,
         backgroundColor: '#0f172a',
         show: false,
         webPreferences: {

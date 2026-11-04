@@ -25,6 +25,7 @@
     }
   ],
   "mac": {
+    "icon": "build/icon.icns",
     "category": "public.app-category.graphics-design",
     "target": [
       {
@@ -40,6 +41,7 @@
     "gatekeeperAssess": false
   },
   "win": {
+    "icon": "build/icon.ico",
     "target": [
       {
         "target": "nsis",
