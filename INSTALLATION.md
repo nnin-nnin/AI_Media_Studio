@@ -20,9 +20,9 @@ AI 媒体工作室提供两种运行体验：**独立桌面客户端**（推荐�
 适合无需接触代码或命令行的用户，内置独立运行环境：
 
 1. **获取安装包**：
-   访问 [GitHub Releases 页面](https://github.com/nnin-nnin/AI_Media_Studio/releases) 下载最新版本文件：
-   - **安装向导版**：`AI-Media-Studio Setup.exe`
-   - **免安装便携版**：`AI-Media-Studio-Portable.exe`
+   访问 [GitHub Releases v1.0.7](https://github.com/nnin-nnin/AI_Media_Studio/releases/tag/v1.0.7) 下载对应安装文件：
+   - **Windows 官方安装引导程序（推荐）**：[`AI.Setup.1.0.0.exe`](https://github.com/nnin-nnin/AI_Media_Studio/releases/download/v1.0.7/AI.Setup.1.0.0.exe)（132 MB，提供桌面快捷方式与安装向导）
+   - **Windows 独立便携免安装版**：[`AI.1.0.0.exe`](https://github.com/nnin-nnin/AI_Media_Studio/releases/download/v1.0.7/AI.1.0.0.exe)（121 MB，单文件双击即开）
 
 2. **启动与安全提示**：
    - 双击文件启动；
@@ -41,7 +41,7 @@ AI 媒体工作室提供两种运行体验：**独立桌面客户端**（推荐�
    确认电脑已安装 [Node.js](https://nodejs.org/)（推荐 LTS v20 或更高版本）。
 
 2. **下载解压**：
-   下载发布的 `AI_Media_Studio_Release.zip`，解压到任意本地英文路径（例如 `D:\AI_Media_Studio`）。
+   下载官方发布的纯净免编译包 [`AI_Media_Studio_Release.zip`](https://github.com/nnin-nnin/AI_Media_Studio/releases/download/v1.0.7/AI_Media_Studio_Release.zip)（34 MB），解压到本地任意目录（例如 `D:\AI_Media_Studio`）。
 
 3. **一键启动**：
    双击文件夹中的 `start.bat`。
@@ -71,8 +71,9 @@ powershell -ExecutionPolicy ByPass -c "irm https://raw.githubusercontent.com/nni
 ### 方式一：桌面客户端（DMG 镜像）
 
 1. **下载安装包**：
-   - **Apple Silicon (M 系列芯片)**：下载 `AI-Media-Studio-arm64.dmg`
-   - **Intel 处理器**：下载 `AI-Media-Studio-x64.dmg`
+   访问 [GitHub Releases v1.0.7](https://github.com/nnin-nnin/AI_Media_Studio/releases/tag/v1.0.7) 下载对应安装文件：
+   - **Apple Silicon (M 系列芯片)**：[`AI.-1.0.0-arm64.dmg`](https://github.com/nnin-nnin/AI_Media_Studio/releases/download/v1.0.7/AI.-1.0.0-arm64.dmg)（136 MB）
+   - **Intel 处理器**：[`AI.-1.0.0.dmg`](https://github.com/nnin-nnin/AI_Media_Studio/releases/download/v1.0.7/AI.-1.0.0.dmg)（140 MB）
 
 2. **安装应用**：
    双击打开 `.dmg` 镜像，将应用图标拖入 `Applications`（应用程序）文件夹。
