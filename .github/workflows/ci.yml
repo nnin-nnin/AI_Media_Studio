@@ -35,6 +35,9 @@ jobs:
         env:
           DATABASE_URL: "file:./data/ai_course.sqlite"
 
+      - name: Build Web Assets
+        run: npm run build
+
       - name: Run Tests
         run: npx vitest run
         env:
