@@ -511,7 +511,12 @@ class VoiceChatPage {
             }
         } catch (e) {
             console.error("TTS Failed", e);
-            this.micStatus.innerText = "Generation failed. Try again.";
+            const isKeyError = /API_KEY|API Key|百炼|火山方舟|密钥/i.test(e.message);
+            if (isKeyError) {
+                this.micStatus.innerHTML = `<span style="color:var(--error, #ef4444);">未配置阿里云百炼 Key</span> · <a href="javascript:void(0)" onclick="window.ApiConfigModal && window.ApiConfigModal.open('speech')" style="color:var(--primary, #3b82f6); text-decoration:underline; font-weight:500;">立即配置 ↗</a>`;
+            } else {
+                this.micStatus.innerText = e.message || "Generation failed. Try again.";
+            }
         }
     }
 
