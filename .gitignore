@@ -45,9 +45,15 @@ dist-ssr
 .DS_Store
 Thumbs.db
 
-# Optional
+# Optional & Temporary Outputs
 temp/
+temp_*
 *.zip
 *.dmg
 release/
+output_*.mp4
+output_video.mp4
+*.mp3
+!/data/mp3/*.mp3
+
 

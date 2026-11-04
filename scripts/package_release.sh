@@ -4,7 +4,8 @@
 set -e
 cd "$(dirname "$0")/.."
 
-OUT_ZIP="AI_Media_Studio_Release.zip"
+mkdir -p release
+OUT_ZIP="release/AI_Media_Studio_Release.zip"
 rm -f "$OUT_ZIP"
 
 echo "📦 正在构建前端生产资源..."
