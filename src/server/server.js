@@ -175,7 +175,7 @@ export function enforceDesktopIsolation() {
             });
         }
         const managedKeys = [
-            'ARK_API_KEY', 'VOLC_SPEECH_APPID', 'VOLC_SPEECH_TOKEN', 'DASHSCOPE_API_KEY', 'DECART_API_KEY'
+            'ARK_API_KEY', 'DASHSCOPE_API_KEY', 'DECART_API_KEY'
         ];
         for (const k of managedKeys) {
             if (allowedKeys[k]) {
@@ -236,7 +236,6 @@ app.get('/api/config', (req, res) => {
         hasDecartKey: !!(process.env.DECART_API_KEY || config.ai.decartApiKey),
         hasArkKey: !!(process.env.ARK_API_KEY || config.ai.arkApiKey),
         hasDashscopeKey: !!(process.env.DASHSCOPE_API_KEY || config.ai.dashscopeApiKey),
-        hasVolcSpeech: !!(process.env.VOLC_SPEECH_APPID && process.env.VOLC_SPEECH_TOKEN),
         skipAuth: config.auth.skipAuth && config.env === 'development'
     });
 });
@@ -246,15 +245,11 @@ app.get('/api/settings/keys', (req, res) => {
     const ark = process.env.ARK_API_KEY || '';
     const dashscope = process.env.DASHSCOPE_API_KEY || '';
     const decart = process.env.DECART_API_KEY || '';
-    const volcAppId = process.env.VOLC_SPEECH_APPID || '';
-    const volcToken = process.env.VOLC_SPEECH_TOKEN || '';
 
     res.json({
         status: 'success',
         keys: {
             ARK_API_KEY: { configured: !!ark, masked: maskKey(ark) },
-            VOLC_SPEECH_APPID: { configured: !!volcAppId, value: volcAppId },
-            VOLC_SPEECH_TOKEN: { configured: !!volcToken, masked: maskKey(volcToken) },
             DASHSCOPE_API_KEY: { configured: !!dashscope, masked: maskKey(dashscope) },
             DECART_API_KEY: { configured: !!decart, masked: maskKey(decart) }
         }
@@ -265,8 +260,6 @@ app.post('/api/settings/keys', (req, res) => {
     try {
         const allowedKeys = [
             'ARK_API_KEY',
-            'VOLC_SPEECH_APPID',
-            'VOLC_SPEECH_TOKEN',
             'DASHSCOPE_API_KEY',
             'DECART_API_KEY'
         ];

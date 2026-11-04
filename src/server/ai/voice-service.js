@@ -9,20 +9,23 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-function resolveVolcVoice(rawVoice) {
+function resolveDashScopeVoice(rawVoice) {
     const v = (rawVoice || '').toLowerCase();
+    if (rawVoice && (rawVoice.startsWith('cosyvoice-') || rawVoice.startsWith('myvoice') || rawVoice.startsWith('voice_'))) {
+        return rawVoice;
+    }
     const map = {
-        'wukong': 'zh_male_sunwukong_mars_bigtts',
-        'bajie': 'zh_male_zhubajie_mars_bigtts',
-        'nezha': 'zh_female_tianmei_mars_bigtts',
-        'aobing': 'zh_male_shaonian_mars_bigtts',
-        'haimian': 'zh_female_shuangkuai_mars_bigtts',
-        'xionger': 'zh_male_chunhou_mars_bigtts'
+        'wukong': 'longshuo',       // 磁性成熟男声 / 齐天大圣
+        'bajie': 'longyuan',        // 幽默圆润男声 / 猪八戒
+        'nezha': 'longmiao',        // 灵动少年音 / 哪吒
+        'aobing': 'longfei',        // 清亮温润公子 / 敖丙
+        'haimian': 'longxiaocheng', // 欢快搞怪童声 / 海绵宝宝
+        'xionger': 'longhua'        // 憨厚男声 / 熊二
     };
     for (const [k, val] of Object.entries(map)) {
         if (v.includes(k)) return val;
     }
-    return rawVoice || 'zh_male_sunwukong_mars_bigtts';
+    return 'longxiaochun'; // 默认阿里原厂高保真女声
 }
 
 function resolvePythonBinary() {
@@ -70,7 +73,7 @@ class VoiceService {
     static async enrollVoice(audioUrl, model = 'cosyvoice-v2', prefix = 'myvoice') {
         const apiKey = process.env.DASHSCOPE_API_KEY;
         if (!apiKey) {
-            throw new Error('缺少 DASHSCOPE_API_KEY，无法调用阿里百炼声音克隆服务');
+            throw new Error('未配置【阿里云百炼 API Key (DASHSCOPE_API_KEY)】，无法进行声音克隆。\n获取方式：\n1. 访问阿里云百炼控制台：https://bailian.console.aliyun.com/\n2. 点击右上角创建 API-Key (sk-...)；\n3. 点击软件左下角【服务配置】填入保存即可。');
         }
 
         const endpoint = 'https://dashscope.aliyuncs.com/api/v1/services/audio/tts/customization';
@@ -135,154 +138,54 @@ class VoiceService {
     }
 
     /**
-     * Synthesize speech using Volcengine OpenSpeech (Primary) -> DashScope -> Edge-TTS (Fallback)
+     * Synthesize speech using Aliyun DashScope CosyVoice
      * @param {Object} options 
      * @returns {Promise<Object>} { status, audioBuffer, useWebSpeech, engine }
      */
     static async synthesizeSpeech({ voiceId, text, speed = 1.0, sampleRate = 22050, outputPath }) {
-        // 1. Primary Engine: Volcengine OpenSpeech
-        const volcAppId = process.env.VOLC_SPEECH_APPID;
-        const volcToken = process.env.VOLC_SPEECH_TOKEN;
-
-        if (volcAppId && volcToken) {
-            try {
-                const volcVoice = resolveVolcVoice(voiceId);
-                const url = 'https://openspeech.bytedance.com/api/v1/tts';
-                const payload = {
-                    app: {
-                        appid: volcAppId,
-                        token: volcToken,
-                        cluster: 'volcano_tts'
-                    },
-                    user: { uid: 'ai_media_studio_user' },
-                    audio: {
-                        voice_type: volcVoice,
-                        encoding: 'mp3',
-                        speed_ratio: speed,
-                        volume_ratio: 1.0,
-                        pitch_ratio: 1.0
-                    },
-                    request: {
-                        reqid: crypto.randomUUID(),
-                        text: text,
-                        text_type: 'plain',
-                        operation: 'query'
-                    }
-                };
-
-                const response = await axios.post(url, payload, {
-                    headers: {
-                        'Authorization': `Bearer;${volcToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    timeout: 25000
-                });
-
-                if (response.data?.code === 3000 && response.data?.data) {
-                    const audioBuffer = Buffer.from(response.data.data, 'base64');
-                    if (outputPath) {
-                        fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-                        fs.writeFileSync(outputPath, audioBuffer);
-                    }
-                    console.log(`[VoiceService] Volcengine TTS synthesized successfully (${audioBuffer.length} bytes, voice: ${volcVoice})`);
-                    return {
-                        status: 'success',
-                        audioBuffer,
-                        useWebSpeech: false,
-                        engine: 'volcengine'
-                    };
-                } else {
-                    console.warn('[VoiceService] Volcengine TTS returned error:', response.data?.message || response.data?.code);
-                }
-            } catch (err) {
-                console.warn('[VoiceService] Volcengine TTS call failed, falling back:', err.message);
-            }
-        }
-
-        // 2. DashScope CosyVoice fallback (if configured)
         const dashscopeKey = process.env.DASHSCOPE_API_KEY;
-        if (dashscopeKey && voiceId && voiceId.startsWith('cosyvoice-')) {
-            try {
-                const endpoint = 'https://dashscope.aliyuncs.com/api/v1/services/audio/tts/generation';
-                const payload = {
-                    model: 'cosyvoice-v2',
-                    input: { text },
-                    parameters: {
-                        voice: voiceId,
-                        speech_rate: speed,
-                        sample_rate: sampleRate,
-                        format: 'mp3'
-                    }
-                };
-                const response = await axios.post(endpoint, payload, {
-                    headers: {
-                        'Authorization': `Bearer ${dashscopeKey}`,
-                        'Content-Type': 'application/json',
-                        'X-DashScope-Async': 'disable'
-                    },
-                    responseType: 'arraybuffer',
-                    timeout: 25000
-                });
-
-                if (outputPath) {
-                    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-                    fs.writeFileSync(outputPath, Buffer.from(response.data));
-                }
-                return {
-                    status: 'success',
-                    audioBuffer: response.data,
-                    useWebSpeech: false,
-                    engine: 'dashscope'
-                };
-            } catch (err) {
-                console.warn('[VoiceService] DashScope fallback failed:', err.message);
-            }
+        if (!dashscopeKey) {
+            throw new Error('未配置【阿里云百炼 API Key (DASHSCOPE_API_KEY)】，无法进行语音合成。\n获取方式：\n1. 访问阿里云百炼控制台：https://bailian.console.aliyun.com/\n2. 点击右上角创建 API-Key (sk-...)；\n3. 点击软件左下角【服务配置】填入保存即可。');
         }
 
-        // 3. High quality Edge-TTS Fallback (Zero Config, neural voices)
-        if (outputPath) {
-            try {
-                const pyBin = resolvePythonBinary();
-                const scriptPath = path.join(__dirname, 'tts_helper.py');
-
-                let targetScript = scriptPath;
-                if (scriptPath.includes('.asar')) {
-                    const tempScript = path.join(os.tmpdir(), path.basename(scriptPath));
-                    fs.writeFileSync(tempScript, fs.readFileSync(scriptPath));
-                    targetScript = tempScript;
+        try {
+            const voice = resolveDashScopeVoice(voiceId);
+            const endpoint = 'https://dashscope.aliyuncs.com/api/v1/services/audio/tts/generation';
+            const payload = {
+                model: 'cosyvoice-v2',
+                input: { text },
+                parameters: {
+                    voice: voice,
+                    speech_rate: speed,
+                    sample_rate: sampleRate,
+                    format: 'mp3'
                 }
+            };
+            const response = await axios.post(endpoint, payload, {
+                headers: {
+                    'Authorization': `Bearer ${dashscopeKey}`,
+                    'Content-Type': 'application/json',
+                    'X-DashScope-Async': 'disable'
+                },
+                responseType: 'arraybuffer',
+                timeout: 30000
+            });
 
-                await new Promise((resolve, reject) => {
-                    const py = spawn(pyBin, [targetScript, voiceId || 'wukong', text, outputPath, '--speed', speed.toString()]);
-                    let stderr = '';
-                    py.stderr.on('data', d => { stderr += d.toString(); });
-                    py.on('close', code => {
-                        if (code === 0 && fs.existsSync(outputPath)) {
-                            resolve();
-                        } else {
-                            reject(new Error(stderr || `Python exit code ${code}`));
-                        }
-                    });
-                });
-
-                console.log('[VoiceService] Edge-TTS fallback synthesized successfully to:', outputPath);
-                return {
-                    status: 'success',
-                    useWebSpeech: false,
-                    engine: 'edge_tts'
-                };
-            } catch (err) {
-                console.warn('[VoiceService] Python Edge-TTS fallback failed:', err.message);
+            if (outputPath) {
+                fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+                fs.writeFileSync(outputPath, Buffer.from(response.data));
             }
+            return {
+                status: 'success',
+                audioBuffer: response.data,
+                useWebSpeech: false,
+                engine: 'dashscope'
+            };
+        } catch (err) {
+            const errDetail = err.response?.data ? Buffer.from(err.response.data).toString() : err.message;
+            console.error('[VoiceService] DashScope CosyVoice synthesis failed:', errDetail);
+            throw new Error(`阿里云百炼语音合成失败: ${err.message}`);
         }
-
-        // 4. Final Browser/System Web Speech API Fallback
-        console.log('[VoiceService] Falling back to Web Speech API');
-        return {
-            status: 'success',
-            audio_url: null,
-            useWebSpeech: true
-        };
     }
 
     /**

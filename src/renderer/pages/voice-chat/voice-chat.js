@@ -53,8 +53,8 @@ class VoiceChatPage {
                         </div>
                         <div class="voice-engine-meta">
                             <span class="engine-dot" id="engine-dot"></span>
-                            <span class="engine-text" id="engine-name-label">本地免密语音</span>
-                            <button type="button" class="engine-link-btn" id="btn-open-speech-cfg" title="配置火山原厂角色语音">配置 ↗</button>
+                            <span class="engine-text" id="engine-name-label">阿里百炼 CosyVoice</span>
+                            <button type="button" class="engine-link-btn" id="btn-open-speech-cfg" title="配置阿里百炼语音密钥">配置 ↗</button>
                         </div>
                     </div>
                 </div>
@@ -201,20 +201,20 @@ class VoiceChatPage {
         try {
             const res = await window.fetch('/api/settings/keys');
             const data = await res.json();
-            const hasVolc = !!(data.keys?.VOLC_SPEECH_APPID?.configured && data.keys?.VOLC_SPEECH_TOKEN?.configured);
-            this.hasVolcSpeech = hasVolc;
+            const hasDashScope = !!(data.keys?.DASHSCOPE_API_KEY?.configured);
+            this.hasDashScope = hasDashScope;
 
             const dot = document.getElementById('engine-dot');
             const label = document.getElementById('engine-name-label');
             const cfgBtn = document.getElementById('btn-open-speech-cfg');
 
-            if (hasVolc) {
+            if (hasDashScope) {
                 if (dot) dot.className = 'engine-dot is-active';
-                if (label) label.innerText = '火山豆包原厂音色';
+                if (label) label.innerText = '阿里百炼 CosyVoice';
                 if (cfgBtn) cfgBtn.innerText = '管理';
             } else {
                 if (dot) dot.className = 'engine-dot';
-                if (label) label.innerText = '本地免密语音';
+                if (label) label.innerText = '未配置百炼 Key';
                 if (cfgBtn) cfgBtn.innerText = '配置 ↗';
             }
         } catch (e) {

@@ -692,12 +692,14 @@ function setupVideoGenerationEventListeners() {
             const resBox = document.querySelector('.result-preview');
             if (resBox) {
                 const safeErr = window.escapeHTML ? window.escapeHTML(error.message) : error.message;
+                const isKeyError = /API_KEY|API Key|密钥|Token/i.test(error.message);
                 resBox.innerHTML = `
                 <div class="energy-overlay" style="background:#000;">
-                     <div style="text-align:center; color:white;">
-                        <span style="font-size:32px; margin-bottom:1rem; display:block;">⚠️</span>
-                        <p>${window.i18n.t('COMMON_ERROR')}</p>
-                        <small style="opacity:0.6;">${safeErr}</small>
+                     <div style="text-align:center; color:white; max-width:500px; padding:20px;">
+                        <span style="font-size:32px; margin-bottom:0.75rem; display:block;">⚠️</span>
+                        <p style="font-weight:600; margin-bottom:8px;">${window.i18n.t('COMMON_ERROR')}</p>
+                        <div style="font-size:12px; opacity:0.85; white-space:pre-line; text-align:left; line-height:1.6; background:rgba(255,255,255,0.08); padding:12px 14px; border-radius:6px; border:1px solid rgba(255,255,255,0.15);">${safeErr}</div>
+                        ${isKeyError ? `<button type="button" class="studio-btn-primary" style="margin-top:14px; padding:6px 16px; font-size:12px; cursor:pointer;" onclick="window.ApiConfigModal && window.ApiConfigModal.open()">⚙️ 立即配置 API 密钥</button>` : ''}
                      </div>
                 </div>
             `;

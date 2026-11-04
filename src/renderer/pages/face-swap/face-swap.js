@@ -589,11 +589,13 @@ function setupFaceSwapEventListeners() {
             const resBox = document.querySelector('.result-preview');
             if (resBox) {
                 const safeErr = window.escapeHTML ? window.escapeHTML(error.message) : error.message;
+                const isKeyError = /API_KEY|API Key|密钥|Token/i.test(error.message);
                 resBox.innerHTML = `
-                    <div class="preview-placeholder">
-                        <span style="font-size:32px; margin-bottom:1rem; opacity:0.5;">⚠️</span>
-                        <p style="color:var(--text-secondary);">${window.i18n.t('COMMON_ERROR')}</p>
-                        <small>${safeErr}</small>
+                    <div class="preview-placeholder" style="max-width: 480px; margin: 0 auto; text-align: center;">
+                        <span style="font-size:32px; margin-bottom:0.75rem; opacity:0.8;">⚠️</span>
+                        <p style="color:var(--text-secondary); font-weight:600; margin-bottom:8px;">${window.i18n.t('COMMON_ERROR')}</p>
+                        <div style="font-size:12px; color:var(--text-secondary); white-space:pre-line; text-align:left; line-height:1.6; background:rgba(0,0,0,0.04); padding:10px 14px; border-radius:6px; border:1px solid rgba(0,0,0,0.08);">${safeErr}</div>
+                        ${isKeyError ? `<button type="button" class="studio-btn-primary" style="margin-top:12px; padding:6px 16px; font-size:12px; cursor:pointer;" onclick="window.ApiConfigModal && window.ApiConfigModal.open()">⚙️ 立即配置 API 密钥</button>` : ''}
                     </div>
                 `;
             }

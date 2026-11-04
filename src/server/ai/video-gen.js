@@ -8,7 +8,7 @@ import axios from "axios";
 function getArkApiKey() {
   const apiKey = process.env.ARK_API_KEY;
   if (!apiKey) {
-    throw new Error("未配置 ARK_API_KEY，请点击页面左下角【⚙️ API 配置】填写密钥");
+    throw new Error("未配置【火山方舟 API Key (ARK_API_KEY)】，无法生成视频。\n获取方式：\n1. 访问火山方舟控制台：https://console.volcengine.com/ark\n2. 在「API Key 管理」中创建密钥 (sk-...)；\n3. 点击软件左下角【服务配置】填入保存即可。");
   }
   return apiKey;
 }

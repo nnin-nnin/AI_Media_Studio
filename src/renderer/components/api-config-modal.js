@@ -33,6 +33,7 @@ class ApiConfigModal {
                             <div class="cfg-row-header">
                                 <div class="cfg-label-wrap">
                                     <span class="cfg-label">火山方舟</span>
+                                    <span class="cfg-pill-opt" style="background:rgba(59,130,246,0.1); color:#3b82f6;">必填</span>
                                     <span id="badge-ark-key" class="cfg-badge is-empty">
                                         <span class="cfg-dot"></span>未配置
                                     </span>
@@ -40,31 +41,29 @@ class ApiConfigModal {
                                 <a href="https://console.volcengine.com/ark" target="_blank" rel="noopener noreferrer" class="cfg-link">获取密钥 ↗</a>
                             </div>
                             <input type="password" id="input-ark-key" class="cfg-input" placeholder="输入 API Key (sk-...)" autocomplete="off">
+                            <div class="cfg-hint">驱动豆包大模型：AI 换脸、文生图与视频生成</div>
                         </div>
 
-                        <!-- Group 2: Volcengine Speech (Optional) -->
-                        <div class="cfg-group" id="group-volc-speech">
+                        <!-- Group 2: DashScope Speech & Voice Cloning -->
+                        <div class="cfg-group" id="group-dashscope-speech">
                             <div class="cfg-row-header">
                                 <div class="cfg-label-wrap">
-                                    <span class="cfg-label">火山语音</span>
-                                    <span class="cfg-pill-opt">可选</span>
-                                    <span id="badge-volc-speech" class="cfg-badge is-default">
-                                        <span class="cfg-dot"></span>本地免密
+                                    <span class="cfg-label">阿里云百炼</span>
+                                    <span class="cfg-pill-opt">选填</span>
+                                    <span id="badge-dashscope-key" class="cfg-badge is-empty">
+                                        <span class="cfg-dot"></span>未配置
                                     </span>
                                 </div>
-                                <a href="https://console.volcengine.com/speech/service/8" target="_blank" rel="noopener noreferrer" class="cfg-link">控制台 ↗</a>
+                                <a href="https://bailian.console.aliyun.com/" target="_blank" rel="noopener noreferrer" class="cfg-link">获取密钥 ↗</a>
                             </div>
-                            <div class="cfg-grid-2">
-                                <input type="text" id="input-volc-appid" class="cfg-input" placeholder="AppID" autocomplete="off">
-                                <input type="password" id="input-volc-token" class="cfg-input" placeholder="Access Token" autocomplete="off">
-                            </div>
-                            <div class="cfg-hint">留空时自动启用本地免密高保真语音引擎</div>
+                            <input type="password" id="input-dashscope-key" class="cfg-input" placeholder="输入 DashScope API Key (sk-...)" autocomplete="off">
+                            <div class="cfg-hint">驱动 CosyVoice-v2：声音克隆、音色复刻与角色语音合成</div>
                         </div>
 
                         <!-- Group 3: Optional Extensions (Collapsible) -->
                         <details class="cfg-accordion">
                             <summary class="cfg-accordion-summary">
-                                <span>可选拓展服务 (阿里云百炼、Decart 视觉)</span>
+                                <span>可选拓展服务 (Decart 实时视觉)</span>
                                 <svg class="cfg-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M3 4.5l3 3 3-3"></path>
                                 </svg>
@@ -72,18 +71,11 @@ class ApiConfigModal {
                             <div class="cfg-accordion-body">
                                 <div class="cfg-group">
                                     <div class="cfg-row-header">
-                                        <span class="cfg-label-sm">阿里云百炼 Key</span>
-                                        <span id="badge-dashscope-key" class="cfg-badge-sm">未配置</span>
-                                    </div>
-                                    <input type="password" id="input-dashscope-key" class="cfg-input" placeholder="输入 DashScope API Key" autocomplete="off">
-                                </div>
-
-                                <div class="cfg-group">
-                                    <div class="cfg-row-header">
                                         <span class="cfg-label-sm">Decart 视觉 Key</span>
                                         <span id="badge-decart-key" class="cfg-badge-sm">未配置</span>
                                     </div>
                                     <input type="password" id="input-decart-key" class="cfg-input" placeholder="输入 Decart API Key" autocomplete="off">
+                                    <div class="cfg-hint">用于实时摄像头交互 (<a href="https://platform.decart.ai/" target="_blank" class="cfg-link">获取密钥 ↗</a>)</div>
                                 </div>
                             </div>
                         </details>
@@ -123,8 +115,8 @@ class ApiConfigModal {
         await this.refreshStatus();
 
         if (focusSection === 'speech') {
-            const appidInput = document.getElementById('input-volc-appid');
-            if (appidInput) setTimeout(() => appidInput.focus(), 150);
+            const dashInput = document.getElementById('input-dashscope-key');
+            if (dashInput) setTimeout(() => dashInput.focus(), 150);
         } else {
             const arkInput = document.getElementById('input-ark-key');
             if (arkInput && !arkInput.value) setTimeout(() => arkInput.focus(), 150);
@@ -161,45 +153,46 @@ class ApiConfigModal {
                     }
                 }
 
-                // Volcengine Speech
-                const speechBadge = document.getElementById('badge-volc-speech');
-                const appidInput = document.getElementById('input-volc-appid');
-                const tokenInput = document.getElementById('input-volc-token');
-                const speechConfigured = !!(data.keys.VOLC_SPEECH_APPID?.configured && data.keys.VOLC_SPEECH_TOKEN?.configured);
-
-                if (speechConfigured) {
-                    if (speechBadge) {
-                        speechBadge.className = 'cfg-badge is-connected';
-                        speechBadge.innerHTML = '<span class="cfg-dot"></span>已连接';
+                // DashScope Speech & Voice Cloning
+                const dashBadge = document.getElementById('badge-dashscope-key');
+                const dashInput = document.getElementById('input-dashscope-key');
+                if (data.keys.DASHSCOPE_API_KEY?.configured) {
+                    if (dashBadge) {
+                        dashBadge.className = 'cfg-badge is-connected';
+                        dashBadge.innerHTML = '<span class="cfg-dot"></span>已连接';
                     }
-                    if (tokenInput) {
-                        tokenInput.placeholder = `已保存 (${data.keys.VOLC_SPEECH_TOKEN.masked})`;
+                    if (dashInput) {
+                        dashInput.placeholder = `已保存 (${data.keys.DASHSCOPE_API_KEY.masked})，输入以覆盖`;
                     }
                 } else {
-                    if (speechBadge) {
-                        speechBadge.className = 'cfg-badge is-default';
-                        speechBadge.innerHTML = '<span class="cfg-dot"></span>本地免密';
+                    if (dashBadge) {
+                        dashBadge.className = 'cfg-badge is-empty';
+                        dashBadge.innerHTML = '<span class="cfg-dot"></span>未配置';
                     }
-                    if (tokenInput) {
-                        tokenInput.placeholder = 'Access Token';
+                    if (dashInput) {
+                        dashInput.placeholder = '输入 DashScope API Key (sk-...)';
                     }
                 }
 
-                if (appidInput && data.keys.VOLC_SPEECH_APPID?.value) {
-                    appidInput.value = data.keys.VOLC_SPEECH_APPID.value;
-                }
-
-                // Extensions
-                const dashBadge = document.getElementById('badge-dashscope-key');
-                if (dashBadge) {
-                    dashBadge.textContent = data.keys.DASHSCOPE_API_KEY?.configured ? '已配置' : '未配置';
-                    dashBadge.className = data.keys.DASHSCOPE_API_KEY?.configured ? 'cfg-badge-sm is-connected' : 'cfg-badge-sm';
-                }
-
+                // Decart Vision
                 const decartBadge = document.getElementById('badge-decart-key');
-                if (decartBadge) {
-                    decartBadge.textContent = data.keys.DECART_API_KEY?.configured ? '已配置' : '未配置';
-                    decartBadge.className = data.keys.DECART_API_KEY?.configured ? 'cfg-badge-sm is-connected' : 'cfg-badge-sm';
+                const decartInput = document.getElementById('input-decart-key');
+                if (data.keys.DECART_API_KEY?.configured) {
+                    if (decartBadge) {
+                        decartBadge.className = 'cfg-badge-sm is-connected';
+                        decartBadge.textContent = '已连接';
+                    }
+                    if (decartInput) {
+                        decartInput.placeholder = `已保存 (${data.keys.DECART_API_KEY.masked})，输入以覆盖`;
+                    }
+                } else {
+                    if (decartBadge) {
+                        decartBadge.className = 'cfg-badge-sm';
+                        decartBadge.textContent = '未配置';
+                    }
+                    if (decartInput) {
+                        decartInput.placeholder = '输入 Decart API Key';
+                    }
                 }
             }
         } catch (e) {
@@ -210,8 +203,6 @@ class ApiConfigModal {
     async save() {
         const payload = {
             ARK_API_KEY: document.getElementById('input-ark-key')?.value.trim() || '',
-            VOLC_SPEECH_APPID: document.getElementById('input-volc-appid')?.value.trim() || '',
-            VOLC_SPEECH_TOKEN: document.getElementById('input-volc-token')?.value.trim() || '',
             DASHSCOPE_API_KEY: document.getElementById('input-dashscope-key')?.value.trim() || '',
             DECART_API_KEY: document.getElementById('input-decart-key')?.value.trim() || ''
         };
