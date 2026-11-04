@@ -71,7 +71,8 @@
     "supertest": "^7.1.4",
     "vite": "^5.2.0",
     "vitest": "^4.0.16",
-    "wait-on": "^9.5.1"
+    "wait-on": "^9.5.1",
+    "yaml": "^2.9.1"
   },
   "prisma": {
     "seed": "node scripts/seed_all.js"
