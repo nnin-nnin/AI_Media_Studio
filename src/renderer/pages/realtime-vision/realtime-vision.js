@@ -21,62 +21,62 @@ async function loadRealtimeVisionPage(container) {
                     <div class="status-badge" style="background:rgba(16, 185, 129, 0.1); color:#10b981; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:600; border:1px solid rgba(16, 185, 129, 0.2);">LIVE</div>
                 </div>
 
-                <!-- Connection Controls (Moved to Top) -->
-                <div style="padding: 1.5rem 1.5rem 0 1.5rem;">
-                    <button class="primary-btn" id="btn-start-vision" style="width:100%; height:44px; font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:center; gap:8px;">
-                        <span>🚀</span> ${window.i18n.t('VISION_START_BTN')}
-                    </button>
-                    <button class="secondary-btn" id="btn-stop-vision" style="width:100%; height:44px; border:none; background:rgba(239, 68, 68, 0.9); color:white; font-weight:600; display:none;">
-                        ${window.i18n.t('VISION_STOP_BTN')}
-                    </button>
-                </div>
+                <div class="vision-controls-body">
+                    <!-- Connection Controls (Moved to Top) -->
+                    <div class="vision-action-group">
+                        <button class="primary-btn" id="btn-start-vision" style="width:100%; height:44px; font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                            <span>🚀</span> ${window.i18n.t('VISION_START_BTN')}
+                        </button>
+                        <button class="secondary-btn" id="btn-stop-vision" style="width:100%; height:44px; border:none; background:rgba(239, 68, 68, 0.9); color:white; font-weight:600; display:none;">
+                            ${window.i18n.t('VISION_STOP_BTN')}
+                        </button>
+                    </div>
 
-                <div class="studio-input-section">
-                    <div class="section-header">
-                        <span class="section-title">${window.i18n.t('VISION_PROMPT_LABEL')}</span>
+                    <div class="studio-input-section">
+                        <div class="section-header">
+                            <span class="section-title">${window.i18n.t('VISION_PROMPT_LABEL')}</span>
+                        </div>
+                        <textarea class="rv-textarea" id="rv-prompt-input" placeholder="${window.i18n.t('VISION_PROMPT_PLACEHOLDER')}">Cyberpunk city</textarea>
+                        <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+                            <button class="secondary-btn small" id="btn-update-prompt">${window.i18n.t('VISION_UPDATE_BTN')}</button>
+                        </div>
                     </div>
-                    <textarea class="rv-textarea" id="rv-prompt-input" placeholder="${window.i18n.t('VISION_PROMPT_PLACEHOLDER')}">Cyberpunk city</textarea>
-                    <div style="display:flex; justify-content:flex-end; margin-top:8px;">
-                        <button class="secondary-btn small" id="btn-update-prompt">${window.i18n.t('VISION_UPDATE_BTN')}</button>
-                    </div>
-                </div>
 
-                <!-- Preset Styles (Refined) -->
-                <div style="padding: 0 1.5rem; flex: 1; overflow-y: auto;">
-                    <div class="section-header">
-                        <span class="section-title">${window.i18n.t('VISION_PRESET_TITLE')}</span>
+                    <!-- Preset Styles (Responsive Grid) -->
+                    <div class="vision-presets-section">
+                        <div class="section-header">
+                            <span class="section-title">${window.i18n.t('VISION_PRESET_TITLE')}</span>
+                        </div>
+                        <div class="preset-grid">
+                            <button class="preset-card" data-prompt="A detailed oil painting in the style of Van Gogh, starry night, swirls">
+                                <span class="preset-icon">🎨</span>
+                                <span class="preset-name">${window.i18n.t('VISION_PRESET_VANGOGH')}</span>
+                            </button>
+                            <button class="preset-card" data-prompt="Futuristic cyberpunk city, neon lights, high tech, rain, blade runner style">
+                                <span class="preset-icon">🌃</span>
+                                <span class="preset-name">${window.i18n.t('VISION_PRESET_CYBERPUNK')}</span>
+                            </button>
+                            <button class="preset-card" data-prompt="Cute claymation style, stop motion, plasticine texture, play-doh">
+                                <span class="preset-icon">🧱</span>
+                                <span class="preset-name">${window.i18n.t('VISION_PRESET_CLAYMATION')}</span>
+                            </button>
+                            <button class="preset-card" data-prompt="Japanese anime style, studio ghibli, vibrant colors, detailed background">
+                                <span class="preset-icon">🎌</span>
+                                <span class="preset-name">${window.i18n.t('VISION_PRESET_ANIME')}</span>
+                            </button>
+                            <button class="preset-card" data-prompt="Pencil sketch, charcoal drawing, rough lines, black and white">
+                                <span class="preset-icon">✏️</span>
+                                <span class="preset-name">${window.i18n.t('VISION_PRESET_SKETCH')}</span>
+                            </button>
+                            <button class="preset-card" data-prompt="Lego bricks, plastic toy block world, macro photography">
+                                <span class="preset-icon">🧩</span>
+                                <span class="preset-name">${window.i18n.t('VISION_PRESET_LEGO')}</span>
+                            </button>
+                        </div>
                     </div>
-                    <div class="preset-grid">
-                        <button class="preset-card" data-prompt="A detailed oil painting in the style of Van Gogh, starry night, swirls">
-                            <span class="preset-icon">🎨</span>
-                            <span class="preset-name">${window.i18n.t('VISION_PRESET_VANGOGH')}</span>
-                        </button>
-                        <button class="preset-card" data-prompt="Futuristic cyberpunk city, neon lights, high tech, rain, blade runner style">
-                            <span class="preset-icon">🌃</span>
-                            <span class="preset-name">${window.i18n.t('VISION_PRESET_CYBERPUNK')}</span>
-                        </button>
-                        <button class="preset-card" data-prompt="Cute claymation style, stop motion, plasticine texture, play-doh">
-                            <span class="preset-icon">🧱</span>
-                            <span class="preset-name">${window.i18n.t('VISION_PRESET_CLAYMATION')}</span>
-                        </button>
-                        <button class="preset-card" data-prompt="Japanese anime style, studio ghibli, vibrant colors, detailed background">
-                            <span class="preset-icon">🎌</span>
-                            <span class="preset-name">${window.i18n.t('VISION_PRESET_ANIME')}</span>
-                        </button>
-                        <button class="preset-card" data-prompt="Pencil sketch, charcoal drawing, rough lines, black and white">
-                            <span class="preset-icon">✏️</span>
-                            <span class="preset-name">${window.i18n.t('VISION_PRESET_SKETCH')}</span>
-                        </button>
-                        <button class="preset-card" data-prompt="Lego bricks, plastic toy block world, macro photography">
-                            <span class="preset-icon">🧩</span>
-                            <span class="preset-name">${window.i18n.t('VISION_PRESET_LEGO')}</span>
-                        </button>
-                    </div>
-                </div>
 
-                <!-- Footer (Powered By only) -->
-                <div class="studio-action-area" style="padding-top: 10px; padding-bottom: 20px; border-top: none;">
-                    <div style="margin-top:0;">
+                    <!-- Footer (Powered By only) -->
+                    <div class="vision-footer">
                          <p style="font-size:10px; color:var(--text-secondary); text-align:center;">
                             ${window.i18n.t('VISION_POWERED_BY')}
                         </p>
@@ -88,10 +88,24 @@ async function loadRealtimeVisionPage(container) {
             </div>
 
             <!-- Col 3: Viewport -->
-            <div class="studio-viewport">
-                <div class="video-container" style="position:relative;">
-                    <video id="video-output" autoplay playsinline></video>
-                    <img id="rv-snapshot-output" style="display:none; width:100%; height:100%; object-fit:cover; position:absolute; inset:0; z-index:5;" alt="Rendered Artwork">
+            <div class="studio-viewport" style="background:#09090b;">
+                <!-- Viewport Floating Toolbar -->
+                <div class="rv-viewport-toolbar">
+                    <div class="rv-toolbar-group">
+                        <button type="button" class="rv-tool-btn" id="btn-toggle-fit" title="切换画面铺满/完整适应">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                            <span id="label-fit-mode">适应画布</span>
+                        </button>
+                        <button type="button" class="rv-tool-btn active" id="btn-toggle-mirror" title="切换水平镜像翻转">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M20 7l-5 5 5 5M4 7l5 5-5 5"/></svg>
+                            <span>镜像</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="video-container" id="rv-video-container">
+                    <video id="video-output" class="fit-contain is-mirrored" autoplay playsinline></video>
+                    <img id="rv-snapshot-output" class="fit-contain is-mirrored" style="display:none; position:absolute; inset:0; z-index:5;" alt="Rendered Artwork">
                     <canvas id="rv-capture-canvas" style="display:none;"></canvas>
                     
                     <div class="rv-status-panel">
@@ -99,9 +113,9 @@ async function loadRealtimeVisionPage(container) {
                         <span id="rv-status-text">${window.i18n.t('VISION_STATUS_DISCONNECTED')}</span>
                     </div>
 
-                    <div id="rv-loading-overlay" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; backdrop-filter:blur(4px); z-index:20;">
+                    <div id="rv-loading-overlay" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; backdrop-filter:blur(6px); z-index:20;">
                         <div class="spinner" style="width:30px; height:30px; border:3px solid var(--glass-border); border-top-color:var(--primary); border-radius:50%; animation:rv-spin 1s linear infinite;"></div>
-                        <span style="font-size:12px;">${window.i18n.t('VISION_INITIALIZING')}</span>
+                        <span style="font-size:12px; color:#fff;">${window.i18n.t('VISION_INITIALIZING')}</span>
                     </div>
                 </div>
             </div>
@@ -344,6 +358,52 @@ async function setupRealtimeVisionListeners() {
         } else {
             console.warn("[Vision] Update clicked but session or prompt is missing. Session:", !!realtimeSession);
         }
+    });
+
+    // Toolbar: Fit Mode Toggle (contain vs cover)
+    const fitBtn = document.getElementById('btn-toggle-fit');
+    const fitLabel = document.getElementById('label-fit-mode');
+    const videoOutput = document.getElementById('video-output');
+
+    let currentFit = localStorage.getItem('rv_fit_mode') || 'contain';
+    const applyFitMode = (mode) => {
+        currentFit = mode;
+        localStorage.setItem('rv_fit_mode', mode);
+        if (videoOutput) {
+            videoOutput.classList.toggle('fit-contain', mode === 'contain');
+            videoOutput.classList.toggle('fit-cover', mode === 'cover');
+        }
+        if (snapshotOutput) {
+            snapshotOutput.classList.toggle('fit-contain', mode === 'contain');
+            snapshotOutput.classList.toggle('fit-cover', mode === 'cover');
+        }
+        if (fitLabel) {
+            fitLabel.textContent = mode === 'contain' ? '适应画布' : '全屏铺满';
+        }
+        if (fitBtn) {
+            fitBtn.classList.toggle('active', mode === 'cover');
+        }
+    };
+    applyFitMode(currentFit);
+
+    fitBtn?.addEventListener('click', () => {
+        applyFitMode(currentFit === 'contain' ? 'cover' : 'contain');
+    });
+
+    // Toolbar: Mirror Flip Toggle
+    const mirrorBtn = document.getElementById('btn-toggle-mirror');
+    let isMirrored = localStorage.getItem('rv_mirrored') !== 'false'; // default mirrored
+    const applyMirror = (mirrored) => {
+        isMirrored = mirrored;
+        localStorage.setItem('rv_mirrored', mirrored ? 'true' : 'false');
+        if (videoOutput) videoOutput.classList.toggle('is-mirrored', mirrored);
+        if (snapshotOutput) snapshotOutput.classList.toggle('is-mirrored', mirrored);
+        if (mirrorBtn) mirrorBtn.classList.toggle('active', mirrored);
+    };
+    applyMirror(isMirrored);
+
+    mirrorBtn?.addEventListener('click', () => {
+        applyMirror(!isMirrored);
     });
 }
 

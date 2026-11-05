@@ -193,7 +193,7 @@ function setupStudioResizer(container) {
     const savedWidth = localStorage.getItem('ai_studio_controls_width');
     if (savedWidth) {
         const parsed = parseInt(savedWidth, 10);
-        if (parsed >= 260 && parsed <= 650) {
+        if (parsed >= 260 && parsed <= 850) {
             controls.style.flex = `0 0 ${parsed}px`;
         }
     }
@@ -205,7 +205,8 @@ function setupStudioResizer(container) {
     const onMouseMove = (e) => {
         if (!isDragging) return;
         const deltaX = e.clientX - startX;
-        const newWidth = Math.max(260, Math.min(650, startWidth + deltaX));
+        const maxW = Math.max(500, Math.min(850, window.innerWidth - 300));
+        const newWidth = Math.max(260, Math.min(maxW, startWidth + deltaX));
         controls.style.flex = `0 0 ${newWidth}px`;
     };
 
@@ -213,6 +214,7 @@ function setupStudioResizer(container) {
         if (!isDragging) return;
         isDragging = false;
         resizer.classList.remove('is-dragging');
+        document.body.classList.remove('is-studio-resizing');
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
         window.removeEventListener('mousemove', onMouseMove);
@@ -227,6 +229,7 @@ function setupStudioResizer(container) {
         startX = e.clientX;
         startWidth = controls.getBoundingClientRect().width;
         resizer.classList.add('is-dragging');
+        document.body.classList.add('is-studio-resizing');
         document.body.style.cursor = 'col-resize';
         document.body.style.userSelect = 'none';
         window.addEventListener('mousemove', onMouseMove);

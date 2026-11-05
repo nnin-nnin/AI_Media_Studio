@@ -359,6 +359,16 @@
     background: rgba(59, 130, 246, 0.5);
 }
 
+body.is-studio-resizing * {
+    user-select: none !important;
+}
+
+body.is-studio-resizing .studio-viewport video,
+body.is-studio-resizing .studio-viewport iframe,
+body.is-studio-resizing .studio-viewport canvas {
+    pointer-events: none !important;
+}
+
 /* Global Viewport Header */
 .viewport-header {
     position: absolute;

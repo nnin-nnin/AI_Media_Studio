@@ -201,7 +201,7 @@ function updateDotEnvFile(updates) {
     if (fs.existsSync(envPath)) {
         content = fs.readFileSync(envPath, 'utf8');
     } else {
-        content = 'PORT=3000\nNODE_ENV=development\nDEBUG=true\nSKIP_AUTH=true\nUSE_REDIS_QUEUE=false\nDATABASE_URL="file:../data/ai_course.sqlite"\n';
+        content = 'PORT=3000\nNODE_ENV=production\nDEBUG=false\nSKIP_AUTH=true\nUSE_REDIS_QUEUE=false\nDATABASE_URL="file:../data/ai_course.sqlite"\n';
     }
 
     const lines = content.split(/\r?\n/);

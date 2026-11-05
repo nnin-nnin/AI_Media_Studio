@@ -54,6 +54,7 @@ delete process.env.VOLC_SPEECH_APPID;
 delete process.env.VOLC_SPEECH_TOKEN;
 delete process.env.DASHSCOPE_API_KEY;
 delete process.env.DECART_API_KEY;
+delete process.env.DEBUG;
 
 // Load user .env from userData ONLY if it exists
 if (fs.existsSync(userEnvPath)) {
@@ -62,7 +63,14 @@ if (fs.existsSync(userEnvPath)) {
         envContent.split(/\r?\n/).forEach(line => {
             const m = line.match(/^([A-Z0-9_]+)\s*=\s*(.*)$/);
             if (m) {
-                process.env[m[1]] = m[2].replace(/^["']|["']$/g, '').trim();
+                const key = m[1];
+                const val = m[2].replace(/^["']|["']$/g, '').trim();
+                // Never let saved user .env force DEBUG=true in production packaged app
+                if (key === 'DEBUG' && !isDev) {
+                    process.env.DEBUG = 'false';
+                } else {
+                    process.env[key] = val;
+                }
             }
         });
     } catch (e) {
@@ -150,7 +158,8 @@ function createWindow(targetUrl) {
         }
     });
 
-    if (process.env.DEBUG === 'true' || process.argv.includes('--devtools')) {
+    // Only open DevTools in development or when explicitly requested via --devtools CLI flag
+    if ((isDev && process.env.DEBUG === 'true') || process.argv.includes('--devtools')) {
         mainWindow.webContents.openDevTools();
     }
 
