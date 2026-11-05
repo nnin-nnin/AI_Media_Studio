@@ -22,7 +22,14 @@ async function loadRealtimeVisionPage(container) {
                 </div>
 
                 <div class="vision-controls-body">
-                    <!-- Connection Controls (Moved to Top) -->
+                    <!-- Engine & Key Status -->
+                    <div class="vision-engine-meta" id="rv-engine-meta">
+                        <span class="engine-dot" id="rv-engine-dot"></span>
+                        <span class="engine-text" id="rv-engine-label">Decart Mirage V2</span>
+                        <button type="button" class="engine-link-btn" id="btn-open-vision-cfg">配置 ↗</button>
+                    </div>
+
+                    <!-- Connection Controls -->
                     <div class="vision-action-group">
                         <button class="primary-btn" id="btn-start-vision" style="width:100%; height:44px; font-weight:600; font-size:14px; display:flex; align-items:center; justify-content:center; gap:8px;">
                             <span>🚀</span> ${window.i18n.t('VISION_START_BTN')}
@@ -105,15 +112,13 @@ async function loadRealtimeVisionPage(container) {
 
                 <div class="video-container" id="rv-video-container">
                     <video id="video-output" class="fit-contain is-mirrored" autoplay playsinline></video>
-                    <img id="rv-snapshot-output" class="fit-contain is-mirrored" style="display:none; position:absolute; inset:0; z-index:5;" alt="Rendered Artwork">
-                    <canvas id="rv-capture-canvas" style="display:none;"></canvas>
                     
                     <div class="rv-status-panel">
                         <div class="status-dot" id="rv-status-dot"></div>
                         <span id="rv-status-text">${window.i18n.t('VISION_STATUS_DISCONNECTED')}</span>
                     </div>
 
-                    <div id="rv-loading-overlay" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; backdrop-filter:blur(6px); z-index:20;">
+                    <div id="rv-loading-overlay" class="rv-loading-overlay" style="display:none;">
                         <div class="spinner" style="width:30px; height:30px; border:3px solid var(--glass-border); border-top-color:var(--primary); border-radius:50%; animation:rv-spin 1s linear infinite;"></div>
                         <span style="font-size:12px; color:#fff;">${window.i18n.t('VISION_INITIALIZING')}</span>
                     </div>
@@ -123,19 +128,6 @@ async function loadRealtimeVisionPage(container) {
     `;
 
     setupRealtimeVisionListeners();
-
-    if (window.registerPageCleanup) {
-        window.registerPageCleanup(() => {
-            if (realtimeSession) {
-                try { realtimeSession.disconnect(); } catch (e) {}
-                realtimeSession = null;
-            }
-            if (currentStream) {
-                currentStream.getTracks().forEach(t => t.stop());
-                currentStream = null;
-            }
-        });
-    }
 }
 
 let realtimeSession = null;
@@ -150,8 +142,7 @@ async function setupRealtimeVisionListeners() {
     const statusDot = document.getElementById('rv-status-dot');
     const statusText = document.getElementById('rv-status-text');
     const loadingOverlay = document.getElementById('rv-loading-overlay');
-
-
+    const btnOpenVisionCfg = document.getElementById('btn-open-vision-cfg');
 
     // Preset Buttons Logic
     document.querySelectorAll('.preset-card').forEach(btn => {
@@ -165,142 +156,143 @@ async function setupRealtimeVisionListeners() {
         });
     });
 
-    // --- Robust API Key Loading ---
+    // --- Robust API Key & Config Loading ---
     let serverApiKey = '';
 
-    try {
-        const configResp = await fetch('/api/config');
-        const config = await configResp.json();
+    const checkVisionConfig = async () => {
+        try {
+            const configResp = await fetch('/api/config');
+            const config = await configResp.json();
 
-        if (config.decartApiKey) {
-            serverApiKey = config.decartApiKey;
-            apiKeyInput.value = serverApiKey;
-            console.log(`[Vision] Server API Key loaded. Length: ${serverApiKey.length}, Prefix: ${serverApiKey.substring(0, 4)}...`);
-        } else {
-            console.warn("[Vision] Server config loaded but NO API KEY found.");
+            serverApiKey = config.decartApiKey || '';
+            if (apiKeyInput) apiKeyInput.value = serverApiKey;
+
+            const dot = document.getElementById('rv-engine-dot');
+            const label = document.getElementById('rv-engine-label');
+            const cfgBtn = document.getElementById('btn-open-vision-cfg');
+
+            if (serverApiKey) {
+                if (dot) dot.className = 'engine-dot is-active';
+                if (label) label.textContent = 'Decart Mirage V2';
+                if (cfgBtn) cfgBtn.textContent = '管理';
+                if (!realtimeSession && statusText) {
+                    statusText.textContent = window.i18n.t('VISION_STATUS_DISCONNECTED');
+                }
+            } else {
+                if (dot) dot.className = 'engine-dot';
+                if (label) label.textContent = '未配置 Decart 视觉 Key';
+                if (cfgBtn) cfgBtn.textContent = '配置 ↗';
+                if (!realtimeSession && statusText) {
+                    statusText.innerHTML = '未配置 Decart 视觉 Key · <a href="javascript:void(0)" id="rv-link-config" style="color:#60a5fa; text-decoration:underline; cursor:pointer;">立即配置 ↗</a>';
+                    const linkCfg = document.getElementById('rv-link-config');
+                    if (linkCfg) {
+                        linkCfg.onclick = (e) => {
+                            e.preventDefault();
+                            if (window.ApiConfigModal) window.ApiConfigModal.open('vision');
+                        };
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("[Vision] Failed to load server config:", e);
         }
-    } catch (e) {
-        console.error("[Vision] Failed to load server config:", e);
+    };
+
+    await checkVisionConfig();
+
+    if (btnOpenVisionCfg) {
+        btnOpenVisionCfg.onclick = () => {
+            if (window.ApiConfigModal) window.ApiConfigModal.open('vision');
+        };
     }
 
+    const settingsListener = () => {
+        checkVisionConfig();
+    };
+    window.addEventListener('settings-updated', settingsListener);
 
-    let isArkMirrorMode = false;
-    const snapshotOutput = document.getElementById('rv-snapshot-output');
-    const captureCanvas = document.getElementById('rv-capture-canvas');
+    if (window.registerPageCleanup) {
+        window.registerPageCleanup(() => {
+            window.removeEventListener('settings-updated', settingsListener);
+            if (realtimeSession) {
+                try { realtimeSession.disconnect(); } catch (e) {}
+                realtimeSession = null;
+            }
+            if (currentStream) {
+                currentStream.getTracks().forEach(t => t.stop());
+                currentStream = null;
+            }
+        });
+    }
 
     startBtn?.addEventListener('click', async () => {
         try {
             console.log("[Vision] Starting connection...");
 
-            // 1. If Decart API Key is present, use low-latency Decart Mirage SDK
-            if (serverApiKey) {
-                isArkMirrorMode = false;
-                startBtn.disabled = true;
-                loadingOverlay.style.display = 'flex';
+            // Ensure key status is current
+            if (!serverApiKey) {
+                await checkVisionConfig();
+            }
 
-                console.log("[Vision] Loading Decart SDK...");
-                const { createDecartClient, models } = await import("@decartai/sdk");
-                const model = models.realtime("mirage_v2");
-
-                console.log("[Vision] Requesting camera access...");
-                currentStream = await navigator.mediaDevices.getUserMedia({
-                    audio: true,
-                    video: {
-                        frameRate: model.fps || 24,
-                        width: model.width || 1024,
-                        height: model.height || 1024,
-                    }
-                });
-
-                console.log("[Vision] Connecting to Mirage V2...");
-                const client = createDecartClient({ apiKey: serverApiKey });
-
-                const session = await client.realtime.connect(currentStream, {
-                    model,
-                    onRemoteStream: (transformedStream) => {
-                        console.log("[Vision] Remote stream received");
-                        const vo = document.getElementById('video-output');
-                        if (vo) vo.srcObject = transformedStream;
-
-                        loadingOverlay.style.display = 'none';
-                        statusDot.classList.add('active');
-                        statusText.textContent = window.i18n.t('VISION_STATUS_ACTIVE');
-                        startBtn.style.display = 'none';
-                        stopBtn.style.display = 'block';
-                    }
-                });
-
-                realtimeSession = session;
-                const initPrompt = promptInput.value.trim();
-                if (initPrompt && session) {
-                    try { session.setPrompt(initPrompt); } catch (e) {}
+            // Realtime Vision Studio strictly requires Decart API Key
+            if (!serverApiKey) {
+                const errorMsg = `未配置【Decart 视觉 API Key (DECART_API_KEY)】，无法启动实时视觉工作室。\n获取方式：\n1. 访问 Decart 开发者平台：https://platform.decart.ai/\n2. 注册并创建 API Key；\n3. 点击软件左下角【服务配置】填入保存即可。`;
+                Toast.show(errorMsg, 'error');
+                if (window.ApiConfigModal) {
+                    window.ApiConfigModal.open('vision');
                 }
                 return;
             }
 
-            // 2. Otherwise, seamlessly use Volcengine Ark Seedream Image-to-Image AI Mirror!
-            isArkMirrorMode = true;
-            if (!currentStream) {
-                loadingOverlay.style.display = 'flex';
-                currentStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: 1024, height: 1024, facingMode: 'user' },
-                    audio: false
-                });
-
-                const vo = document.getElementById('video-output');
-                if (vo) vo.srcObject = currentStream;
-
-                loadingOverlay.style.display = 'none';
-                statusDot.classList.add('active');
-                statusText.textContent = '火山引擎 AI 镜像模式 (已连通摄像头)';
-                startBtn.innerHTML = '<span>🎨</span> 转换当前画面风格';
-                stopBtn.style.display = 'block';
-                return;
-            }
-
-            // If camera is already streaming, capture frame and render with Ark Seedream
-            const vo = document.getElementById('video-output');
-            if (!vo || !captureCanvas) return;
-
+            startBtn.disabled = true;
             loadingOverlay.style.display = 'flex';
-            captureCanvas.width = vo.videoWidth || 1024;
-            captureCanvas.height = vo.videoHeight || 1024;
-            const ctx = captureCanvas.getContext('2d');
-            ctx.drawImage(vo, 0, 0, captureCanvas.width, captureCanvas.height);
-            const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.85);
 
-            const prompt = promptInput.value.trim() || 'A detailed oil painting in the style of Van Gogh, starry night, swirls';
-            const { fetchAPI } = await import('../../utils/web-api.js');
-            const res = await fetchAPI('/api/ai/edit-image', {
-                prompt: prompt,
-                image: dataUrl,
-                strength: 0.7
+            console.log("[Vision] Loading Decart SDK...");
+            const { createDecartClient, models } = await import("@decartai/sdk");
+            const model = models.realtime("mirage_v2");
+
+            console.log("[Vision] Requesting camera access...");
+            currentStream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+                video: {
+                    frameRate: model.fps || 24,
+                    width: model.width || 1024,
+                    height: model.height || 1024,
+                }
             });
 
-            loadingOverlay.style.display = 'none';
-            if (res.status === 'success' && res.image_url) {
-                if (snapshotOutput) {
-                    snapshotOutput.src = res.image_url;
-                    snapshotOutput.style.display = 'block';
-                    snapshotOutput.title = '点击切回摄像头实时预览';
-                    snapshotOutput.onclick = () => {
-                        snapshotOutput.style.display = 'none';
-                    };
+            console.log("[Vision] Connecting to Mirage V2...");
+            const client = createDecartClient({ apiKey: serverApiKey });
+
+            const session = await client.realtime.connect(currentStream, {
+                model,
+                onRemoteStream: (transformedStream) => {
+                    console.log("[Vision] Remote stream received");
+                    const vo = document.getElementById('video-output');
+                    if (vo) vo.srcObject = transformedStream;
+
+                    loadingOverlay.style.display = 'none';
+                    statusDot.classList.add('active');
+                    statusText.textContent = window.i18n.t('VISION_STATUS_ACTIVE');
+                    startBtn.style.display = 'none';
+                    stopBtn.style.display = 'block';
                 }
-                if (window.AssetManager) {
-                    window.AssetManager.refresh();
-                }
-                Toast.show('画风转换完成！点击画面可切回摄像头', 'success');
-            } else {
-                Toast.show(res.message || '风格转换失败', 'error');
+            });
+
+            realtimeSession = session;
+            const initPrompt = promptInput.value.trim();
+            if (initPrompt && session) {
+                try { session.setPrompt(initPrompt); } catch (e) {}
             }
 
         } catch (err) {
-            console.error("[Vision] AI Mirror Error:", err);
+            console.error("[Vision] Connection error:", err);
             Toast.show("启动失败: " + err.message, 'error');
 
             loadingOverlay.style.display = 'none';
             startBtn.disabled = false;
+            statusDot.classList.remove('active');
+            statusText.textContent = window.i18n.t('VISION_STATUS_DISCONNECTED');
         }
     });
 
@@ -317,7 +309,6 @@ async function setupRealtimeVisionListeners() {
 
         const vo = document.getElementById('video-output');
         if (vo) vo.srcObject = null;
-        if (snapshotOutput) snapshotOutput.style.display = 'none';
 
         statusDot.classList.remove('active');
         statusText.textContent = window.i18n.t('VISION_STATUS_DISCONNECTED');
@@ -373,10 +364,6 @@ async function setupRealtimeVisionListeners() {
             videoOutput.classList.toggle('fit-contain', mode === 'contain');
             videoOutput.classList.toggle('fit-cover', mode === 'cover');
         }
-        if (snapshotOutput) {
-            snapshotOutput.classList.toggle('fit-contain', mode === 'contain');
-            snapshotOutput.classList.toggle('fit-cover', mode === 'cover');
-        }
         if (fitLabel) {
             fitLabel.textContent = mode === 'contain' ? '适应画布' : '全屏铺满';
         }
@@ -397,7 +384,6 @@ async function setupRealtimeVisionListeners() {
         isMirrored = mirrored;
         localStorage.setItem('rv_mirrored', mirrored ? 'true' : 'false');
         if (videoOutput) videoOutput.classList.toggle('is-mirrored', mirrored);
-        if (snapshotOutput) snapshotOutput.classList.toggle('is-mirrored', mirrored);
         if (mirrorBtn) mirrorBtn.classList.toggle('active', mirrored);
     };
     applyMirror(isMirrored);

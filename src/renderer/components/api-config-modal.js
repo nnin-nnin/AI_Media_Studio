@@ -29,11 +29,10 @@ class ApiConfigModal {
 
                     <div class="cfg-body">
                         <!-- Group 1: Volcengine Ark Core -->
-                        <div class="cfg-group">
+                        <div class="cfg-group" id="group-ark-core">
                             <div class="cfg-row-header">
                                 <div class="cfg-label-wrap">
                                     <span class="cfg-label">火山方舟</span>
-                                    <span class="cfg-pill-opt" style="background:rgba(59,130,246,0.1); color:#3b82f6;">必填</span>
                                     <span id="badge-ark-key" class="cfg-badge is-empty">
                                         <span class="cfg-dot"></span>未配置
                                     </span>
@@ -49,7 +48,6 @@ class ApiConfigModal {
                             <div class="cfg-row-header">
                                 <div class="cfg-label-wrap">
                                     <span class="cfg-label">阿里云百炼</span>
-                                    <span class="cfg-pill-opt">选填</span>
                                     <span id="badge-dashscope-key" class="cfg-badge is-empty">
                                         <span class="cfg-dot"></span>未配置
                                     </span>
@@ -60,25 +58,20 @@ class ApiConfigModal {
                             <div class="cfg-hint">驱动 CosyVoice-v2：声音克隆、音色复刻与角色语音合成</div>
                         </div>
 
-                        <!-- Group 3: Optional Extensions (Collapsible) -->
-                        <details class="cfg-accordion">
-                            <summary class="cfg-accordion-summary">
-                                <span>可选拓展服务 (Decart 实时视觉)</span>
-                                <svg class="cfg-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M3 4.5l3 3 3-3"></path>
-                                </svg>
-                            </summary>
-                            <div class="cfg-accordion-body">
-                                <div class="cfg-group">
-                                    <div class="cfg-row-header">
-                                        <span class="cfg-label-sm">Decart 视觉 Key</span>
-                                        <span id="badge-decart-key" class="cfg-badge-sm">未配置</span>
-                                    </div>
-                                    <input type="password" id="input-decart-key" class="cfg-input" placeholder="输入 Decart API Key" autocomplete="off">
-                                    <div class="cfg-hint">用于实时摄像头交互 (<a href="https://platform.decart.ai/" target="_blank" class="cfg-link">获取密钥 ↗</a>)</div>
+                        <!-- Group 3: Decart Realtime Vision Core -->
+                        <div class="cfg-group" id="group-decart-vision">
+                            <div class="cfg-row-header">
+                                <div class="cfg-label-wrap">
+                                    <span class="cfg-label">Decart 视觉</span>
+                                    <span id="badge-decart-key" class="cfg-badge is-empty">
+                                        <span class="cfg-dot"></span>未配置
+                                    </span>
                                 </div>
+                                <a href="https://platform.decart.ai/" target="_blank" rel="noopener noreferrer" class="cfg-link">获取密钥 ↗</a>
                             </div>
-                        </details>
+                            <input type="password" id="input-decart-key" class="cfg-input" placeholder="输入 Decart API Key" autocomplete="off">
+                            <div class="cfg-hint">驱动 Mirage V2：实时视觉工作室与 AI 镜像</div>
+                        </div>
                     </div>
 
                     <div class="cfg-footer">
@@ -117,6 +110,9 @@ class ApiConfigModal {
         if (focusSection === 'speech') {
             const dashInput = document.getElementById('input-dashscope-key');
             if (dashInput) setTimeout(() => dashInput.focus(), 150);
+        } else if (focusSection === 'vision') {
+            const decartInput = document.getElementById('input-decart-key');
+            if (decartInput) setTimeout(() => decartInput.focus(), 150);
         } else {
             const arkInput = document.getElementById('input-ark-key');
             if (arkInput && !arkInput.value) setTimeout(() => arkInput.focus(), 150);
@@ -179,16 +175,16 @@ class ApiConfigModal {
                 const decartInput = document.getElementById('input-decart-key');
                 if (data.keys.DECART_API_KEY?.configured) {
                     if (decartBadge) {
-                        decartBadge.className = 'cfg-badge-sm is-connected';
-                        decartBadge.textContent = '已连接';
+                        decartBadge.className = 'cfg-badge is-connected';
+                        decartBadge.innerHTML = '<span class="cfg-dot"></span>已连接';
                     }
                     if (decartInput) {
                         decartInput.placeholder = `已保存 (${data.keys.DECART_API_KEY.masked})，输入以覆盖`;
                     }
                 } else {
                     if (decartBadge) {
-                        decartBadge.className = 'cfg-badge-sm';
-                        decartBadge.textContent = '未配置';
+                        decartBadge.className = 'cfg-badge is-empty';
+                        decartBadge.innerHTML = '<span class="cfg-dot"></span>未配置';
                     }
                     if (decartInput) {
                         decartInput.placeholder = '输入 Decart API Key';
