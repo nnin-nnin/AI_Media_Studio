@@ -82,4 +82,4 @@ xattr -cr "$TARGET_PATH"
 
 echo -e "${GREEN}${BOLD}[SUCCESS] AI 媒体工作室已成功安装至 /Applications！${NC}"
 echo -e "${GREEN}[INFO] 正在为您启动应用...${NC}"
-open -a "$TARGET_PATH"
+open "$TARGET_PATH"
