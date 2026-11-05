@@ -19,7 +19,7 @@
 
 .cfg-dialog {
     width: 100%;
-    max-width: 440px;
+    max-width: 490px;
     background: #ffffff;
     color: #0f172a;
     border-radius: 12px;
@@ -105,6 +105,46 @@
     overflow-y: auto;
 }
 
+/* Notice & Guide Card */
+.cfg-guide-card {
+    background: rgba(59, 130, 246, 0.05);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    border-radius: 9px;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    user-select: none;
+}
+
+[data-theme="dark"] .cfg-guide-card {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.22);
+}
+
+.cfg-guide-title {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #2563eb;
+}
+
+[data-theme="dark"] .cfg-guide-title {
+    color: #60a5fa;
+}
+
+.cfg-guide-desc {
+    font-size: 11px;
+    line-height: 1.45;
+    color: #64748b;
+}
+
+[data-theme="dark"] .cfg-guide-desc {
+    color: #a1a1aa;
+}
+
 .cfg-group {
     display: flex;
     flex-direction: column;
@@ -120,7 +160,48 @@
 .cfg-label-wrap {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
+}
+
+.cfg-studio-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+}
+
+[data-theme="dark"] .cfg-studio-title {
+    color: #f4f4f5;
+}
+
+.cfg-provider-tag {
+    font-size: 10.5px;
+    font-weight: 500;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.05);
+    color: #64748b;
+}
+
+[data-theme="dark"] .cfg-provider-tag {
+    background: rgba(255, 255, 255, 0.08);
+    color: #a1a1aa;
+}
+
+.cfg-hint-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 0 4px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.06);
+    color: #64748b;
+    margin-right: 4px;
+}
+
+[data-theme="dark"] .cfg-hint-tag {
+    background: rgba(255, 255, 255, 0.08);
+    color: #a1a1aa;
 }
 
 .cfg-label {

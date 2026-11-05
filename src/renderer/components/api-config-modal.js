@@ -28,41 +28,55 @@ class ApiConfigModal {
                     </div>
 
                     <div class="cfg-body">
-                        <!-- Group 1: Volcengine Ark Core -->
+                        <!-- Guide Card -->
+                        <div class="cfg-guide-card">
+                            <div class="cfg-guide-title">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                                <span>按需配置指南</span>
+                            </div>
+                            <div class="cfg-guide-desc">
+                                工作室为独立模块化驱动。您只需根据想要使用的功能配置对应密钥即可，无需全部填写：
+                            </div>
+                        </div>
+
+                        <!-- Group 1: Image & Video Studios -->
                         <div class="cfg-group" id="group-ark-core">
                             <div class="cfg-row-header">
                                 <div class="cfg-label-wrap">
-                                    <span class="cfg-label">火山方舟</span>
+                                    <span class="cfg-studio-title">图像 & 视频工作室</span>
+                                    <span class="cfg-provider-tag">火山方舟</span>
                                     <span id="badge-ark-key" class="cfg-badge is-empty">
                                         <span class="cfg-dot"></span>未配置
                                     </span>
                                 </div>
                                 <a href="https://console.volcengine.com/ark" target="_blank" rel="noopener noreferrer" class="cfg-link">获取密钥 ↗</a>
                             </div>
-                            <input type="password" id="input-ark-key" class="cfg-input" placeholder="输入 API Key (sk-...)" autocomplete="off">
-                            <div class="cfg-hint">驱动豆包大模型：AI 换脸、文生图与视频生成</div>
+                            <input type="password" id="input-ark-key" class="cfg-input" placeholder="输入火山方舟 API Key (sk-...)" autocomplete="off">
+                            <div class="cfg-hint"><span class="cfg-hint-tag">驱动功能</span>文生图、AI 换脸、图生图、视频生成（豆包大模型）</div>
                         </div>
 
-                        <!-- Group 2: DashScope Speech & Voice Cloning -->
+                        <!-- Group 2: Audio Studio -->
                         <div class="cfg-group" id="group-dashscope-speech">
                             <div class="cfg-row-header">
                                 <div class="cfg-label-wrap">
-                                    <span class="cfg-label">阿里云百炼</span>
+                                    <span class="cfg-studio-title">音频工作室</span>
+                                    <span class="cfg-provider-tag">阿里云百炼</span>
                                     <span id="badge-dashscope-key" class="cfg-badge is-empty">
                                         <span class="cfg-dot"></span>未配置
                                     </span>
                                 </div>
                                 <a href="https://bailian.console.aliyun.com/" target="_blank" rel="noopener noreferrer" class="cfg-link">获取密钥 ↗</a>
                             </div>
-                            <input type="password" id="input-dashscope-key" class="cfg-input" placeholder="输入 DashScope API Key (sk-...)" autocomplete="off">
-                            <div class="cfg-hint">驱动 CosyVoice-v2：声音克隆、音色复刻与角色语音合成</div>
+                            <input type="password" id="input-dashscope-key" class="cfg-input" placeholder="输入阿里百炼 API Key (sk-...)" autocomplete="off">
+                            <div class="cfg-hint"><span class="cfg-hint-tag">驱动功能</span>声音克隆、音色复刻、角色语音对话（CosyVoice-v2）</div>
                         </div>
 
-                        <!-- Group 3: Decart Realtime Vision Core -->
+                        <!-- Group 3: Vision Studio -->
                         <div class="cfg-group" id="group-decart-vision">
                             <div class="cfg-row-header">
                                 <div class="cfg-label-wrap">
-                                    <span class="cfg-label">Decart 视觉</span>
+                                    <span class="cfg-studio-title">视觉工作室</span>
+                                    <span class="cfg-provider-tag">Decart 视觉</span>
                                     <span id="badge-decart-key" class="cfg-badge is-empty">
                                         <span class="cfg-dot"></span>未配置
                                     </span>
@@ -70,7 +84,7 @@ class ApiConfigModal {
                                 <a href="https://platform.decart.ai/" target="_blank" rel="noopener noreferrer" class="cfg-link">获取密钥 ↗</a>
                             </div>
                             <input type="password" id="input-decart-key" class="cfg-input" placeholder="输入 Decart API Key" autocomplete="off">
-                            <div class="cfg-hint">驱动 Mirage V2：实时视觉工作室与 AI 镜像</div>
+                            <div class="cfg-hint"><span class="cfg-hint-tag">驱动功能</span>实时 AI 镜像、摄像头超低延迟画风转换（Mirage V2）</div>
                         </div>
                     </div>
 
@@ -107,12 +121,15 @@ class ApiConfigModal {
         if (this.modal) this.modal.style.display = 'flex';
         await this.refreshStatus();
 
-        if (focusSection === 'speech') {
+        if (focusSection === 'speech' || focusSection === 'audio') {
             const dashInput = document.getElementById('input-dashscope-key');
             if (dashInput) setTimeout(() => dashInput.focus(), 150);
         } else if (focusSection === 'vision') {
             const decartInput = document.getElementById('input-decart-key');
             if (decartInput) setTimeout(() => decartInput.focus(), 150);
+        } else if (focusSection === 'image' || focusSection === 'video') {
+            const arkInput = document.getElementById('input-ark-key');
+            if (arkInput) setTimeout(() => arkInput.focus(), 150);
         } else {
             const arkInput = document.getElementById('input-ark-key');
             if (arkInput && !arkInput.value) setTimeout(() => arkInput.focus(), 150);
@@ -128,7 +145,7 @@ class ApiConfigModal {
             const res = await fetch('/api/settings/keys');
             const data = await res.json();
             if (data.status === 'success' && data.keys) {
-                // Ark API Key
+                // Ark API Key (Image & Video)
                 const arkBadge = document.getElementById('badge-ark-key');
                 const arkInput = document.getElementById('input-ark-key');
                 if (data.keys.ARK_API_KEY?.configured) {
@@ -145,11 +162,11 @@ class ApiConfigModal {
                         arkBadge.innerHTML = '<span class="cfg-dot"></span>未配置';
                     }
                     if (arkInput) {
-                        arkInput.placeholder = '输入 API Key (sk-...)';
+                        arkInput.placeholder = '输入火山方舟 API Key (sk-...)';
                     }
                 }
 
-                // DashScope Speech & Voice Cloning
+                // DashScope Speech & Voice Cloning (Audio)
                 const dashBadge = document.getElementById('badge-dashscope-key');
                 const dashInput = document.getElementById('input-dashscope-key');
                 if (data.keys.DASHSCOPE_API_KEY?.configured) {
@@ -166,11 +183,11 @@ class ApiConfigModal {
                         dashBadge.innerHTML = '<span class="cfg-dot"></span>未配置';
                     }
                     if (dashInput) {
-                        dashInput.placeholder = '输入 DashScope API Key (sk-...)';
+                        dashInput.placeholder = '输入阿里百炼 API Key (sk-...)';
                     }
                 }
 
-                // Decart Vision
+                // Decart Vision (Vision)
                 const decartBadge = document.getElementById('badge-decart-key');
                 const decartInput = document.getElementById('input-decart-key');
                 if (data.keys.DECART_API_KEY?.configured) {
